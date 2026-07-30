@@ -3,7 +3,16 @@ import { useNavigate } from '@tanstack/react-router';
 import { useAppStore } from '../../store/useAppStore';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { createBackupFilename, createBackupPayload, downloadJsonFile, normalizeBackupPayload, restoreBackupPayload } from '../../utils/backup';
-import { ArrowLeft, CloudUpload, Download, Palette, RefreshCw, ShieldCheck, Smartphone, Upload, Wifi, Database, FileJson, MoonStar, SunMedium, CircleGauge } from 'lucide-react';
+import { ArrowLeft, CloudUpload, Download, Palette, RefreshCw, ShieldCheck, Smartphone, Upload, Wifi, Database, FileJson, MoonStar, SunMedium, CircleGauge, Bell, BellOff } from 'lucide-react';
+import {
+  isNotificationSupported,
+  requestNotificationPermission,
+  getNotificationPermission,
+  areNotificationsActive,
+  setNotificationEnabled,
+  loadNotificationPreference,
+  sendTestNotification,
+} from '../../services/notifications/push-service';
 
 type InstallPromptEvent = Event & {
   prompt: () => Promise<void> | void;
@@ -23,6 +32,11 @@ export const SettingsPage: React.FC = () => {
   const [isStandalone, setIsStandalone] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
 
+  // Notification toggle state
+  const [notificationsEnabled, setNotificationsEnabledState] = useState<boolean>(false);
+  const [notificationsSupported, setNotificationsSupported] = useState<boolean>(false);
+  const [notificationsPermitted, setNotificationsPermitted] = useState<boolean>(false);
+
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
     setIsStandalone(standalone);
@@ -39,6 +53,16 @@ export const SettingsPage: React.FC = () => {
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Initialize notification state
+    const supported = isNotificationSupported();
+    setNotificationsSupported(supported);
+    if (supported) {
+      const permitted = getNotificationPermission() === 'granted';
+      setNotificationsPermitted(permitted);
+      const enabled = loadNotificationPreference();
+      setNotificationsEnabledState(enabled);
+    }
 
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -109,6 +133,34 @@ export const SettingsPage: React.FC = () => {
       setDeferredPrompt(null);
     } catch (error) {
       addToast({ type: 'error', title: 'Gagal Memasang', message: 'Browser tidak mengizinkan prompt instalasi.' });
+    }
+  };
+
+  const handleNotificationToggle = async () => {
+    playClickSound();
+    // If turning on and permission not yet granted, request it first
+    if (!notificationsEnabled) {
+      if (!notificationsPermitted) {
+        const permission = await requestNotificationPermission();
+        if (permission === 'granted') {
+          setNotificationsPermitted(true);
+          setNotificationsEnabledState(true);
+          setNotificationEnabled(true);
+          await sendTestNotification();
+          addToast({ type: 'success', title: 'Notifikasi Diaktifkan', message: 'Notifikasi pengingat tensi & obat berhasil diaktifkan.' });
+        } else {
+          addToast({ type: 'warning', title: 'Izin Ditolak', message: 'Notifikasi tidak dapat diaktifkan tanpa izin browser.' });
+        }
+        return;
+      }
+      setNotificationsEnabledState(true);
+      setNotificationEnabled(true);
+      await sendTestNotification();
+      addToast({ type: 'success', title: 'Notifikasi Diaktifkan', message: 'Notifikasi pengingat tensi & obat berhasil diaktifkan.' });
+    } else {
+      setNotificationsEnabledState(false);
+      setNotificationEnabled(false);
+      addToast({ type: 'info', title: 'Notifikasi Dimatikan', message: 'Notifikasi pengingat telah dinonaktifkan.' });
     }
   };
 
@@ -260,6 +312,52 @@ export const SettingsPage: React.FC = () => {
             </button>
           </div>
         </article>
+
+        {/* Notifikasi Card */}
+        {notificationsSupported && (
+          <article className="hallmark-card p-6 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/20">
+                {notificationsEnabled ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Notifikasi</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {notificationsPermitted ? 'Pengingat tensi & obat aktif.' : 'Aktifkan izin browser untuk notifikasi pengingat.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+              <div>
+                <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                  {notificationsEnabled ? 'Notifikasi Aktif' : 'Notifikasi Mati'}
+                </p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  {notificationsEnabled
+                    ? 'Anda akan menerima pengingat sesuai jadwal.'
+                    : 'Aktifkan untuk menerima pengingat terjadwal.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleNotificationToggle}
+                className={`relative w-14 h-8 rounded-full transition-colors focus:outline-none ${
+                  notificationsEnabled ? 'bg-teal-500' : 'bg-slate-300 dark:bg-slate-600'
+                }`}
+                role="switch"
+                aria-checked={notificationsEnabled}
+                aria-label="Toggle notifikasi"
+              >
+                <span
+                  className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-transform ${
+                    notificationsEnabled ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </article>
+        )}
 
         <article className="hallmark-card p-6 space-y-4 lg:col-span-2">
           <div className="flex items-center gap-3">

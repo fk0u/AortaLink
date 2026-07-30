@@ -1,11 +1,12 @@
 import Dexie, { type Table } from 'dexie';
-import { Profile, BPReading, Reminder, HabitLog } from '../types/blood-pressure';
+import { Profile, BPReading, Reminder, HabitLog, GamificationState } from '../types/blood-pressure';
 
 export class HeartSyncDatabase extends Dexie {
   profiles!: Table<Profile, string>;
   readings!: Table<BPReading, number>;
   reminders!: Table<Reminder, number>;
   habits!: Table<HabitLog, number>;
+  gamification!: Table<GamificationState, 'current'>;
 
   constructor() {
     super('HeartSyncDB');
@@ -20,6 +21,14 @@ export class HeartSyncDatabase extends Dexie {
       readings: '++id, profileId, timestamp, systolic, diastolic, pulse',
       reminders: '++id, profileId, type, time, enabled',
       habits: '++id, profileId, date, timestamp'
+    });
+
+    this.version(3).stores({
+      profiles: 'id, name, relationship, isDefault, createdAt',
+      readings: '++id, profileId, timestamp, systolic, diastolic, pulse',
+      reminders: '++id, profileId, type, time, enabled',
+      habits: '++id, profileId, date, timestamp',
+      gamification: 'id, streak, longestStreak, lastMeasurementDate, score, earnedBadges'
     });
   }
 }
@@ -47,5 +56,18 @@ export async function seedInitialData() {
     };
 
     await db.profiles.add(initialProfile);
+  }
+
+  // Initialize gamification state if not present
+  const gamificationState = await db.gamification.get('current');
+  if (!gamificationState) {
+    await db.gamification.put({
+      id: 'current',
+      streak: 0,
+      longestStreak: 0,
+      lastMeasurementDate: null,
+      score: 0,
+      earnedBadges: []
+    });
   }
 }

@@ -48,6 +48,9 @@ import { MobileToolsSheet } from './components/layout/MobileToolsSheet';
 // Bluetooth pairing
 import { DevicePairingButton } from './components/bluetooth/DevicePairingButton';
 
+// Gamification
+import { StreakBadges } from './components/gamification/StreakBadges';
+
 // Icons
 import {
   Plus,
@@ -312,6 +315,11 @@ export function App() {
               </div>
             ) : (
               <StatCards stats={stats} onOpenNewReading={() => openReadingModal()} />
+            )}
+
+            {/* Gamification: Streak & Badges */}
+            {!isLoading && !isDataRefreshing && (
+              <StreakBadges />
             )}
 
             {/* Apple Health Style Category Breakdown */}
