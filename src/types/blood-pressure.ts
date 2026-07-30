@@ -92,6 +92,15 @@ export interface BPSummaryStats {
 export type DateFilterRange = '7days' | '30days' | '90days' | 'all' | 'custom';
 export type SortOption = 'date_desc' | 'date_asc' | 'systolic_desc' | 'systolic_asc';
 
+export interface GamificationState {
+  id: 'current';
+  streak: number;
+  longestStreak: number;
+  lastMeasurementDate: string | null;
+  score: number;
+  earnedBadges: string[];
+}
+
 export interface BackupDataFormat {
   version: string;
   exportedAt: string;

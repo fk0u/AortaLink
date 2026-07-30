@@ -7,6 +7,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Bell, Plus, Clock, Pill, Activity, Trash2, Check } from 'lucide-react';
+import { scheduleReminder, syncAllReminders, cancelScheduledNotification } from '../../services/notifications/push-service';
 
 export const ReminderModal: React.FC = () => {
   const isOpen = useAppStore((state) => state.isReminderModalOpen);
@@ -46,6 +47,17 @@ export const ReminderModal: React.FC = () => {
     playClickSound();
     if (!rem.id) return;
     await db.reminders.update(rem.id, { enabled: !rem.enabled });
+    
+    // Update notification scheduling
+    const updatedReminder = await db.reminders.get(rem.id);
+    if (updatedReminder) {
+      if (updatedReminder.enabled) {
+        scheduleReminder(updatedReminder);
+      } else {
+        cancelScheduledNotification(rem.id);
+      }
+    }
+    
     addToast({
       type: 'info',
       title: rem.enabled ? 'Pengingat Dimatikan' : 'Pengingat Diaktifkan',
@@ -56,6 +68,10 @@ export const ReminderModal: React.FC = () => {
   const handleDeleteReminder = async (id?: number) => {
     playClickSound();
     if (!id) return;
+    
+    // Cancel any scheduled notification first
+    cancelScheduledNotification(id);
+    
     await db.reminders.delete(id);
     addToast({ type: 'success', title: 'Pengingat Dihapus', message: 'Jadwal pengingat telah dihapus.' });
   };
@@ -65,7 +81,7 @@ export const ReminderModal: React.FC = () => {
     if (!activeProfileId || !title.trim()) return;
 
     try {
-      await db.reminders.add({
+      const newId = await db.reminders.add({
         profileId: activeProfileId,
         title,
         type,
@@ -75,6 +91,16 @@ export const ReminderModal: React.FC = () => {
         dosage: type === 'medication' ? dosage : undefined,
         notes
       });
+
+      // Schedule push notification for this reminder
+      try {
+        const addedReminder = await db.reminders.get(newId);
+        if (addedReminder) {
+          scheduleReminder(addedReminder);
+        }
+      } catch (notifErr) {
+        console.warn('[HeartSync] Could not schedule notification:', notifErr);
+      }
 
       playSuccessChime();
       addToast({
