@@ -29,6 +29,7 @@ import { ReadingFormModal } from './components/readings/ReadingFormModal';
 // Modals & Common
 import { ProfileModal } from './components/profiles/ProfileModal';
 import { ExportPdfModal } from './components/reports/ExportPdfModal';
+import { WeeklyReport } from './components/reports/WeeklyReport';
 import { ReminderModal } from './components/reminders/ReminderModal';
 import { ToastContainer } from './components/common/Toast';
 import { ConfirmModal } from './components/common/ConfirmModal';
@@ -558,7 +559,8 @@ export function App() {
 
         {/* TAB 3: DOCTOR REPORTS */}
         {activeTab === 'reports' && (
-          <div className="space-y-4 animate-in fade-in duration-300 max-w-2xl mx-auto">
+          <div className="space-y-6 animate-in fade-in duration-300 max-w-3xl mx-auto">
+            <WeeklyReport />
             <div className="text-center space-y-1">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 inline-flex items-center gap-1">
                 <Sparkles className="w-3 h-3" /> Laporan Medis PDF
