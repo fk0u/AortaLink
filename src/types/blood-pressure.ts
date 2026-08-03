@@ -29,6 +29,10 @@ export interface BPReading {
   notes?: string;
 }
 
+export interface SodiumLog { id?: number; profileId: string; date: string; sodiumMg: number; items?: string[] }
+export interface SleepLog { id?: number; profileId: string; date: string; sleepHours: number; screenTimeHours?: number; outdoorMinutes?: number }
+export interface MedicationLog { id?: number; profileId: string; date: string; takenCount: number; totalCount: number }
+
 export interface HabitLog {
   id?: number;
   profileId: string;

@@ -15,6 +15,7 @@ import {
 import { useProfiles } from '../../hooks/useProfiles';
 import { useAppStore } from '../../store/useAppStore';
 import { db } from '../../db';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { HabitLog } from '../../types/blood-pressure';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { format } from 'date-fns';
@@ -36,6 +37,7 @@ export const HabitsTrackerModal: React.FC<HabitsTrackerModalProps> = ({ isOpen, 
   const [activityNotes, setActivityNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingLogs, setExistingLogs] = useState<HabitLog[]>([]);
+  const sleepLogs = useLiveQuery(() => activeProfileId ? db.sleepLogs.where('profileId').equals(activeProfileId).reverse().limit(7).toArray() : [], [activeProfileId]) || [];
 
   // Calculate total sleep duration
   const calculateSleepDuration = (start: string, end: string): number => {
@@ -99,6 +101,7 @@ export const HabitsTrackerModal: React.FC<HabitsTrackerModalProps> = ({ isOpen, 
       };
 
       await db.habits.add(newHabit);
+      await db.sleepLogs.add({ profileId: activeProfileId, date: dateStr, sleepHours, screenTimeHours: Number(screenTimeHours), outdoorMinutes: Number(outdoorMinutes) });
       playSuccessChime();
       addToast({
         type: 'success',
