@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import type { WeeklyReport } from './weekly-report';
 import { Profile, BPReading, BPSummaryStats } from '../types/blood-pressure';
 import { classifyBP } from './bp-classifier';
 import { formatDateIndonesian, getRelationshipLabel } from './formatters';
@@ -171,3 +172,23 @@ export function generateDoctorPDF(
   const fileName = `HeartSync_Laporan_${profile.name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
   doc.save(fileName);
 }
+
+export async function generateWeeklyReportPDF(profile: Profile, report: WeeklyReport) {
+  const { default: JsPDF } = await import('jspdf');
+  const { default: table } = await import('jspdf-autotable');
+  const doc = new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  doc.setFillColor(2, 132, 199); doc.rect(0, 0, 210, 25, 'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.text('HEARTSYNC — LAPORAN MINGGUAN', 14, 13);
+  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.text(`Profil: ${profile.name}  |  ${formatWeeklyRangeForPdf(report)}`, 14, 20);
+  doc.setTextColor(15,23,42); doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.text('Ringkasan Statistik', 14, 36);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text(`Rata-rata: ${report.avgSystolic}/${report.avgDiastolic} mmHg    Rentang sistolik: ${report.minSystolic}–${report.maxSystolic} mmHg`, 14, 43);
+  doc.text(`Jumlah catatan: ${report.count}    Nadi rata-rata: ${report.avgPulse || '-'} BPM    Kepatuhan: ${report.adherence}%`, 14, 50);
+  const categories = Object.entries(report.categories).map(([key,count]) => [key === 'normal' ? 'Normal' : key === 'elevated' ? 'Meningkat' : key === 'stage1' ? 'Hipertensi Tahap 1' : key === 'stage2' ? 'Hipertensi Tahap 2' : 'Krisis', String(count)]);
+  table(doc, { startY: 56, head: [['Kategori','Jumlah']], body: categories, theme: 'grid', headStyles: { fillColor: [2,132,199] }, margin: {left:14,right:14} });
+  const y = ((doc as any).lastAutoTable?.finalY || 90) + 8;
+  doc.setFont('helvetica','bold'); doc.text('Catatan pengukuran minggu ini', 14, y);
+  table(doc, { startY: y + 4, head: [['Tanggal','Sistolik/Diastolik','Nadi','Kategori']], body: report.readings.map(r => [format(new Date(r.timestamp),'dd/MM/yyyy HH:mm'), `${r.systolic}/${r.diastolic} mmHg`, `${r.pulse} BPM`, classifyBP(r.systolic,r.diastolic).label]), theme:'grid', headStyles:{fillColor:[2,132,199]}, bodyStyles:{fontSize:8}, margin:{left:14,right:14} });
+  const iy = ((doc as any).lastAutoTable?.finalY || 220) + 8; doc.setFont('helvetica','bold'); doc.text('Insight', 14, iy); doc.setFont('helvetica','normal'); doc.setFontSize(9); report.insights.slice(0,6).forEach((s,i)=>doc.text(`• ${s}`, 16, iy + 7 + i*6, {maxWidth:178}));
+  doc.save(`Laporan-Mingguan-HBS-${format(new Date(),'yyyy-MM-dd')}.pdf`);
+}
+function formatWeeklyRangeForPdf(r: WeeklyReport) { return `${format(r.startDate,'dd/MM/yyyy')} - ${format(r.endDate,'dd/MM/yyyy')}`; }
