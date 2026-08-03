@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import { Profile, BPReading, Reminder, HabitLog, GamificationState } from '../types/blood-pressure';
+import { Profile, BPReading, Reminder, HabitLog, GamificationState, SodiumLog, SleepLog, MedicationLog } from '../types/blood-pressure';
 
 export class HeartSyncDatabase extends Dexie {
   profiles!: Table<Profile, string>;
@@ -7,6 +7,9 @@ export class HeartSyncDatabase extends Dexie {
   reminders!: Table<Reminder, number>;
   habits!: Table<HabitLog, number>;
   gamification!: Table<GamificationState, 'current'>;
+  sodiumLogs!: Table<SodiumLog, number>;
+  sleepLogs!: Table<SleepLog, number>;
+  medicationLogs!: Table<MedicationLog, number>;
 
   constructor() {
     super('HeartSyncDB');
@@ -29,6 +32,17 @@ export class HeartSyncDatabase extends Dexie {
       reminders: '++id, profileId, type, time, enabled',
       habits: '++id, profileId, date, timestamp',
       gamification: 'id, streak, longestStreak, lastMeasurementDate, score, earnedBadges'
+    });
+
+    this.version(4).stores({
+      profiles: 'id, name, relationship, isDefault, createdAt',
+      readings: '++id, profileId, timestamp, systolic, diastolic, pulse',
+      reminders: '++id, profileId, type, time, enabled',
+      habits: '++id, profileId, date, timestamp',
+      gamification: 'id, streak, longestStreak, lastMeasurementDate, score, earnedBadges',
+      sodiumLogs: '++id, profileId, date',
+      sleepLogs: '++id, profileId, date',
+      medicationLogs: '++id, profileId, date'
     });
   }
 }

@@ -50,6 +50,7 @@ import { DevicePairingButton } from './components/bluetooth/DevicePairingButton'
 
 // Gamification
 import { StreakBadges } from './components/gamification/StreakBadges';
+import { LifestyleCorrelation } from './components/analytics/LifestyleCorrelation';
 
 // Icons
 import {
@@ -319,7 +320,13 @@ export function App() {
 
             {/* Gamification: Streak & Badges */}
             {!isLoading && !isDataRefreshing && (
-              <StreakBadges />
+              <>
+                <StreakBadges />
+                <details className="group hallmark-card p-4 md:p-5">
+                  <summary className="cursor-pointer font-extrabold text-sm text-slate-800 dark:text-slate-100">Korelasi Gaya Hidup &amp; Tekanan Darah</summary>
+                  <div className="mt-4"><LifestyleCorrelation /></div>
+                </details>
+              </>
             )}
 
             {/* Apple Health Style Category Breakdown */}

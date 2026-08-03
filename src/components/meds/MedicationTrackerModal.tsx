@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { db } from '../../db';
+import { useProfiles } from '../../hooks/useProfiles';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Pill, CheckCircle2, Plus, Clock, AlertCircle, Sparkles, Flame } from 'lucide-react';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
@@ -20,6 +23,8 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
   isOpen,
   onClose
 }) => {
+  const { activeProfile } = useProfiles();
+  const medicationLogs = useLiveQuery(() => activeProfile?.id ? db.medicationLogs.where('profileId').equals(activeProfile.id).toArray() : [], [activeProfile?.id]) || [];
   const [meds, setMeds] = useState<Medication[]>([
     { id: '1', name: 'Amlodipine', dosage: '5 mg', time: '08:00 Pagi', takenToday: true },
     { id: '2', name: 'Valsartan', dosage: '80 mg', time: '20:00 Malam', takenToday: false }
@@ -29,18 +34,18 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
   const [newMedDosage, setNewMedDosage] = useState('');
   const [newMedTime, setNewMedTime] = useState('08:00');
 
+  const persistMedication = (next: Medication[]) => { if (activeProfile?.id) db.medicationLogs.add({ profileId: activeProfile.id, date: new Date().toISOString().slice(0, 10), takenCount: next.filter(m => m.takenToday).length, totalCount: next.length }); };
+
   const toggleTaken = (id: string) => {
     playClickSound();
-    setMeds((prev) =>
-      prev.map((m) => {
+    setMeds((prev) => { const next = prev.map((m) => {
         if (m.id === id) {
           const nextState = !m.takenToday;
           if (nextState) playSuccessChime();
           return { ...m, takenToday: nextState };
         }
         return m;
-      })
-    );
+      }); persistMedication(next); return next; });
   };
 
   const handleAddMed = (e: React.FormEvent) => {
@@ -54,7 +59,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
       time: `${newMedTime}`,
       takenToday: false
     };
-    setMeds([...meds, newMed]);
+    const next = [...meds, newMed]; setMeds(next); persistMedication(next);
     setNewMedName('');
     setNewMedDosage('');
   };
