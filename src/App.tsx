@@ -1,5 +1,5 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · Apple Native APK/IPA Archetype */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouterState, useNavigate } from '@tanstack/react-router';
 import { seedInitialData, db } from './db';
 import { useProfiles } from './hooks/useProfiles';
@@ -51,6 +51,8 @@ import { DevicePairingButton } from './components/bluetooth/DevicePairingButton'
 // Gamification
 import { StreakBadges } from './components/gamification/StreakBadges';
 import { LifestyleCorrelation } from './components/analytics/LifestyleCorrelation';
+import { DashboardCustomizer } from './components/dashboard/DashboardCustomizer';
+import { loadDashboardPreferences, saveDashboardPreferences, type DashboardSection } from './utils/dashboard-preferences';
 
 // Icons
 import {
@@ -89,6 +91,13 @@ export function App() {
 
   const [isDbReady, setIsDbReady] = useState(false);
   const [isRestTimerOpen, setIsRestTimerOpen] = useState(false);
+  const [dashboardPreferences, setDashboardPreferences] = useState<DashboardSection[]>(() => loadDashboardPreferences());
+  const dashboardOrder = useMemo(() => new Map(dashboardPreferences.map((section) => [section.id, section])), [dashboardPreferences]);
+  const updateDashboardPreferences = (preferences: DashboardSection[]) => {
+    setDashboardPreferences(preferences);
+    saveDashboardPreferences(preferences);
+  };
+  const sectionStyle = (id: DashboardSection['id']) => ({ order: dashboardOrder.get(id)?.order ?? 0, display: dashboardOrder.get(id)?.visible === false ? 'none' : undefined });
 
   // Quick Tools Modal States
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
@@ -261,6 +270,7 @@ export function App() {
             
             {/* Apple SwiftUI Pull/Tap-to-Refresh & Cache Info Bar */}
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-1 text-xs">
+              <DashboardCustomizer preferences={dashboardPreferences} onChange={updateDashboardPreferences} />
               <div className="flex items-center gap-2 text-slate-400 font-semibold min-w-0">
                 <Clock className="w-3.5 h-3.5" />
                 <span className="min-w-0 truncate">Cache: {cacheTimestamp ? `Terakhir sinkron ${new Date(cacheTimestamp).toLocaleTimeString('id-ID')}` : 'Belum sinkron'}</span>
@@ -307,6 +317,7 @@ export function App() {
             <EmergencyAlert latestReading={stats.latestReading} />
 
             {/* Loader / Stat Cards */}
+            <div data-dashboard-section="statcards" style={sectionStyle('statcards')}>
             {isLoading || isDataRefreshing ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
                 <div className="md:col-span-2">
@@ -317,12 +328,13 @@ export function App() {
             ) : (
               <StatCards stats={stats} onOpenNewReading={() => openReadingModal()} />
             )}
+            </div>
 
             {/* Gamification: Streak & Badges */}
             {!isLoading && !isDataRefreshing && (
               <>
-                <StreakBadges />
-                <details className="group hallmark-card p-4 md:p-5">
+                <div data-dashboard-section="streakbadges" style={sectionStyle('streakbadges')}><StreakBadges /></div>
+                <details data-dashboard-section="lifestylecorrelation" style={sectionStyle('lifestylecorrelation')}  className="group hallmark-card p-4 md:p-5">
                   <summary className="cursor-pointer font-extrabold text-sm text-slate-800 dark:text-slate-100">Korelasi Gaya Hidup &amp; Tekanan Darah</summary>
                   <div className="mt-4"><LifestyleCorrelation /></div>
                 </details>
@@ -330,11 +342,13 @@ export function App() {
             )}
 
             {/* Apple Health Style Category Breakdown */}
+            <div data-dashboard-section="applerings" style={sectionStyle('applerings')}>
             {isLoading || isDataRefreshing ? (
               <ShimmerSkeletonCard type="stats" />
             ) : (
               <AppleHealthRings readings={rawReadings || []} />
             )}
+            </div>
 
             {/* SwiftUI Quick Tools & Accessibility Grid */}
             <div className="space-y-4 md:space-y-3">
@@ -440,7 +454,7 @@ export function App() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 items-start">
               
               {/* Left Column: Trend Graph */}
-              <div className="lg:col-span-2">
+              <div data-dashboard-section="bptrend" style={sectionStyle('bptrend')} className="lg:col-span-2">
                 {isLoading || isDataRefreshing ? (
                   <ShimmerSkeletonCard type="chart" />
                 ) : (
@@ -449,7 +463,7 @@ export function App() {
               </div>
 
               {/* Right Column: Recent Readings */}
-              <div className="space-y-4 md:space-y-4">
+              <div data-dashboard-section="recentreadings" style={sectionStyle('recentreadings')} className="space-y-4 md:space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 min-w-0">
                     Catatan Terbaru ({activeProfile?.name || 'Pasien'})
