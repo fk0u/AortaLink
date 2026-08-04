@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import { Profile, BPReading, Reminder, HabitLog, GamificationState, SodiumLog, SleepLog, MedicationLog, MedicationItem, LabResult, FhirPatient, FhirObservation, FhirMedicationRequest, FhirMedicationStatement } from '../types/blood-pressure';
+import { Profile, BPReading, Reminder, HabitLog, GamificationState, SodiumLog, SleepLog, MedicationLog, MedicationItem, LabResult, FhirPatient, FhirObservation, FhirMedicationRequest, FhirMedicationStatement, AscvdProfile, ClinicalNote } from '../types/blood-pressure';
 
 export class AortaLinkDatabase extends Dexie {
   profiles!: Table<Profile, string>;
@@ -18,6 +18,10 @@ export class AortaLinkDatabase extends Dexie {
   fhirObservations!: Table<FhirObservation, string>;
   fhirMedicationRequests!: Table<FhirMedicationRequest, string>;
   fhirMedicationStatements!: Table<FhirMedicationStatement, string>;
+
+  // V7: Clinical Features
+  ascvdProfiles!: Table<AscvdProfile, number>;
+  clinicalNotes!: Table<ClinicalNote, number>;
 
   constructor() {
     super('AortaLinkDB');
@@ -82,6 +86,26 @@ export class AortaLinkDatabase extends Dexie {
       fhirObservations: 'id, profileId, status, effectiveDateTime',
       fhirMedicationRequests: 'id, profileId, status, intent',
       fhirMedicationStatements: 'id, profileId, status, effectiveDateTime'
+    });
+
+    // Version 7: ASCVD Risk Calculator & Clinical Notes Journal
+    this.version(7).stores({
+      profiles: 'id, name, relationship, isDefault, createdAt',
+      readings: '++id, profileId, timestamp, systolic, diastolic, pulse, measurement_context',
+      reminders: '++id, profileId, type, time, enabled',
+      habits: '++id, profileId, date, timestamp',
+      gamification: 'id, streak, longestStreak, lastMeasurementDate, score, earnedBadges',
+      sodiumLogs: '++id, profileId, date',
+      sleepLogs: '++id, profileId, date',
+      medications: '++id, profileId, name, schedule',
+      medicationLogs: '++id, profileId, medicationId, takenAt',
+      labResults: '++id, profileId, timestamp',
+      fhirPatients: 'id, active',
+      fhirObservations: 'id, profileId, status, effectiveDateTime',
+      fhirMedicationRequests: 'id, profileId, status, intent',
+      fhirMedicationStatements: 'id, profileId, status, effectiveDateTime',
+      ascvdProfiles: '++id, profileId, timestamp',
+      clinicalNotes: '++id, profileId, timestamp'
     });
   }
 }

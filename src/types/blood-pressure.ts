@@ -303,6 +303,35 @@ export interface FhirMedicationStatement {
   };
 }
 
+export interface AscvdProfile {
+  id?: number;
+  profileId: string;
+  timestamp: string;
+  age: number;
+  gender: 'male' | 'female';
+  race: 'white' | 'african_american' | 'other';
+  totalCholesterol: number; // mg/dL
+  hdlCholesterol: number;   // mg/dL
+  systolicBP: number;       // mmHg (auto-filled from latest reading)
+  onBPTreatment: boolean;
+  diabetes: boolean;
+  smoker: boolean;
+  riskPercent: number;      // Calculated 10-year ASCVD risk %
+  riskLevel: 'low' | 'borderline' | 'intermediate' | 'high';
+}
+
+export interface ClinicalNote {
+  id?: number;
+  profileId: string;
+  timestamp: string;
+  doctorName?: string;
+  chiefComplaint: string;   // Keluhan utama
+  assessment: string;       // Penilaian / Diagnosis
+  plan: string;             // Rencana terapi
+  tags: string[];           // e.g. 'follow-up', 'emergency', 'routine'
+  linkedReadingIds: number[];
+}
+
 export interface SmartOnFhirConfig {
   clientId: string;
   fhirUrl: string;

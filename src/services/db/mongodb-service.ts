@@ -124,7 +124,9 @@ export class MongoDbAtlasService {
         fhirPatients,
         fhirObservations,
         fhirMedicationRequests,
-        fhirMedicationStatements
+        fhirMedicationStatements,
+        ascvdProfiles,
+        clinicalNotes
       ] = await Promise.all([
         db.readings.toArray(),
         db.medications.toArray(),
@@ -139,7 +141,9 @@ export class MongoDbAtlasService {
         db.fhirPatients.toArray(),
         db.fhirObservations.toArray(),
         db.fhirMedicationRequests.toArray(),
-        db.fhirMedicationStatements.toArray()
+        db.fhirMedicationStatements.toArray(),
+        db.ascvdProfiles.toArray(),
+        db.clinicalNotes.toArray()
       ]);
 
       const appState = useAppStore.getState();
@@ -170,6 +174,8 @@ export class MongoDbAtlasService {
           fhirObservations,
           fhirMedicationRequests,
           fhirMedicationStatements,
+          ascvdProfiles,
+          clinicalNotes,
           userSettings
         })
       });
@@ -242,6 +248,8 @@ export class MongoDbAtlasService {
       totalRestored += await restoreTable(cloudData.fhirObservations, db.fhirObservations);
       totalRestored += await restoreTable(cloudData.fhirMedicationRequests, db.fhirMedicationRequests);
       totalRestored += await restoreTable(cloudData.fhirMedicationStatements, db.fhirMedicationStatements);
+      totalRestored += await restoreTable(cloudData.ascvdProfiles, db.ascvdProfiles);
+      totalRestored += await restoreTable(cloudData.clinicalNotes, db.clinicalNotes);
 
       // Restore User Settings (Theme & Profile)
       if (cloudData.userSettings) {
