@@ -6,11 +6,11 @@ export default defineConfig({
   plugins: [pluginReact()],
   html: {
     template: './index.html',
-    title: 'AortaLink — Personal EHR & Clinical Blood Pressure Platform',
+    title: 'AortaLink — Open-Source AI-Powered EHR Platform (HL7 FHIR R4)',
     meta: {
       viewport: 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no',
       'theme-color': '#0f172a',
-      description: 'AortaLink — Personal EHR & Clinical Blood Pressure Interoperability Platform for Internal Medicine Precision'
+      description: 'AortaLink — Open-Source AI-Powered EHR Platform (HL7 FHIR R4 Compliant) for Clinical Interoperability and Decision Support'
     }
   },
   source: {

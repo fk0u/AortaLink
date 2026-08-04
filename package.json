@@ -1,5 +1,6 @@
 {
   "name": "aortalink",
+  "description": "AortaLink — Open-Source AI-Powered EHR Platform (HL7 FHIR R4 Compliant)",
   "private": true,
   "version": "1.0.0",
   "type": "module",

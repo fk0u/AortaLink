@@ -26,8 +26,8 @@ export const MobileHeader: React.FC = () => {
             <span className="block text-sm font-black text-slate-900 dark:text-slate-100 tracking-tight truncate">
               AortaLink
             </span>
-            <span className="block text-[10px] font-bold text-teal-600 dark:text-teal-400 leading-none truncate">
-              Personal EHR Platform
+            <span className="block text-[10px] font-extrabold text-teal-600 dark:text-teal-400 leading-none truncate">
+              AI EHR (HL7 FHIR R4)
             </span>
           </div>
         </div>

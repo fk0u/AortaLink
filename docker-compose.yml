@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  aortalink-ehr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aortalink-ehr-platform
+    restart: always
+    ports:
+      - "80:80"
+      - "8173:80"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_ATLAS_PUBLIC_KEY=wfokmvwy
+      - MONGODB_ATLAS_PRIVATE_KEY=729507c9-3cb2-430d-8c51-a20878616549
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

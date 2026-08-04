@@ -19,6 +19,8 @@ import { StatCards } from './components/dashboard/StatCards';
 import { BPTrendChart } from './components/dashboard/BPTrendChart';
 import { EmergencyAlert } from './components/dashboard/EmergencyAlert';
 import { ClinicalAlertBanner } from './components/dashboard/ClinicalAlertBanner';
+import { CdssAlertBanner } from './components/dashboard/CdssAlertBanner';
+import { FhirResourceInspectorModal } from './components/fhir/FhirResourceInspectorModal';
 import { AppleHealthRings } from './components/dashboard/AppleHealthRings';
 import { CalendarView } from './components/calendar/CalendarView';
 
@@ -37,7 +39,7 @@ import { ToastContainer } from './components/common/Toast';
 import { ConfirmModal } from './components/common/ConfirmModal';
 import { BPRestTimerModal } from './components/timer/BPRestTimerModal';
 import { ShimmerSkeletonCard } from './components/common/ShimmerSkeleton';
-import { evaluateClinicalAlerts } from './utils/advanced-analytics';
+import { evaluateClinicalAlerts, calculateNocturnalDipping } from './utils/advanced-analytics';
 import { useLiveQuery } from 'dexie-react-hooks';
 
 // Action & Habit Modals
@@ -77,7 +79,8 @@ import {
   Moon,
   RefreshCw,
   Clock,
-  FlaskConical
+  FlaskConical,
+  FileCode
 } from 'lucide-react';
 
 export function App() {
@@ -112,6 +115,7 @@ export function App() {
   const [isMedModalOpen, setIsMedModalOpen] = useState(false);
   const [isHabitsModalOpen, setIsHabitsModalOpen] = useState(false);
   const [isLabModalOpen, setIsLabModalOpen] = useState(false);
+  const [isFhirModalOpen, setIsFhirModalOpen] = useState(false);
 
   const { activeProfile } = useProfiles();
   const { readings, rawReadings, stats, isLoading } = useReadings();
@@ -126,6 +130,7 @@ export function App() {
   );
 
   const clinicalAlerts = evaluateClinicalAlerts(rawReadings || [], labResults || []);
+  const dippingReport = useMemo(() => calculateNocturnalDipping(rawReadings || []), [rawReadings]);
 
   // Cache & Reload Zustand Store States
   const isDataRefreshing = useAppStore((state) => state.isDataRefreshing);
@@ -331,6 +336,14 @@ export function App() {
               </button>
             </div>
 
+            {/* AI Clinical Decision Support System (CDSS) & FHIR R4 Banner */}
+            <CdssAlertBanner
+              alerts={clinicalAlerts}
+              dippingReport={dippingReport}
+              fhirCount={(rawReadings?.length || 0) + (labResults?.length || 0)}
+              onOpenFhirInspector={() => setIsFhirModalOpen(true)}
+            />
+
             {/* Clinical Alert Auto-Flagging Banner */}
             <ClinicalAlertBanner alerts={clinicalAlerts} />
 
@@ -483,6 +496,24 @@ export function App() {
                   <div>
                     <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Kontak Darurat</h4>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400">Kirim SOS WhatsApp</p>
+                  </div>
+                </button>
+
+                {/* FHIR R4 JSON Inspector */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClickSound();
+                    setIsFhirModalOpen(true);
+                  }}
+                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer min-h-32 border-teal-200 dark:border-teal-900/60 bg-teal-50/20 dark:bg-teal-950/10"
+                >
+                  <div className="p-2 rounded-xl bg-teal-500 text-white w-fit shadow-md shadow-teal-500/20">
+                    <FileCode className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Inspektor FHIR</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Payload HL7 FHIR v4.0.1</p>
                   </div>
                 </button>
 
@@ -711,6 +742,10 @@ export function App() {
       <LabResultsModal
         isOpen={isLabModalOpen}
         onClose={() => setIsLabModalOpen(false)}
+      />
+      <FhirResourceInspectorModal
+        isOpen={isFhirModalOpen}
+        onClose={() => setIsFhirModalOpen(false)}
       />
 
       {/* Delete Reading Confirmation Modal */}

@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import { Profile, BPReading, Reminder, HabitLog, GamificationState, SodiumLog, SleepLog, MedicationLog, MedicationItem, LabResult } from '../types/blood-pressure';
+import { Profile, BPReading, Reminder, HabitLog, GamificationState, SodiumLog, SleepLog, MedicationLog, MedicationItem, LabResult, FhirPatient, FhirObservation, FhirMedicationRequest, FhirMedicationStatement } from '../types/blood-pressure';
 
 export class AortaLinkDatabase extends Dexie {
   profiles!: Table<Profile, string>;
@@ -12,6 +12,12 @@ export class AortaLinkDatabase extends Dexie {
   medicationLogs!: Table<MedicationLog, number>;
   medications!: Table<MedicationItem, number>;
   labResults!: Table<LabResult, number>;
+
+  // HL7 FHIR R4 Core Stores
+  fhirPatients!: Table<FhirPatient, string>;
+  fhirObservations!: Table<FhirObservation, string>;
+  fhirMedicationRequests!: Table<FhirMedicationRequest, string>;
+  fhirMedicationStatements!: Table<FhirMedicationStatement, string>;
 
   constructor() {
     super('AortaLinkDB');
@@ -59,6 +65,24 @@ export class AortaLinkDatabase extends Dexie {
       medicationLogs: '++id, profileId, medicationId, takenAt',
       labResults: '++id, profileId, timestamp'
     });
+
+    // Version 6: HL7 FHIR R4 Resource Integration
+    this.version(6).stores({
+      profiles: 'id, name, relationship, isDefault, createdAt',
+      readings: '++id, profileId, timestamp, systolic, diastolic, pulse, measurement_context',
+      reminders: '++id, profileId, type, time, enabled',
+      habits: '++id, profileId, date, timestamp',
+      gamification: 'id, streak, longestStreak, lastMeasurementDate, score, earnedBadges',
+      sodiumLogs: '++id, profileId, date',
+      sleepLogs: '++id, profileId, date',
+      medications: '++id, profileId, name, schedule',
+      medicationLogs: '++id, profileId, medicationId, takenAt',
+      labResults: '++id, profileId, timestamp',
+      fhirPatients: 'id, active',
+      fhirObservations: 'id, profileId, status, effectiveDateTime',
+      fhirMedicationRequests: 'id, profileId, status, intent',
+      fhirMedicationStatements: 'id, profileId, status, effectiveDateTime'
+    });
   }
 }
 
@@ -68,7 +92,7 @@ export const HeartSyncDatabase = AortaLinkDatabase;
 export const db = new AortaLinkDatabase();
 
 /**
- * Initialize fresh database with default profile and clinical medication regimen.
+ * Initialize fresh database with default profile, clinical medication regimen, and FHIR R4 seeds.
  */
 export async function seedInitialData() {
   const defaultProfileId = 'profile-self-default';
@@ -136,5 +160,26 @@ export async function seedInitialData() {
     ];
 
     await db.medications.bulkAdd(defaultMedications as MedicationItem[]);
+  }
+
+  // Inject default FHIR Patient Resource
+  const fhirPatientCount = await db.fhirPatients.count();
+  if (fhirPatientCount === 0) {
+    const defaultFhirPatient: FhirPatient = {
+      resourceType: 'Patient',
+      id: defaultProfileId,
+      meta: {
+        lastUpdated: new Date().toISOString(),
+        profile: ['http://hl7.org/fhir/StructureDefinition/Patient']
+      },
+      active: true,
+      name: [{
+        use: 'official',
+        text: 'Saya',
+        family: 'Pengguna',
+        given: ['AortaLink']
+      }]
+    };
+    await db.fhirPatients.put(defaultFhirPatient);
   }
 }

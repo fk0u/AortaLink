@@ -184,4 +184,128 @@ export interface BackupDataFormat {
   medications?: MedicationItem[];
   medicationLogs?: MedicationLog[];
   labResults?: LabResult[];
+  fhirPatients?: FhirPatient[];
+  fhirObservations?: FhirObservation[];
+}
+
+/**
+ * ==========================================
+ * HL7 FHIR Version R4 International Schemas
+ * ==========================================
+ */
+
+export interface FhirCoding {
+  system: string;
+  code: string;
+  display: string;
+}
+
+export interface FhirCodeableConcept {
+  coding: FhirCoding[];
+  text?: string;
+}
+
+export interface FhirObservationComponent {
+  code: FhirCodeableConcept;
+  valueQuantity: {
+    value: number;
+    unit: string;
+    system: string;
+    code: string;
+  };
+}
+
+export interface FhirPatient {
+  resourceType: 'Patient';
+  id: string;
+  meta?: {
+    versionId?: string;
+    lastUpdated?: string;
+    profile?: string[];
+  };
+  active: boolean;
+  name: Array<{
+    use?: string;
+    text: string;
+    family?: string;
+    given?: string[];
+  }>;
+  gender?: 'male' | 'female' | 'other' | 'unknown';
+  birthDate?: string;
+  telecom?: Array<{
+    system: 'phone' | 'email';
+    value: string;
+  }>;
+}
+
+export interface FhirObservation {
+  resourceType: 'Observation';
+  id?: string;
+  profileId?: string;
+  status: 'final' | 'amended' | 'preliminary';
+  category?: FhirCodeableConcept[];
+  code: FhirCodeableConcept;
+  subject: {
+    reference: string;
+    display?: string;
+  };
+  effectiveDateTime: string; // ISO 8601
+  valueQuantity?: {
+    value: number;
+    unit: string;
+    system: string;
+    code: string;
+  };
+  component?: FhirObservationComponent[];
+  note?: Array<{ text: string }>;
+  extension?: Array<{
+    url: string;
+    valueString?: string;
+    valueCode?: string;
+  }>;
+}
+
+export interface FhirMedicationRequest {
+  resourceType: 'MedicationRequest';
+  id?: string;
+  profileId?: string;
+  status: 'active' | 'completed' | 'cancelled';
+  intent: 'order' | 'plan';
+  medicationCodeableConcept: FhirCodeableConcept;
+  subject: {
+    reference: string;
+  };
+  dosageInstruction?: Array<{
+    text: string;
+    timing?: {
+      repeat?: {
+        period?: number;
+        periodUnit?: 'd' | 'h';
+        when?: string[];
+      };
+    };
+  }>;
+}
+
+export interface FhirMedicationStatement {
+  resourceType: 'MedicationStatement';
+  id?: string;
+  profileId?: string;
+  status: 'active' | 'completed';
+  medicationCodeableConcept: FhirCodeableConcept;
+  subject: {
+    reference: string;
+  };
+  effectiveDateTime: string;
+  dateAsserted?: string;
+  informationSource?: {
+    reference: string;
+  };
+}
+
+export interface SmartOnFhirConfig {
+  clientId: string;
+  fhirUrl: string;
+  scope: string;
+  redirectUri: string;
 }

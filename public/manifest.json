@@ -1,7 +1,7 @@
 {
-  "name": "AortaLink — Personal EHR & Clinical Blood Pressure",
-  "short_name": "AortaLink",
-  "description": "Personal EHR & Clinical Blood Pressure Interoperability Platform for Internal Medicine Precision",
+  "name": "AortaLink — Open-Source AI EHR Platform",
+  "short_name": "AortaLink EHR",
+  "description": "Open-Source AI-Powered Electronic Health Record (EHR) Platform (HL7 FHIR R4 Compliant)",
   "theme_color": "#0f172a",
   "background_color": "#0f172a",
   "display": "standalone",

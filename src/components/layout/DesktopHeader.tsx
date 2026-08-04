@@ -46,8 +46,8 @@ export const DesktopHeader: React.FC = () => {
             <h1 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none">
               AortaLink
             </h1>
-            <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400">
-              Personal EHR &amp; Clinical Platform
+            <span className="text-[10px] font-extrabold text-teal-600 dark:text-teal-400 uppercase tracking-wider">
+              Open-Source AI EHR (HL7 FHIR R4)
             </span>
           </div>
         </div>
