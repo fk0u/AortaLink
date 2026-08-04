@@ -53,6 +53,9 @@ import { SettingsPage } from './components/pages/SettingsPage';
 import { LandingPage } from './components/landing/LandingPage';
 import { AuthModal } from './components/auth/AuthModal';
 import { JsonImportExportModal } from './components/backup/JsonImportExportModal';
+import { MongoAtlasSyncBadge } from './components/dashboard/MongoAtlasSyncBadge';
+import { NvidiaNimAiAssistantWidget } from './components/ai/NvidiaNimAiAssistantWidget';
+import { useAuthStore } from './store/useAuthStore';
 import { MobileToolsSheet } from './components/layout/MobileToolsSheet';
 
 // Bluetooth pairing
@@ -151,6 +154,12 @@ export function App() {
 
   // Deleting reading confirmation state
   const [deletingReadingId, setDeletingReadingId] = useState<number | null>(null);
+
+  const initSessionFromStorage = useAuthStore((state) => state.initSessionFromStorage);
+
+  useEffect(() => {
+    initSessionFromStorage();
+  }, [initSessionFromStorage]);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('heartsync-theme');
@@ -308,15 +317,18 @@ export function App() {
                 <Clock className="w-3.5 h-3.5" />
                 <span className="min-w-0 truncate">Cache: {cacheTimestamp ? `Terakhir sinkron ${new Date(cacheTimestamp).toLocaleTimeString('id-ID')}` : 'Belum sinkron'}</span>
               </div>
-              <button
-                type="button"
-                onClick={handleManualCacheRefresh}
-                disabled={isDataRefreshing}
-                className="inline-flex items-center gap-2 font-bold text-teal-600 dark:text-teal-400 hover:underline active:scale-95 transition-all self-start sm:self-auto"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isDataRefreshing ? 'animate-spin' : ''}`} />
-                {isDataRefreshing ? 'Menyinkronkan...' : 'Segarkan Data'}
-              </button>
+              <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
+                <MongoAtlasSyncBadge />
+                <button
+                  type="button"
+                  onClick={handleManualCacheRefresh}
+                  disabled={isDataRefreshing}
+                  className="inline-flex items-center gap-2 font-bold text-teal-600 dark:text-teal-400 hover:underline active:scale-95 transition-all"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isDataRefreshing ? 'animate-spin' : ''}`} />
+                  {isDataRefreshing ? 'Menyinkronkan...' : 'Segarkan Data'}
+                </button>
+              </div>
             </div>
 
             {/* Quick Rest Protocol Banner */}
@@ -786,6 +798,7 @@ export function App() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
       />
+      <NvidiaNimAiAssistantWidget />
 
       {/* Delete Reading Confirmation Modal */}
       <ConfirmModal
