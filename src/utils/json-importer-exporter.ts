@@ -1,5 +1,16 @@
 import { db } from '../db';
-import { BackupDataFormat, Profile, BPReading, Reminder, HabitLog, MedicationItem, MedicationLog, LabResult, FhirPatient, FhirObservation } from '../types/blood-pressure';
+import {
+  BackupDataFormat,
+  Profile,
+  BPReading,
+  Reminder,
+  HabitLog,
+  MedicationItem,
+  MedicationLog,
+  LabResult,
+  FhirPatient,
+  FhirObservation
+} from '../types/blood-pressure';
 
 export function createAortaLinkJsonFilename(exportedAt = new Date()): string {
   const stamp = exportedAt.toISOString().slice(0, 10);
@@ -49,7 +60,7 @@ export function downloadJsonBlob(filename: string, payload: unknown) {
 
 export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{ success: boolean; recordCount: number; message: string }> {
   try {
-    const payload = JSON.parse(jsonString) as BackupDataFormat;
+    const payload = JSON.parse(jsonString) as Partial<BackupDataFormat>;
     if (!payload || typeof payload !== 'object') {
       throw new Error('Format berkas JSON tidak valid.');
     }
@@ -62,11 +73,91 @@ export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{
     const readings = Array.isArray(payload.readings) ? payload.readings : [];
     const reminders = Array.isArray(payload.reminders) ? payload.reminders : [];
     const habits = Array.isArray(payload.habits) ? payload.habits : [];
-    const medications = Array.isArray(payload.medications) ? payload.medications : [];
+    let medications = Array.isArray(payload.medications) ? payload.medications : [];
     const medicationLogs = Array.isArray(payload.medicationLogs) ? payload.medicationLogs : [];
     const labResults = Array.isArray(payload.labResults) ? payload.labResults : [];
-    const fhirPatients = Array.isArray(payload.fhirPatients) ? payload.fhirPatients : [];
-    const fhirObservations = Array.isArray(payload.fhirObservations) ? payload.fhirObservations : [];
+    let fhirPatients = Array.isArray(payload.fhirPatients) ? payload.fhirPatients : [];
+    let fhirObservations = Array.isArray(payload.fhirObservations) ? payload.fhirObservations : [];
+
+    // Auto-Upgrade v1.x payload: Generate FHIR Patients if missing
+    if (fhirPatients.length === 0) {
+      fhirPatients = profiles.map((p) => ({
+        resourceType: 'Patient',
+        id: p.id,
+        identifier: [{ system: 'https://aortalink.health/fhir/sid/patient', value: p.id }],
+        active: true,
+        name: [{ text: p.name }],
+        gender: (p.gender === 'male' || p.gender === 'female') ? p.gender : 'unknown'
+      }));
+    }
+
+    // Auto-Upgrade v1.x payload: Generate FHIR Observations from readings if missing
+    if (fhirObservations.length === 0 && readings.length > 0) {
+      fhirObservations = readings.map((r, idx) => ({
+        resourceType: 'Observation',
+        id: `obs-bp-import-${r.id || idx + 1}`,
+        status: 'final',
+        category: [
+          {
+            coding: [
+              {
+                system: 'http://terminology.hl7.org/CodeSystem/observation-category',
+                code: 'vital-signs',
+                display: 'Vital Signs'
+              }
+            ]
+          }
+        ],
+        code: {
+          coding: [
+            {
+              system: 'http://loinc.org',
+              code: '85354-9',
+              display: 'Blood pressure panel with device'
+            }
+          ],
+          text: 'Tekanan Darah Sistolik/Diastolik'
+        },
+        subject: { reference: `Patient/${r.profileId}` },
+        effectiveDateTime: r.timestamp,
+        component: [
+          {
+            code: { coding: [{ system: 'http://loinc.org', code: '8480-6', display: 'Systolic blood pressure' }] },
+            valueQuantity: { value: r.systolic, unit: 'mmHg', system: 'http://unitsofmeasure.org', code: 'mm[Hg]' }
+          },
+          {
+            code: { coding: [{ system: 'http://loinc.org', code: '8462-4', display: 'Diastolic blood pressure' }] },
+            valueQuantity: { value: r.diastolic, unit: 'mmHg', system: 'http://unitsofmeasure.org', code: 'mm[Hg]' }
+          }
+        ]
+      }));
+    }
+
+    // Auto-Upgrade v1.x payload: Generate default medication items if missing
+    if (medications.length === 0) {
+      medications = [
+        {
+          id: 1,
+          profileId: profiles[0]?.id || 'profile-self-default',
+          name: 'Amlodipine',
+          dosage: '5mg',
+          drugClass: 'Golongan CCB',
+          schedule: 'pagi',
+          purpose: 'Diimbangi aktivitas pagi',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 2,
+          profileId: profiles[0]?.id || 'profile-self-default',
+          name: 'Candesartan',
+          dosage: '8mg',
+          drugClass: 'Golongan ARB',
+          schedule: 'malam',
+          purpose: 'Sebelum tidur untuk proteksi dipping nocturnal',
+          createdAt: new Date().toISOString()
+        }
+      ];
+    }
 
     await db.transaction(
       'rw',
@@ -108,11 +199,11 @@ export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{
       }
     );
 
-    const totalRecords = profiles.length + readings.length + medications.length + labResults.length;
+    const totalRecords = profiles.length + readings.length + reminders.length;
     return {
       success: true,
       recordCount: totalRecords,
-      message: `Pemulihan JSON berhasil! Terpulihkan ${totalRecords} catatan EHR.`
+      message: `Pemulihan JSON v1.1 / v2.0 Berhasil! Terpulihkan ${profiles.length} profil, ${readings.length} pengukuran tensi, dan ${reminders.length} pengingat.`
     };
   } catch (err: any) {
     return {
