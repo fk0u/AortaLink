@@ -3,10 +3,16 @@
  * Model: z-ai/glm-5.2
  */
 
-const NVIDIA_NIM_API_KEY = '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';
+const NVIDIA_NIM_API_KEY =
+  (import.meta as any).env?.PUBLIC_NVIDIA_NIM_API_KEY ||
+  (import.meta as any).env?.VITE_NVIDIA_NIM_API_KEY ||
+  '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';
+
 const PROXY_ENDPOINT = '/api/nvidia/v1/chat/completions';
-const DIRECT_ENDPOINT = 'https://integrate.api.nvidia.com/v1/chat/completions';
-const MODEL_ID = 'z-ai/glm-5.2';
+const DIRECT_ENDPOINT =
+  ((import.meta as any).env?.PUBLIC_NVIDIA_NIM_BASE_URL || 'https://integrate.api.nvidia.com/v1') + '/chat/completions';
+
+const MODEL_ID = (import.meta as any).env?.PUBLIC_NVIDIA_NIM_MODEL || 'z-ai/glm-5.2';
 
 export interface NvidiaNimConsultationRequest {
   patientName: string;

@@ -1,11 +1,12 @@
 /**
  * AortaLink — MongoDB Atlas Cloud Cluster Sync Service
- * Credentials:
+ * Connection String: mongodb+srv://kousozo:<db_password>@cluster0.2pnjht.mongodb.net/?appName=Cluster0
  * Public Key: wfokmvwy
  * Private Key: 729507c9-3cb2-430d-8c51-a20878616549
  */
 
 export interface MongoAtlasConfig {
+  connectionString: string;
   publicKey: string;
   privateKey: string;
   clusterName: string;
@@ -14,10 +15,20 @@ export interface MongoAtlasConfig {
 }
 
 export const MONGODB_ATLAS_DEFAULT_CONFIG: MongoAtlasConfig = {
-  publicKey: 'wfokmvwy',
-  privateKey: '729507c9-3cb2-430d-8c51-a20878616549',
-  clusterName: 'AortaLinkCluster0',
-  databaseName: 'aortalink_ehr_db',
+  connectionString:
+    (import.meta as any).env?.PUBLIC_MONGODB_URI ||
+    (import.meta as any).env?.VITE_MONGODB_URI ||
+    'mongodb+srv://kousozo:<db_password>@cluster0.2pnjht.mongodb.net/?appName=Cluster0',
+  publicKey:
+    (import.meta as any).env?.PUBLIC_MONGODB_ATLAS_PUBLIC_KEY ||
+    (import.meta as any).env?.VITE_MONGODB_ATLAS_PUBLIC_KEY ||
+    'wfokmvwy',
+  privateKey:
+    (import.meta as any).env?.PUBLIC_MONGODB_ATLAS_PRIVATE_KEY ||
+    (import.meta as any).env?.VITE_MONGODB_ATLAS_PRIVATE_KEY ||
+    '729507c9-3cb2-430d-8c51-a20878616549',
+  clusterName: (import.meta as any).env?.PUBLIC_MONGODB_ATLAS_CLUSTER || 'Cluster0',
+  databaseName: (import.meta as any).env?.PUBLIC_MONGODB_ATLAS_DB || 'aortalink_ehr_db',
   endpoint: 'https://cloud.mongodb.com/api/atlas/v1.0'
 };
 
@@ -66,6 +77,10 @@ export class MongoDbAtlasService {
 
   public getSyncedCount(): number {
     return Number(localStorage.getItem('aortalink_mongodb_atlas_synced_count') || '0');
+  }
+
+  public getConnectionString(): string {
+    return this.config.connectionString;
   }
 }
 
