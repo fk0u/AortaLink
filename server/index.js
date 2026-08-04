@@ -22,26 +22,69 @@ const DB_NAME = process.env.PUBLIC_MONGODB_ATLAS_DB || 'aortalink_ehr_db';
 const JWT_SECRET = process.env.JWT_SECRET || 'aortalink_secret_jwt_key_2026_safe';
 
 const app = express();
-app.use(cors({ origin: '*' }));
+
+// Explicit CORS middleware for Vercel & Multi-device deployment
+app.use(cors({ origin: '*', credentials: true }));
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use(express.json({ limit: '15mb' }));
 
 let dbClient = null;
 let db = null;
+let connectionPromise = null;
 
-// Connect to MongoDB Atlas
+// Connect to MongoDB Atlas (Serverless Safe)
 async function connectToMongo() {
-  try {
-    console.log('[AortaLink Server] Connecting to MongoDB Atlas Cloud Cluster...');
-    dbClient = new MongoClient(MONGODB_URI);
-    await dbClient.connect();
-    db = dbClient.db(DB_NAME);
-    console.log(`[AortaLink Server] Connected to MongoDB Atlas Database: "${DB_NAME}"`);
-  } catch (error) {
-    console.error('[AortaLink Server] MongoDB Connection Error:', error);
-  }
+  if (db) return db;
+  if (connectionPromise) return connectionPromise;
+
+  connectionPromise = (async () => {
+    try {
+      console.log('[AortaLink Server] Connecting to MongoDB Atlas Cloud Cluster...');
+      if (!dbClient) {
+        dbClient = new MongoClient(MONGODB_URI, {
+          connectTimeoutMS: 10000,
+          serverSelectionTimeoutMS: 10000
+        });
+      }
+      await dbClient.connect();
+      db = dbClient.db(DB_NAME);
+      console.log(`[AortaLink Server] Connected to MongoDB Atlas Database: "${DB_NAME}"`);
+      return db;
+    } catch (error) {
+      console.error('[AortaLink Server] MongoDB Connection Error:', error);
+      db = null;
+      dbClient = null;
+      connectionPromise = null;
+      throw error;
+    }
+  })();
+
+  return connectionPromise;
 }
 
-connectToMongo();
+// Middleware to ensure DB connection is ready before handling any /api request
+app.use('/api', async (req, res, next) => {
+  if (req.path === '/health') return next();
+  try {
+    await connectToMongo();
+    next();
+  } catch (error) {
+    console.error('[AortaLink Server] API DB Middleware Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: `Gagal terhubung ke MongoDB Atlas Cloud (${error?.message || 'Koneksi Ditolak'}). Pastikan IP Whitelist di MongoDB Atlas diset ke 0.0.0.0/0.`
+    });
+  }
+});
 
 // Middleware to verify JWT Token
 function authenticateToken(req, res, next) {
