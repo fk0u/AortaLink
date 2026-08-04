@@ -150,6 +150,8 @@ export function App() {
     const savedTheme = localStorage.getItem('heartsync-theme');
     if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
       setTheme(savedTheme);
+    } else {
+      setTheme('light');
     }
   }, [setTheme]);
 

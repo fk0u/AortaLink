@@ -72,7 +72,7 @@ export const useAppStore = create<AppState>((set) => ({
   customEndDate: null,
   searchQuery: '',
   categoryFilter: 'all',
-  theme: 'system',
+  theme: 'light',
 
   isReadingModalOpen: false,
   editingReading: null,
