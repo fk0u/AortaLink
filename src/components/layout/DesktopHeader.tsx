@@ -3,24 +3,33 @@ import { useRouterState, useNavigate } from '@tanstack/react-router';
 import { CustomProfileSelector } from '../profiles/CustomProfileSelector';
 import { NavTab } from './Navigation';
 import { playClickSound } from '../../utils/audio-fx';
-import { Heart, LayoutDashboard, History, FileText, Bell, Plus, Settings, UserRound } from 'lucide-react';
+import { Heart, LayoutDashboard, History, FileText, Bell, Plus, Settings, UserRound, LogOut } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export const DesktopHeader: React.FC = () => {
   const routerState = useRouterState();
   const navigate = useNavigate();
   const openReadingModal = useAppStore((state) => state.openReadingModal);
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
 
   const activeTab: NavTab =
-    routerState.location.pathname === '/' ? 'dashboard' :
+    routerState.location.pathname === '/dashboard' ? 'dashboard' :
     routerState.location.pathname === '/history' ? 'history' :
     routerState.location.pathname === '/reports' ? 'reports' :
     routerState.location.pathname === '/reminders' ? 'reminders' : 'dashboard';
 
   const handleTabClick = (tab: NavTab) => {
     playClickSound();
-    const toPath = tab === 'dashboard' ? '/' : `/${tab}`;
+    const toPath = tab === 'dashboard' ? '/dashboard' : `/${tab}`;
     navigate({ to: toPath });
+  };
+
+  const handleLogout = () => {
+    playClickSound();
+    logout();
+    navigate({ to: '/' });
   };
 
   const navItems: { id: NavTab; label: string; icon: React.ReactNode }[] = [
@@ -113,6 +122,18 @@ export const DesktopHeader: React.FC = () => {
           </button>
 
           <CustomProfileSelector />
+
+          {/* User Session Logout */}
+          {user && (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="p-2 rounded-full text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 transition-colors"
+              title={`Keluar (${user.name})`}
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
       </div>

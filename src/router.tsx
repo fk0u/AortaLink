@@ -42,6 +42,11 @@ const settingsRoute = createRoute({
   path: '/settings',
 });
 
+const dashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/dashboard',
+});
+
 const landingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/landing',
@@ -54,6 +59,7 @@ const backupRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  dashboardRoute,
   historyRoute,
   reportsRoute,
   remindersRoute,

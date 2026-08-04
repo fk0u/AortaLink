@@ -15,7 +15,7 @@ export const MobileHeader: React.FC = () => {
         <div 
           onClick={() => {
             playClickSound();
-            navigate({ to: '/' });
+            navigate({ to: '/dashboard' });
           }}
           className="flex items-center gap-2 cursor-pointer min-w-0"
         >

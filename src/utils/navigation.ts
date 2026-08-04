@@ -3,7 +3,7 @@ export type UtilityPage = 'profile' | 'settings' | 'landing' | 'backup';
 export type ScreenKey = PrimaryTab | UtilityPage;
 
 export const primaryTabPaths: Record<PrimaryTab, string> = {
-  dashboard: '/',
+  dashboard: '/dashboard',
   history: '/history',
   reports: '/reports',
   reminders: '/reminders'
@@ -12,19 +12,19 @@ export const primaryTabPaths: Record<PrimaryTab, string> = {
 export const utilityPagePaths: Record<UtilityPage, string> = {
   profile: '/profile',
   settings: '/settings',
-  landing: '/landing',
+  landing: '/',
   backup: '/backup'
 };
 
 export function getScreenKey(pathname: string): ScreenKey {
+  if (pathname === '/dashboard') return 'dashboard';
   if (pathname === '/history') return 'history';
   if (pathname === '/reports') return 'reports';
   if (pathname === '/reminders') return 'reminders';
   if (pathname === '/profile') return 'profile';
   if (pathname === '/settings') return 'settings';
-  if (pathname === '/landing') return 'landing';
   if (pathname === '/backup') return 'backup';
-  return 'dashboard';
+  return 'landing';
 }
 
 export function isPrimaryTab(screen: ScreenKey): screen is PrimaryTab {

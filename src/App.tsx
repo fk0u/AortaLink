@@ -156,10 +156,18 @@ export function App() {
   const [deletingReadingId, setDeletingReadingId] = useState<number | null>(null);
 
   const initSessionFromStorage = useAuthStore((state) => state.initSessionFromStorage);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
     initSessionFromStorage();
   }, [initSessionFromStorage]);
+
+  useEffect(() => {
+    if (!isAuthenticated && screenKey !== 'landing') {
+      navigate({ to: '/' });
+      setIsAuthModalOpen(true);
+    }
+  }, [isAuthenticated, screenKey, navigate]);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('heartsync-theme');
@@ -292,14 +300,20 @@ export function App() {
       <ExportPdfModal />
       <ReminderModal />
 
-      {/* Apple HIG Clean Header */}
-      <Header />
+      {/* Apple HIG Clean Header (Only when authenticated & not on landing) */}
+      {isAuthenticated && screenKey !== 'landing' && <Header />}
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6 md:space-y-8">
 
-        {screenKey === 'landing' ? (
-          <LandingPage onLaunchApp={() => navigate({ to: '/' })} />
+        {screenKey === 'landing' || !isAuthenticated ? (
+          <LandingPage onLaunchApp={() => {
+            if (isAuthenticated) {
+              navigate({ to: '/dashboard' });
+            } else {
+              setIsAuthModalOpen(true);
+            }
+          }} />
         ) : screenKey === 'profile' ? (
           <ProfilePage />
         ) : screenKey === 'settings' ? (
@@ -797,6 +811,7 @@ export function App() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => navigate({ to: '/dashboard' })}
       />
       <NvidiaNimAiAssistantWidget />
 
