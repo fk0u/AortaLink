@@ -3,7 +3,7 @@ import { useRouterState, useNavigate } from '@tanstack/react-router';
 import { CustomProfileSelector } from '../profiles/CustomProfileSelector';
 import { NavTab } from './Navigation';
 import { playClickSound } from '../../utils/audio-fx';
-import { Heart, LayoutDashboard, History, FileText, Bell, Plus, Settings, UserRound, LogOut } from 'lucide-react';
+import { Heart, LayoutDashboard, History, FileText, Bell, Plus, Settings, UserRound, LogOut, SunMedium, MoonStar } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -11,6 +11,8 @@ export const DesktopHeader: React.FC = () => {
   const routerState = useRouterState();
   const navigate = useNavigate();
   const openReadingModal = useAppStore((state) => state.openReadingModal);
+  const theme = useAppStore((state) => state.theme);
+  const setTheme = useAppStore((state) => state.setTheme);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
@@ -30,6 +32,11 @@ export const DesktopHeader: React.FC = () => {
     playClickSound();
     logout();
     navigate({ to: '/' });
+  };
+
+  const toggleTheme = () => {
+    playClickSound();
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   const navItems: { id: NavTab; label: string; icon: React.ReactNode }[] = [
@@ -83,8 +90,18 @@ export const DesktopHeader: React.FC = () => {
           })}
         </nav>
 
-        {/* Right: Actions & Custom Profile Selector */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Right: Actions, Theme Switcher & Custom Profile Selector */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          {/* Quick Theme Toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 transition-all active:scale-95"
+            title={theme === 'dark' ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
+          >
+            {theme === 'dark' ? <SunMedium className="w-4 h-4 text-amber-400" /> : <MoonStar className="w-4 h-4 text-slate-600" />}
+          </button>
+
           <button
             type="button"
             onClick={() => {

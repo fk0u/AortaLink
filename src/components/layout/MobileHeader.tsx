@@ -1,15 +1,23 @@
 import React from 'react';
 import { CustomProfileSelector } from '../profiles/CustomProfileSelector';
-import { Heart } from 'lucide-react';
+import { Heart, SunMedium, MoonStar } from 'lucide-react';
 import { playClickSound } from '../../utils/audio-fx';
 import { useNavigate } from '@tanstack/react-router';
+import { useAppStore } from '../../store/useAppStore';
 
 export const MobileHeader: React.FC = () => {
   const navigate = useNavigate();
+  const theme = useAppStore((state) => state.theme);
+  const setTheme = useAppStore((state) => state.setTheme);
+
+  const toggleTheme = () => {
+    playClickSound();
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   return (
     <header className="md:hidden sticky top-0 z-40 bg-white/96 dark:bg-slate-900/96 backdrop-blur-2xl border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-3 transition-colors">
-      <div className="flex items-center justify-between gap-3 min-w-0">
+      <div className="flex items-center justify-between gap-2 min-w-0">
         
         {/* App Logo */}
         <div 
@@ -32,8 +40,20 @@ export const MobileHeader: React.FC = () => {
           </div>
         </div>
 
-        {/* Custom Apple Profile Selector */}
-        <CustomProfileSelector />
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Quick Theme Toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 transition-all active:scale-95"
+            title={theme === 'dark' ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
+          >
+            {theme === 'dark' ? <SunMedium className="w-4 h-4 text-amber-400" /> : <MoonStar className="w-4 h-4 text-slate-600" />}
+          </button>
+
+          {/* Custom Apple Profile Selector */}
+          <CustomProfileSelector />
+        </div>
 
       </div>
     </header>

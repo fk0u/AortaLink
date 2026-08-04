@@ -9,6 +9,18 @@ export interface ToastMessage {
   message?: string;
 }
 
+const getInitialTheme = (): 'light' | 'dark' | 'system' => {
+  try {
+    const saved = localStorage.getItem('aortalink_theme');
+    if (saved === 'dark' || saved === 'light' || saved === 'system') {
+      return saved;
+    }
+  } catch {
+    // ignore
+  }
+  return 'light';
+};
+
 interface AppState {
   activeProfileId: string;
   dateFilter: DateFilterRange;
@@ -72,7 +84,7 @@ export const useAppStore = create<AppState>((set) => ({
   customEndDate: null,
   searchQuery: '',
   categoryFilter: 'all',
-  theme: 'light',
+  theme: getInitialTheme(),
 
   isReadingModalOpen: false,
   editingReading: null,
@@ -99,7 +111,14 @@ export const useAppStore = create<AppState>((set) => ({
   },
   setSearchQuery: (query) => set({ searchQuery: query }),
   setCategoryFilter: (category) => set({ categoryFilter: category }),
-  setTheme: (theme) => set({ theme }),
+  setTheme: (theme) => {
+    try {
+      localStorage.setItem('aortalink_theme', theme);
+    } catch {
+      // ignore
+    }
+    set({ theme });
+  },
 
   openReadingModal: (readingToEdit = null) =>
     set({ isReadingModalOpen: true, editingReading: readingToEdit }),
@@ -131,7 +150,6 @@ export const useAppStore = create<AppState>((set) => ({
   addToast: (toast) => {
     const id = Math.random().toString(36).substring(2, 9);
     set((state) => ({ toasts: [...state.toasts, { ...toast, id }] }));
-    // Auto dismiss after 4 seconds
     setTimeout(() => {
       set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }));
     }, 4000);

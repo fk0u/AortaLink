@@ -50,6 +50,8 @@ import { MedicationTrackerModal } from './components/meds/MedicationTrackerModal
 import { HabitsTrackerModal } from './components/habits/HabitsTrackerModal';
 import { ProfilePage } from './components/pages/ProfilePage';
 import { SettingsPage } from './components/pages/SettingsPage';
+import { PrivacyPolicyPage } from './components/pages/PrivacyPolicyPage';
+import { TermsOfServicePage } from './components/pages/TermsOfServicePage';
 import { LandingPage } from './components/landing/LandingPage';
 import { AuthModal } from './components/auth/AuthModal';
 import { JsonImportExportModal } from './components/backup/JsonImportExportModal';
@@ -163,7 +165,7 @@ export function App() {
   }, [initSessionFromStorage]);
 
   useEffect(() => {
-    if (!isAuthenticated && screenKey !== 'landing') {
+    if (!isAuthenticated && screenKey !== 'landing' && screenKey !== 'privacy' && screenKey !== 'terms') {
       navigate({ to: '/' });
       setIsAuthModalOpen(true);
     }
@@ -300,13 +302,17 @@ export function App() {
       <ExportPdfModal />
       <ReminderModal />
 
-      {/* Apple HIG Clean Header (Only when authenticated & not on landing) */}
-      {isAuthenticated && screenKey !== 'landing' && <Header />}
+      {/* Apple HIG Clean Header (Only when authenticated & not on landing/privacy/terms) */}
+      {isAuthenticated && screenKey !== 'landing' && screenKey !== 'privacy' && screenKey !== 'terms' && <Header />}
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6 md:space-y-8">
 
-        {screenKey === 'landing' || !isAuthenticated ? (
+        {screenKey === 'privacy' ? (
+          <PrivacyPolicyPage />
+        ) : screenKey === 'terms' ? (
+          <TermsOfServicePage />
+        ) : screenKey === 'landing' || !isAuthenticated ? (
           <LandingPage onLaunchApp={() => {
             if (isAuthenticated) {
               navigate({ to: '/dashboard' });

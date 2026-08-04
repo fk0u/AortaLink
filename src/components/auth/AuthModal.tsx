@@ -232,7 +232,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {tab === 'register' && (
                 <div className="space-y-1.5 pt-1">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Pilih Paket Akun SaaS
+                    Tipe Akses Akun Open-Source
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -244,8 +244,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           : 'border-slate-200 dark:border-slate-800 text-slate-600'
                       }`}
                     >
-                      <div>Pro EHR Person</div>
-                      <div className="text-[10px] text-teal-600 font-bold">Rp 49.000 / bln</div>
+                      <div>Personal Open EHR</div>
+                      <div className="text-[10px] text-teal-600 font-bold">100% Gratis & Open-Source</div>
                     </button>
                     
                     <button
@@ -257,8 +257,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           : 'border-slate-200 dark:border-slate-800 text-slate-600'
                       }`}
                     >
-                      <div>Klinik Multi-Tenant</div>
-                      <div className="text-[10px] text-sky-600 font-bold">Rp 299.000 / bln</div>
+                      <div>Klinik & Interop</div>
+                      <div className="text-[10px] text-sky-600 font-bold">100% Gratis & Open-Source</div>
                     </button>
                   </div>
                 </div>

@@ -15,12 +15,14 @@ import {
   UserCheck
 } from 'lucide-react';
 import { AuthModal } from '../auth/AuthModal';
+import { useNavigate } from '@tanstack/react-router';
 
 interface LandingPageProps {
   onLaunchApp: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
+  const navigate = useNavigate();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   return (
@@ -152,28 +154,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
             
-            {/* Free Trial Tier */}
+            {/* Free Personal Tier */}
             <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="p-2.5 rounded-2xl bg-slate-100 text-slate-800 w-fit">
                   <UserCheck className="w-5 h-5" />
                 </div>
-                <h4 className="text-lg font-black text-slate-900">Uji Coba Gratis</h4>
-                <div className="text-2xl font-black text-slate-900">
-                  Rp 0 <span className="text-xs text-slate-400 font-normal">/ selamanya</span>
+                <h4 className="text-lg font-black text-slate-900">Personal EHR</h4>
+                <div className="text-2xl font-black text-teal-600">
+                  Gratis <span className="text-xs text-slate-400 font-normal">/ Open-Source</span>
                 </div>
                 <ul className="space-y-2 text-xs text-slate-600 font-medium pt-2">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
-                    <span>Hingga 30 Catatan Tensi</span>
+                    <span>Catatan Tensi &amp; Vital Signs Bebas</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
-                    <span>Format JSON v1.1 / v2.0 Impor</span>
+                    <span>Format JSON Impor &amp; Ekspor</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
-                    <span>Laporan Grafik PDF Sederhana</span>
+                    <span>Laporan Grafik PDF Klinis</span>
                   </li>
                 </ul>
               </div>
@@ -183,23 +185,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
                 onClick={onLaunchApp}
                 className="w-full py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs transition-all"
               >
-                Mulai Uji Coba Gratis
+                Gunakan Sekarang
               </button>
             </div>
 
             {/* Pro EHR Tier (Popular) */}
             <div className="p-6 rounded-3xl bg-gradient-to-b from-teal-500/5 to-white border-2 border-teal-500 shadow-xl space-y-4 flex flex-col justify-between relative overflow-hidden">
               <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-teal-500 text-white text-[10px] font-black uppercase tracking-wider">
-                Paling Populer
+                Full Feature
               </div>
 
               <div className="space-y-3">
                 <div className="p-2.5 rounded-2xl bg-teal-500 text-white w-fit shadow-md shadow-teal-500/20">
                   <Zap className="w-5 h-5" />
                 </div>
-                <h4 className="text-lg font-black text-slate-900">Pro EHR Personal</h4>
-                <div className="text-2xl font-black text-slate-900">
-                  Rp 49.000 <span className="text-xs text-slate-500 font-normal">/ bulan</span>
+                <h4 className="text-lg font-black text-slate-900">Pro EHR &amp; AI Cloud</h4>
+                <div className="text-2xl font-black text-teal-600">
+                  Gratis <span className="text-xs text-slate-500 font-normal">/ Selamanya</span>
                 </div>
                 <ul className="space-y-2 text-xs text-slate-600 font-medium pt-2">
                   <li className="flex items-center gap-2">
@@ -226,7 +228,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
                 onClick={() => setIsAuthOpen(true)}
                 className="w-full py-3 rounded-2xl bg-gradient-to-r from-teal-500 to-sky-500 text-white font-extrabold text-xs shadow-md shadow-teal-500/20 hover:from-teal-600 hover:to-sky-600 transition-all"
               >
-                Langganan Pro EHR Sekarang
+                Buat Akun Open-Source
               </button>
             </div>
 
@@ -236,9 +238,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
                 <div className="p-2.5 rounded-2xl bg-sky-500 text-white w-fit shadow-md shadow-sky-500/20">
                   <Building2 className="w-5 h-5" />
                 </div>
-                <h4 className="text-lg font-black text-slate-900">Klinik Multi-Tenant</h4>
-                <div className="text-2xl font-black text-slate-900">
-                  Rp 299.000 <span className="text-xs text-slate-400 font-normal">/ bulan</span>
+                <h4 className="text-lg font-black text-slate-900">Klinik &amp; Interoperabilitas</h4>
+                <div className="text-2xl font-black text-sky-600">
+                  Gratis <span className="text-xs text-slate-400 font-normal">/ Self-Hosted</span>
                 </div>
                 <ul className="space-y-2 text-xs text-slate-600 font-medium pt-2">
                   <li className="flex items-center gap-2">
@@ -247,7 +249,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
-                    <span>SMART on FHIR Hospital Integration</span>
+                    <span>HL7 FHIR R4 Hospital Integration</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
@@ -293,8 +295,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
       </main>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-slate-200 py-6 text-center text-xs text-slate-500">
-        <p className="font-extrabold text-slate-800">AortaLink SaaS Platform — Powered by NVIDIA NIM AI &amp; MongoDB Atlas</p>
+      <footer className="mt-auto border-t border-slate-200 py-8 text-center text-xs text-slate-500 bg-white">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="font-extrabold text-slate-800">
+            © 2026 AortaLink SaaS Platform • HL7 FHIR R4 &amp; MongoDB Atlas Cloud
+          </p>
+          <div className="flex items-center gap-6 font-bold text-slate-600">
+            <button
+              type="button"
+              onClick={() => navigate({ to: '/privacy' })}
+              className="hover:text-teal-600 transition-colors"
+            >
+              Kebijakan Privasi (Privacy Policy)
+            </button>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={() => navigate({ to: '/terms' })}
+              className="hover:text-teal-600 transition-colors"
+            >
+              Syarat &amp; Ketentuan (Terms of Service)
+            </button>
+          </div>
+        </div>
       </footer>
 
       {/* Auth Modal Trigger */}

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { realAuthService } from '../services/auth/real-auth-service';
+import { mongoDbAtlasService } from '../services/db/mongodb-service';
 
 export type SubscriptionTier = 'free_trial' | 'pro_ehr' | 'clinic_tenant';
 
@@ -25,23 +26,44 @@ interface AuthState {
   loginWithGoogle: (googleProfile?: { name?: string; email?: string; picture?: string }) => Promise<UserSession>;
   logout: () => void;
   updateSubscriptionTier: (tier: SubscriptionTier) => void;
-  initSessionFromStorage: () => void;
+  initSessionFromStorage: () => Promise<void>;
+  syncCloudData: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: false,
   user: null,
   isLoading: false,
 
-  initSessionFromStorage: () => {
+  initSessionFromStorage: async () => {
     try {
       const saved = localStorage.getItem('aortalink_saas_user_session');
       if (saved) {
         const parsed = JSON.parse(saved) as UserSession;
         set({ isAuthenticated: true, user: parsed });
+        
+        // Verify token with backend
+        if (parsed.token) {
+          const verified = await realAuthService.verifySessionToken(parsed.token);
+          if (verified) {
+            set({ user: verified });
+            localStorage.setItem('aortalink_saas_user_session', JSON.stringify(verified));
+          }
+        }
       }
     } catch {
       localStorage.removeItem('aortalink_saas_user_session');
+    }
+  },
+
+  syncCloudData: async () => {
+    try {
+      // 1. Pull data from cloud (MongoDB Atlas) to local Dexie.js
+      await mongoDbAtlasService.pullAndRestoreUserData();
+      // 2. Push any local records to MongoDB Atlas
+      await mongoDbAtlasService.pushUserData();
+    } catch (err) {
+      console.warn('[useAuthStore] Cloud sync warning:', err);
     }
   },
 
@@ -51,6 +73,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       const session = await realAuthService.loginUser(email, password);
       localStorage.setItem('aortalink_saas_user_session', JSON.stringify(session));
       set({ isAuthenticated: true, user: session, isLoading: false });
+      
+      // Auto restore cloud data for multi-device experience
+      get().syncCloudData();
       return session;
     } catch (err) {
       set({ isLoading: false });
@@ -64,6 +89,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       const session = await realAuthService.registerUser(name, email, password, tier);
       localStorage.setItem('aortalink_saas_user_session', JSON.stringify(session));
       set({ isAuthenticated: true, user: session, isLoading: false });
+      
+      // Push initial local data to cloud
+      get().syncCloudData();
       return session;
     } catch (err) {
       set({ isLoading: false });
@@ -77,6 +105,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       const session = await realAuthService.loginWithGoogleOAuth(googleProfile);
       localStorage.setItem('aortalink_saas_user_session', JSON.stringify(session));
       set({ isAuthenticated: true, user: session, isLoading: false });
+      
+      get().syncCloudData();
       return session;
     } catch (err) {
       set({ isLoading: false });

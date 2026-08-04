@@ -57,6 +57,16 @@ const backupRoute = createRoute({
   path: '/backup',
 });
 
+const privacyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/privacy',
+});
+
+const termsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/terms',
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   dashboardRoute,
@@ -67,6 +77,8 @@ const routeTree = rootRoute.addChildren([
   settingsRoute,
   landingRoute,
   backupRoute,
+  privacyRoute,
+  termsRoute,
 ]);
 
 export const router = createRouter({ routeTree });
