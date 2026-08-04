@@ -499,7 +499,11 @@ app.post('/api/fhir/sync', authenticateToken, async (req, res) => {
   }
 });
 
-// Start Server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[AortaLink Open-Source API] Backend server listening on http://0.0.0.0:${PORT}`);
-});
+// Start Server (Standalone local mode)
+if (!process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[AortaLink Open-Source API] Backend server listening on http://0.0.0.0:${PORT}`);
+  });
+}
+
+export default app;
