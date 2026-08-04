@@ -3,15 +3,18 @@ import { BackupDataFormat, BPReading, HabitLog, Profile, Reminder } from '../typ
 
 export function createBackupFilename(exportedAt = new Date()): string {
   const stamp = exportedAt.toISOString().replace(/[:.]/g, '-');
-  return `heartsync-backup-${stamp}.json`;
+  return `aortalink-backup-${stamp}.json`;
 }
 
 export async function createBackupPayload(): Promise<BackupDataFormat> {
-  const [profiles, readings, reminders, habits] = await Promise.all([
+  const [profiles, readings, reminders, habits, medications, medicationLogs, labResults] = await Promise.all([
     db.profiles.toArray(),
     db.readings.toArray(),
     db.reminders.toArray(),
-    db.habits.toArray()
+    db.habits.toArray(),
+    db.medications.toArray(),
+    db.medicationLogs.toArray(),
+    db.labResults.toArray()
   ]);
 
   return {
@@ -20,7 +23,10 @@ export async function createBackupPayload(): Promise<BackupDataFormat> {
     profiles,
     readings,
     reminders,
-    habits
+    habits,
+    medications,
+    medicationLogs,
+    labResults
   };
 }
 
@@ -51,6 +57,9 @@ export function normalizeBackupPayload(input: unknown): BackupDataFormat {
     readings?: unknown;
     reminders?: unknown;
     habits?: unknown;
+    medications?: unknown;
+    medicationLogs?: unknown;
+    labResults?: unknown;
   };
 
   const profiles = ensureArray<Profile>(payload.profiles);
@@ -64,24 +73,33 @@ export function normalizeBackupPayload(input: unknown): BackupDataFormat {
     profiles,
     readings: ensureArray<BPReading>(payload.readings),
     reminders: ensureArray<Reminder>(payload.reminders),
-    habits: ensureArray<HabitLog>(payload.habits)
+    habits: ensureArray<HabitLog>(payload.habits),
+    medications: ensureArray<import('../types/blood-pressure').MedicationItem>(payload.medications),
+    medicationLogs: ensureArray<import('../types/blood-pressure').MedicationLog>(payload.medicationLogs),
+    labResults: ensureArray<import('../types/blood-pressure').LabResult>(payload.labResults)
   };
 }
 
 export async function restoreBackupPayload(payload: BackupDataFormat) {
-  await db.transaction('rw', db.profiles, db.readings, db.reminders, db.habits, async () => {
+  await db.transaction('rw', [db.profiles, db.readings, db.reminders, db.habits, db.medications, db.medicationLogs, db.labResults], async () => {
     await Promise.all([
       db.profiles.clear(),
       db.readings.clear(),
       db.reminders.clear(),
-      db.habits.clear()
+      db.habits.clear(),
+      db.medications.clear(),
+      db.medicationLogs.clear(),
+      db.labResults.clear()
     ]);
 
     await Promise.all([
       db.profiles.bulkPut(payload.profiles),
       db.readings.bulkPut(payload.readings),
       db.reminders.bulkPut(payload.reminders),
-      db.habits.bulkPut(payload.habits || [])
+      db.habits.bulkPut(payload.habits || []),
+      db.medications.bulkPut(payload.medications || []),
+      db.medicationLogs.bulkPut(payload.medicationLogs || []),
+      db.labResults.bulkPut(payload.labResults || [])
     ]);
   });
 }

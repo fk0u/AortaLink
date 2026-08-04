@@ -2,6 +2,8 @@ export type RelationshipType = 'self' | 'parent' | 'spouse' | 'child' | 'other';
 export type BodyPosition = 'duduk' | 'baring' | 'berdiri';
 export type ArmUsed = 'kiri' | 'kanan';
 
+export type MeasurementContext = 'Home' | 'Clinic/Hospital' | 'Post-Medication' | 'Stress';
+
 export interface Profile {
   id: string;
   name: string;
@@ -27,6 +29,71 @@ export interface BPReading {
   arm?: ArmUsed;
   tags?: string[];
   notes?: string;
+  measurement_context?: MeasurementContext;
+}
+
+export type DrugClass = 'Golongan CCB' | 'Golongan ARB' | 'Penurun Asam Urat' | 'Lainnya';
+export type MedicationSchedule = 'pagi' | 'malam' | 'pagi_malam';
+
+export interface MedicationItem {
+  id?: number;
+  profileId: string;
+  name: string;
+  dosage: string;
+  drugClass: DrugClass | string;
+  schedule: MedicationSchedule;
+  purpose: string;
+  createdAt: string;
+}
+
+export interface MedicationLog {
+  id?: number;
+  profileId: string;
+  medicationId: number;
+  medicationName: string;
+  dosage: string;
+  takenAt: string; // ISO 8601 timestamp
+  notes?: string;
+}
+
+export interface LabResult {
+  id?: number;
+  profileId: string;
+  timestamp: string; // ISO 8601 string
+  bloodUrea: number; // Ureum Darah (mg/dL) - Normal ~15-45
+  serumCreatinine: number; // Kreatinin Darah (mg/dL) - Normal ~0.6-1.2
+  uricAcid: number; // Asam Urat Darah (mg/dL) - Normal < 7.0 (High > 7.0)
+  notes?: string;
+}
+
+export type DippingPattern = 'dipper' | 'non_dipper' | 'riser' | 'extreme_dipper';
+
+export interface CircadianDippingReport {
+  daytimeAvgSystolic: number;
+  daytimeAvgDiastolic: number;
+  daytimeAvgMAP: number;
+  nighttimeAvgSystolic: number;
+  nighttimeAvgDiastolic: number;
+  nighttimeAvgMAP: number;
+  sysDippingPercent: number;
+  diaDippingPercent: number;
+  pattern: DippingPattern;
+  label: string;
+  description: string;
+  clinicalAdvice: string;
+}
+
+export type ClinicalAlertSeverity = 'info' | 'warning' | 'critical';
+
+export interface ClinicalAlert {
+  id: string;
+  title: string;
+  category: 'hyperuricemia' | 'hypertension_stage' | 'renal_impairment' | 'white_coat';
+  severity: ClinicalAlertSeverity;
+  message: string;
+  recommendation: string;
+  valueString?: string;
+  timestamp: string;
 }
 
 export interface SodiumLog { id?: number; profileId: string; date: string; sodiumMg: number; items?: string[] }
@@ -112,4 +179,7 @@ export interface BackupDataFormat {
   readings: BPReading[];
   reminders: Reminder[];
   habits?: HabitLog[];
+  medications?: MedicationItem[];
+  medicationLogs?: MedicationLog[];
+  labResults?: LabResult[];
 }

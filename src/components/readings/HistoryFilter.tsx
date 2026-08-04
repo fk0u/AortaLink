@@ -44,7 +44,7 @@ export const HistoryFilter: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `HeartSync_${activeProfile?.name || 'User'}_${new Date().toISOString().slice(0,10)}.csv`);
+    link.setAttribute('download', `AortaLink_${activeProfile?.name || 'User'}_${new Date().toISOString().slice(0,10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -70,7 +70,7 @@ export const HistoryFilter: React.FC = () => {
       const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backup, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute('href', dataStr);
-      downloadAnchor.setAttribute('download', `HeartSync_Full_Backup_${new Date().toISOString().slice(0,10)}.json`);
+      downloadAnchor.setAttribute('download', `AortaLink_Full_Backup_${new Date().toISOString().slice(0,10)}.json`);
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();

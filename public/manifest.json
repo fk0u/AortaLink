@@ -1,7 +1,7 @@
 {
-  "name": "HeartSync — Blood Pressure Tracker",
-  "short_name": "HeartSync",
-  "description": "Aplikasi Pencatatan & Monitoring Tekanan Darah Offline-First & Ramah Keluarga",
+  "name": "AortaLink — Personal EHR & Clinical Blood Pressure",
+  "short_name": "AortaLink",
+  "description": "Personal EHR & Clinical Blood Pressure Interoperability Platform for Internal Medicine Precision",
   "theme_color": "#0f172a",
   "background_color": "#0f172a",
   "display": "standalone",

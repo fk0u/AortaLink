@@ -10,8 +10,8 @@ import './index.css';
 if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
-      .then((reg) => console.log('HeartSync SW registered successfully:', reg.scope))
-      .catch((err) => console.error('HeartSync SW registration failed:', err));
+      .then((reg) => console.log('AortaLink SW registered successfully:', reg.scope))
+      .catch((err) => console.error('AortaLink SW registration failed:', err));
   });
 }
 

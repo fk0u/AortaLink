@@ -18,6 +18,7 @@ import { Navigation, NavTab } from './components/layout/Navigation';
 import { StatCards } from './components/dashboard/StatCards';
 import { BPTrendChart } from './components/dashboard/BPTrendChart';
 import { EmergencyAlert } from './components/dashboard/EmergencyAlert';
+import { ClinicalAlertBanner } from './components/dashboard/ClinicalAlertBanner';
 import { AppleHealthRings } from './components/dashboard/AppleHealthRings';
 import { CalendarView } from './components/calendar/CalendarView';
 
@@ -31,10 +32,13 @@ import { ProfileModal } from './components/profiles/ProfileModal';
 import { ExportPdfModal } from './components/reports/ExportPdfModal';
 import { WeeklyReport } from './components/reports/WeeklyReport';
 import { ReminderModal } from './components/reminders/ReminderModal';
+import { LabResultsModal } from './components/lab/LabResultsModal';
 import { ToastContainer } from './components/common/Toast';
 import { ConfirmModal } from './components/common/ConfirmModal';
 import { BPRestTimerModal } from './components/timer/BPRestTimerModal';
 import { ShimmerSkeletonCard } from './components/common/ShimmerSkeleton';
+import { evaluateClinicalAlerts } from './utils/advanced-analytics';
+import { useLiveQuery } from 'dexie-react-hooks';
 
 // Action & Habit Modals
 import { SecurityBackupModal } from './components/security/SecurityBackupModal';
@@ -72,7 +76,8 @@ import {
   Pill,
   Moon,
   RefreshCw,
-  Clock
+  Clock,
+  FlaskConical
 } from 'lucide-react';
 
 export function App() {
@@ -106,9 +111,21 @@ export function App() {
   const [isSOSModalOpen, setIsSOSModalOpen] = useState(false);
   const [isMedModalOpen, setIsMedModalOpen] = useState(false);
   const [isHabitsModalOpen, setIsHabitsModalOpen] = useState(false);
+  const [isLabModalOpen, setIsLabModalOpen] = useState(false);
 
   const { activeProfile } = useProfiles();
   const { readings, rawReadings, stats, isLoading } = useReadings();
+
+  // Query lab results for active profile for clinical alerts
+  const labResults = useLiveQuery(
+    async () => {
+      if (!activeProfile?.id) return [];
+      return await db.labResults.where('profileId').equals(activeProfile.id).sortBy('timestamp');
+    },
+    [activeProfile?.id]
+  );
+
+  const clinicalAlerts = evaluateClinicalAlerts(rawReadings || [], labResults || []);
 
   // Cache & Reload Zustand Store States
   const isDataRefreshing = useAppStore((state) => state.isDataRefreshing);
@@ -236,7 +253,7 @@ export function App() {
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-500 to-sky-500 flex items-center justify-center animate-bounce shadow-xl shadow-teal-500/30">
           <Heart className="w-6 h-6 fill-white" />
         </div>
-        <p className="text-sm font-bold text-slate-400">Memuat HeartSync...</p>
+        <p className="text-sm font-bold text-slate-400">Memuat AortaLink Personal EHR...</p>
       </div>
     );
   }
@@ -314,6 +331,9 @@ export function App() {
               </button>
             </div>
 
+            {/* Clinical Alert Auto-Flagging Banner */}
+            <ClinicalAlertBanner alerts={clinicalAlerts} />
+
             {/* Emergency Crisis Alert */}
             <EmergencyAlert latestReading={stats.latestReading} />
 
@@ -356,7 +376,25 @@ export function App() {
               <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 Peralatan &amp; Pelacak Kebiasaan Gaya Hidup
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 md:gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
+                
+                {/* Lab Parameters (Renal & Gout) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClickSound();
+                    setIsLabModalOpen(true);
+                  }}
+                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer min-h-32 border-purple-200 dark:border-purple-900/60 bg-purple-50/20 dark:bg-purple-950/10"
+                >
+                  <div className="p-2 rounded-xl bg-purple-500 text-white w-fit shadow-md shadow-purple-500/20">
+                    <FlaskConical className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Lab Sekunder</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Asam Urat &amp; Ginjal</p>
+                  </div>
+                </button>
                 
                 {/* Bluetooth BP Monitor Pairing */}
                 <DevicePairingButton />
@@ -670,6 +708,10 @@ export function App() {
         isOpen={isHabitsModalOpen}
         onClose={() => setIsHabitsModalOpen(false)}
       />
+      <LabResultsModal
+        isOpen={isLabModalOpen}
+        onClose={() => setIsLabModalOpen(false)}
+      />
 
       {/* Delete Reading Confirmation Modal */}
       <ConfirmModal
@@ -685,10 +727,10 @@ export function App() {
       {/* Footer */}
       <footer className="mt-12 border-t border-slate-200/80 dark:border-slate-800/80 py-6 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1">
         <p className="font-extrabold text-slate-700 dark:text-slate-300">
-          HeartSync — Blood Pressure Tracker
+          AortaLink — Personal EHR &amp; Clinical Interoperability Platform
         </p>
         <p className="text-[11px] font-medium">
-          Apple Health Controlled Cache • Offline-First Secure Storage
+          Apple Health Controlled Cache • Clinical Data Normalization • Offline-First Storage
         </p>
       </footer>
     </div>

@@ -6,11 +6,11 @@ export default defineConfig({
   plugins: [pluginReact()],
   html: {
     template: './index.html',
-    title: 'HeartSync — Blood Pressure Tracker',
+    title: 'AortaLink — Personal EHR & Clinical Blood Pressure Platform',
     meta: {
       viewport: 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no',
       'theme-color': '#0f172a',
-      description: 'HeartSync — Aplikasi Pencatatan & Monitoring Tekanan Darah Offline-First, Aman & Mudah Digunakan untuk Keluarga'
+      description: 'AortaLink — Personal EHR & Clinical Blood Pressure Interoperability Platform for Internal Medicine Precision'
     }
   },
   source: {

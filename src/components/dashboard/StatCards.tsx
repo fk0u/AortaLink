@@ -41,7 +41,7 @@ export const StatCards: React.FC<StatCardsProps> = ({ stats, onOpenNewReading })
                   <Activity className="w-5 h-5" />
                 </div>
                 <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-0">
-                  {latest ? 'Pengukuran Terakhir (Real Data)' : 'Selamat Datang di HeartSync'}
+                  {latest ? 'Pengukuran Terakhir (Real Data)' : 'Selamat Datang di AortaLink'}
                 </span>
               </div>
 
@@ -112,7 +112,7 @@ export const StatCards: React.FC<StatCardsProps> = ({ stats, onOpenNewReading })
                   Siap Mencatat Tekanan Darah Real Anda
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-                  Belum ada data pengukuran tekanan darah. HeartSync bebas dari data sampel/palsu. Mulai jurnal kesehatan Anda sekarang!
+                  Belum ada data pengukuran tekanan darah. AortaLink bebas dari data sampel/palsu. Mulai rekam medis Anda sekarang!
                 </p>
                 <div className="pt-1">
                   <button

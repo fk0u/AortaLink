@@ -28,7 +28,7 @@ export function generateDoctorPDF(
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  doc.text('HEARTSYNC — LAPORAN TEKANAN DARAH', 14, 13);
+  doc.text('AORTALINK — LAPORAN REKAM MEDIS TEKANAN DARAH', 14, 13);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.text(`Dicetak pada: ${format(new Date(), 'd MMMM yyyy, HH:mm', { locale: idLocale })}`, 14, 19);
@@ -169,7 +169,7 @@ export function generateDoctorPDF(
   }
 
   // Save PDF file
-  const fileName = `HeartSync_Laporan_${profile.name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+  const fileName = `AortaLink_Laporan_${profile.name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
   doc.save(fileName);
 }
 

@@ -44,10 +44,10 @@ export const DesktopHeader: React.FC = () => {
           </div>
           <div>
             <h1 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none">
-              HeartSync
+              AortaLink
             </h1>
             <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400">
-              Blood Pressure Ecosystem
+              Personal EHR &amp; Clinical Platform
             </span>
           </div>
         </div>

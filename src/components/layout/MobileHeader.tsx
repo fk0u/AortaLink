@@ -24,10 +24,10 @@ export const MobileHeader: React.FC = () => {
           </div>
           <div className="min-w-0">
             <span className="block text-sm font-black text-slate-900 dark:text-slate-100 tracking-tight truncate">
-              HeartSync
+              AortaLink
             </span>
-            <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 leading-none truncate">
-              mobile-first cardio log
+            <span className="block text-[10px] font-bold text-teal-600 dark:text-teal-400 leading-none truncate">
+              Personal EHR Platform
             </span>
           </div>
         </div>

@@ -70,7 +70,7 @@ export const SecurityBackupModal: React.FC<SecurityBackupModalProps> = ({ isOpen
         
         const anchor = document.createElement('a');
         anchor.setAttribute('href', dataStr);
-        anchor.setAttribute('download', `HeartSync_Encrypted_Backup_${new Date().toISOString().slice(0, 10)}.hsbackup`);
+        anchor.setAttribute('download', `AortaLink_Encrypted_Backup_${new Date().toISOString().slice(0, 10)}.albackup`);
         document.body.appendChild(anchor);
         anchor.click();
         anchor.remove();
@@ -78,13 +78,13 @@ export const SecurityBackupModal: React.FC<SecurityBackupModalProps> = ({ isOpen
         addToast({
           type: 'success',
           title: 'Cadangan Terenkripsi Disimpan',
-          message: 'Berkas AES-256-GCM (.hsbackup) telah diunduh aman.'
+          message: 'Berkas AES-256-GCM (.albackup) telah diunduh aman.'
         });
       } else {
         const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(rawBackup, null, 2));
         const anchor = document.createElement('a');
         anchor.setAttribute('href', dataStr);
-        anchor.setAttribute('download', `HeartSync_Plain_Backup_${new Date().toISOString().slice(0, 10)}.json`);
+        anchor.setAttribute('download', `AortaLink_Plain_Backup_${new Date().toISOString().slice(0, 10)}.json`);
         document.body.appendChild(anchor);
         anchor.click();
         anchor.remove();

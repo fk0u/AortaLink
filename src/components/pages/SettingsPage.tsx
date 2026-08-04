@@ -128,7 +128,7 @@ export const SettingsPage: React.FC = () => {
       const result = await deferredPrompt.userChoice;
       if (result.outcome === 'accepted') {
         setIsStandalone(true);
-        addToast({ type: 'success', title: 'PWA Terpasang', message: 'HeartSync berhasil dipasang sebagai aplikasi.' });
+        addToast({ type: 'success', title: 'PWA Terpasang', message: 'AortaLink berhasil dipasang sebagai aplikasi.' });
       }
       setDeferredPrompt(null);
     } catch (error) {

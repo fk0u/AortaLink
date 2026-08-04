@@ -26,7 +26,7 @@ export const FamilySOSModal: React.FC<FamilySOSModalProps> = ({ isOpen, onClose 
     const cleanPhone = phone.replace(/[^0-9]/g, '');
     const formattedPhone = cleanPhone.startsWith('0') ? `62${cleanPhone.slice(1)}` : cleanPhone;
 
-    const message = `🚨 *DARURAT HEARTSYNC - DARURAT KESEHATAN* 🚨\n\nNama Pasien: *${activeProfile?.name || 'Pasien'}*\nTekanan Darah Terakhir: *${latest ? `${latest.systolic}/${latest.diastolic} mmHg` : 'Tidak Diketahui'}*\nDenyut Nadi: *${latest?.pulse || '--'} BPM*\nStatus AHA: *${category?.label || 'Krisis Hipertensi'}*\nWaktu Pengukuran: *${latest ? new Date(latest.timestamp).toLocaleString('id-ID') : new Date().toLocaleString('id-ID')}*\n\n_Dimohon untuk segera menghubungi pasien atau datang ke lokasi!_`;
+    const message = `🚨 *DARURAT AORTALINK - KONDISI MEDIS KRITIS* 🚨\n\nNama Pasien: *${activeProfile?.name || 'Pasien'}*\nTekanan Darah Terakhir: *${latest ? `${latest.systolic}/${latest.diastolic} mmHg` : 'Tidak Diketahui'}*\nDenyut Nadi: *${latest?.pulse || '--'} BPM*\nStatus AHA: *${category?.label || 'Krisis Hipertensi'}*\nWaktu Pengukuran: *${latest ? new Date(latest.timestamp).toLocaleString('id-ID') : new Date().toLocaleString('id-ID')}*\n\n_Dimohon untuk segera menghubungi pasien atau datang ke lokasi!_`;
 
     const waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
     window.open(waUrl, '_blank');

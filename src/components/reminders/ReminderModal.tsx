@@ -129,7 +129,7 @@ export const ReminderModal: React.FC = () => {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       playSuccessChime();
-      new Notification('HeartSync Pengingat Aktif', {
+      new Notification('AortaLink Pengingat Aktif', {
         body: 'Notifikasi pengingat tensi & obat berhasil diaktifkan di perangkat Anda!',
         icon: '/favicon.svg'
       });

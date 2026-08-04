@@ -3,7 +3,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useProfiles } from '../../hooks/useProfiles';
 import { db } from '../../db';
 import { classifyBP } from '../../utils/bp-classifier';
-import { BodyPosition, ArmUsed } from '../../types/blood-pressure';
+import { BodyPosition, ArmUsed, MeasurementContext } from '../../types/blood-pressure';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { startVoiceBPRecognition } from '../../utils/voice-recognition';
 import { sanitizeText, validateBPRange } from '../../security/sanitizer';
@@ -26,6 +26,7 @@ export const ReadingFormModal: React.FC = () => {
   const [timeStr, setTimeStr] = useState(format(new Date(), 'HH:mm'));
   const [position, setPosition] = useState<BodyPosition>('duduk');
   const [arm, setArm] = useState<ArmUsed>('kiri');
+  const [measurementContext, setMeasurementContext] = useState<MeasurementContext>('Home');
   const [selectedTags, setSelectedTags] = useState<string[]>(['Bangun Tidur']);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -84,6 +85,7 @@ export const ReadingFormModal: React.FC = () => {
       setTimeStr(format(dateObj, 'HH:mm'));
       setPosition(editingReading.position || 'duduk');
       setArm(editingReading.arm || 'kiri');
+      setMeasurementContext(editingReading.measurement_context || 'Home');
       setSelectedTags(editingReading.tags || []);
       setNotes(editingReading.notes || '');
     } else {
@@ -94,6 +96,7 @@ export const ReadingFormModal: React.FC = () => {
       setTimeStr(format(new Date(), 'HH:mm'));
       setPosition('duduk');
       setArm('kiri');
+      setMeasurementContext('Home');
       setSelectedTags(['Bangun Tidur']);
       setNotes('');
     }
@@ -144,7 +147,8 @@ export const ReadingFormModal: React.FC = () => {
           position,
           arm,
           tags: selectedTags,
-          notes: sanitizedNotes
+          notes: sanitizedNotes,
+          measurement_context: measurementContext
         });
 
         playSuccessChime();
@@ -163,7 +167,8 @@ export const ReadingFormModal: React.FC = () => {
           position,
           arm,
           tags: selectedTags,
-          notes: sanitizedNotes
+          notes: sanitizedNotes,
+          measurement_context: measurementContext
         });
 
         playSuccessChime();
@@ -464,6 +469,42 @@ export const ReadingFormModal: React.FC = () => {
                     </button>
                   ))}
                 </div>
+              </div>
+            </div>
+
+            {/* Measurement Context (White-Coat Hypertension Protection) */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Konteks Pengukuran Vital
+                </label>
+                <span className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">
+                  Proteksi Sindrom Jas Putih
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl">
+                {[
+                  { key: 'Home', label: 'Rumah (Mandiri)' },
+                  { key: 'Clinic/Hospital', label: 'Klinik / RS' },
+                  { key: 'Post-Medication', label: 'Pasca Obat' },
+                  { key: 'Stress', label: 'Stres / Lelah' }
+                ].map((ctx) => (
+                  <button
+                    key={ctx.key}
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setMeasurementContext(ctx.key as MeasurementContext);
+                    }}
+                    className={`py-1.5 px-2 rounded-lg text-[10px] font-extrabold transition-all text-center ${
+                      measurementContext === ctx.key
+                        ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                    }`}
+                  >
+                    {ctx.label}
+                  </button>
+                ))}
               </div>
             </div>
 
