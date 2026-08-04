@@ -136,7 +136,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
             </div>
             <h3 className="text-base font-black text-slate-900">MongoDB Atlas Cluster</h3>
             <p className="text-xs text-slate-600 leading-relaxed font-medium">
-              Koneksi langsung klaster MongoDB Atlas (Public: <code>wfokmvwy</code>) untuk backup data rekam medis cloud real-time.
+              Koneksi terenkripsi ke MongoDB Atlas Cloud Cluster untuk backup dan sinkronisasi data rekam medis real-time.
             </p>
           </div>
         </div>

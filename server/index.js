@@ -16,8 +16,10 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI =
   process.env.MONGODB_URI ||
+  process.env.PUBLIC_MONGODB_URI ||
   process.env.VITE_MONGODB_URI ||
-  'mongodb+srv://kousozo:Koureal323@cluster0.2pnjht.mongodb.net/?appName=Cluster0';
+  '';
+
 const DB_NAME = process.env.PUBLIC_MONGODB_ATLAS_DB || 'aortalink_ehr_db';
 const JWT_SECRET = process.env.JWT_SECRET || 'aortalink_secret_jwt_key_2026_safe';
 
@@ -71,11 +73,28 @@ async function connectToMongo() {
   return connectionPromise;
 }
 
+// Helper to get connected DB instance
+async function getDatabase() {
+  if (db) return db;
+  try {
+    return await connectToMongo();
+  } catch (err) {
+    console.error('[AortaLink Server] getDatabase Error:', err);
+    return null;
+  }
+}
+
 // Middleware to ensure DB connection is ready before handling any /api request
 app.use('/api', async (req, res, next) => {
   if (req.path === '/health') return next();
   try {
-    await connectToMongo();
+    const activeDb = await getDatabase();
+    if (!activeDb) {
+      return res.status(500).json({
+        success: false,
+        message: 'Gagal terhubung ke MongoDB Atlas Cloud. Pastikan IP Whitelist di MongoDB Atlas diset ke 0.0.0.0/0.'
+      });
+    }
     next();
   } catch (error) {
     console.error('[AortaLink Server] API DB Middleware Error:', error);
@@ -105,11 +124,12 @@ function authenticateToken(req, res, next) {
 }
 
 // Health Check Endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+  const activeDb = await getDatabase();
   res.json({
     status: 'ok',
     app: 'AortaLink Open-Source EHR Backend API',
-    databaseConnected: !!db,
+    databaseConnected: !!activeDb,
     timestamp: new Date().toISOString()
   });
 });
@@ -129,12 +149,13 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Nama, email, dan kata sandi wajib diisi.' });
     }
 
-    if (!db) {
-      return res.status(500).json({ success: false, message: 'Database MongoDB Atlas belum terhubung.' });
+    const activeDb = await getDatabase();
+    if (!activeDb) {
+      return res.status(500).json({ success: false, message: 'Database MongoDB Atlas belum terhubung. Silakan coba beberapa saat lagi.' });
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const usersCollection = db.collection('users');
+    const usersCollection = activeDb.collection('users');
 
     const existingUser = await usersCollection.findOne({ email: cleanEmail });
     if (existingUser) {
@@ -197,12 +218,13 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email dan kata sandi wajib diisi.' });
     }
 
-    if (!db) {
-      return res.status(500).json({ success: false, message: 'Database MongoDB Atlas belum terhubung.' });
+    const activeDb = await getDatabase();
+    if (!activeDb) {
+      return res.status(500).json({ success: false, message: 'Database MongoDB Atlas belum terhubung. Pastikan Network Access di MongoDB Atlas mengizinkan 0.0.0.0/0.' });
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const usersCollection = db.collection('users');
+    const usersCollection = activeDb.collection('users');
 
     const userDoc = await usersCollection.findOne({ email: cleanEmail });
     if (!userDoc) {
@@ -257,11 +279,12 @@ app.post('/api/auth/google', async (req, res) => {
     const name = googleProfile?.name || 'Google Health User';
     const avatarUrl = googleProfile?.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`;
 
-    if (!db) {
+    const activeDb = await getDatabase();
+    if (!activeDb) {
       return res.status(500).json({ success: false, message: 'Database MongoDB Atlas belum terhubung.' });
     }
 
-    const usersCollection = db.collection('users');
+    const usersCollection = activeDb.collection('users');
     let userDoc = await usersCollection.findOne({ email });
 
     if (!userDoc) {
@@ -307,10 +330,11 @@ app.post('/api/auth/google', async (req, res) => {
  */
 app.get('/api/auth/me', authenticateToken, async (req, res) => {
   try {
-    if (!db) {
+    const activeDb = await getDatabase();
+    if (!activeDb) {
       return res.json({ success: true, user: req.user });
     }
-    const usersCollection = db.collection('users');
+    const usersCollection = activeDb.collection('users');
     const userDoc = await usersCollection.findOne({ email: req.user.email });
     if (userDoc) {
       const userSession = {
@@ -341,7 +365,8 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
  */
 app.post('/api/sync/push', authenticateToken, async (req, res) => {
   try {
-    if (!db) {
+    const activeDb = await getDatabase();
+    if (!activeDb) {
       return res.status(500).json({ success: false, message: 'Database MongoDB Atlas belum terhubung.' });
     }
 
@@ -368,7 +393,7 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
 
     const upsertCollection = async (collName, items, keyField = 'id') => {
       if (!Array.isArray(items) || items.length === 0) return 0;
-      const collection = db.collection(collName);
+      const collection = activeDb.collection(collName);
       for (const item of items) {
         const query = { [keyField]: item[keyField], userId };
         await collection.updateOne(
@@ -397,7 +422,7 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
 
     // Save User Settings (Theme, Active Profile, Layout)
     if (userSettings) {
-      await db.collection('user_settings').updateOne(
+      await activeDb.collection('user_settings').updateOne(
         { userId },
         { $set: { ...userSettings, userId, updatedAt: new Date().toISOString() } },
         { upsert: true }
@@ -423,7 +448,8 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
  */
 app.get('/api/sync/pull', authenticateToken, async (req, res) => {
   try {
-    if (!db) {
+    const activeDb = await getDatabase();
+    if (!activeDb) {
       return res.status(500).json({ success: false, message: 'Database MongoDB Atlas belum terhubung.' });
     }
 
@@ -446,21 +472,21 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
       fhirMedicationStatements,
       userSettingsDoc
     ] = await Promise.all([
-      db.collection('observations').find({ userId }).toArray(),
-      db.collection('medications').find({ userId }).toArray(),
-      db.collection('medication_logs').find({ userId }).toArray(),
-      db.collection('lab_results').find({ userId }).toArray(),
-      db.collection('habits').find({ userId }).toArray(),
-      db.collection('sodium_logs').find({ userId }).toArray(),
-      db.collection('sleep_logs').find({ userId }).toArray(),
-      db.collection('gamification').find({ userId }).toArray(),
-      db.collection('profiles').find({ userId }).toArray(),
-      db.collection('reminders').find({ userId }).toArray(),
-      db.collection('fhir_patients').find({ userId }).toArray(),
-      db.collection('fhir_observations').find({ userId }).toArray(),
-      db.collection('fhir_medication_requests').find({ userId }).toArray(),
-      db.collection('fhir_medication_statements').find({ userId }).toArray(),
-      db.collection('user_settings').findOne({ userId })
+      activeDb.collection('observations').find({ userId }).toArray(),
+      activeDb.collection('medications').find({ userId }).toArray(),
+      activeDb.collection('medication_logs').find({ userId }).toArray(),
+      activeDb.collection('lab_results').find({ userId }).toArray(),
+      activeDb.collection('habits').find({ userId }).toArray(),
+      activeDb.collection('sodium_logs').find({ userId }).toArray(),
+      activeDb.collection('sleep_logs').find({ userId }).toArray(),
+      activeDb.collection('gamification').find({ userId }).toArray(),
+      activeDb.collection('profiles').find({ userId }).toArray(),
+      activeDb.collection('reminders').find({ userId }).toArray(),
+      activeDb.collection('fhir_patients').find({ userId }).toArray(),
+      activeDb.collection('fhir_observations').find({ userId }).toArray(),
+      activeDb.collection('fhir_medication_requests').find({ userId }).toArray(),
+      activeDb.collection('fhir_medication_statements').find({ userId }).toArray(),
+      activeDb.collection('user_settings').findOne({ userId })
     ]);
 
     const totalCount =
@@ -514,14 +540,15 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
  */
 app.post('/api/fhir/sync', authenticateToken, async (req, res) => {
   try {
-    if (!db) {
+    const activeDb = await getDatabase();
+    if (!activeDb) {
       return res.status(500).json({ success: false, message: 'Database MongoDB Atlas belum terhubung.' });
     }
 
     const { resource, bundle, timestamp = new Date().toISOString() } = req.body;
     const userId = req.user.id;
 
-    const collection = db.collection('fhir_resources');
+    const collection = activeDb.collection('fhir_resources');
     const doc = {
       userId,
       resourceType: resource?.resourceType || bundle?.resourceType || 'Bundle',

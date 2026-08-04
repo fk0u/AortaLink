@@ -39,8 +39,8 @@ export const MongoAtlasSyncBadge: React.FC = () => {
       <div className="flex items-center gap-1.5 min-w-0">
         <span className="font-extrabold truncate">MongoDB Atlas</span>
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-        <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-mono hidden sm:inline">
-          wfokmvwy
+        <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-extrabold hidden sm:inline">
+          Cloud Active
         </span>
       </div>
 
