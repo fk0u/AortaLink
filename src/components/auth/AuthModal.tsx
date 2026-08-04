@@ -1,7 +1,7 @@
-/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · Light Mode Minimalist Auth Modal with Google OAuth & SaaS Tiers */
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · Light Mode Minimalist Auth Modal with Real MongoDB Atlas Auth */
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, LogIn, UserPlus, Heart, Lock, Mail, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { X, LogIn, UserPlus, Heart, Lock, Mail, ShieldCheck, CheckCircle2, RefreshCw } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore, SubscriptionTier } from '../../store/useAuthStore';
 
@@ -24,43 +24,65 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const addToast = useAppStore((state) => state.addToast);
   const loginWithEmail = useAuthStore((state) => state.loginWithEmail);
+  const registerWithEmail = useAuthStore((state) => state.registerWithEmail);
   const loginWithGoogle = useAuthStore((state) => state.loginWithGoogle);
+  const isLoading = useAuthStore((state) => state.isLoading);
 
   if (!isOpen) return null;
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       addToast({ type: 'warning', title: 'Data Belum Lengkap', message: 'Silakan isi email dan kata sandi.' });
       return;
     }
 
-    if (tab === 'register' && !name) {
-      addToast({ type: 'warning', title: 'Data Belum Lengkap', message: 'Silakan isi nama lengkap Anda.' });
-      return;
+    try {
+      if (tab === 'register') {
+        if (!name) {
+          addToast({ type: 'warning', title: 'Data Belum Lengkap', message: 'Silakan isi nama lengkap Anda.' });
+          return;
+        }
+
+        await registerWithEmail(name, email, password, selectedTier);
+        addToast({
+          type: 'success',
+          title: 'Registrasi MongoDB Atlas Berhasil!',
+          message: `Selamat datang ${name}, akun SaaS EHR Anda berhasil dibuat.`
+        });
+      } else {
+        await loginWithEmail(email, password);
+        addToast({
+          type: 'success',
+          title: 'Autentikasi Berhasil!',
+          message: `Selamat datang kembali di AortaLink SaaS EHR Platform.`
+        });
+      }
+
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (err: any) {
+      addToast({
+        type: 'error',
+        title: tab === 'login' ? 'Gagal Masuk' : 'Gagal Mendaftar',
+        message: err.message || 'Terjadi kesalahan autentikasi database.'
+      });
     }
-
-    loginWithEmail(email, name);
-
-    addToast({
-      type: 'success',
-      title: tab === 'login' ? 'Berhasil Masuk!' : 'Pendaftaran Berhasil!',
-      message: `Selamat datang kembali di AortaLink SaaS EHR Platform.`
-    });
-
-    if (onSuccess) onSuccess();
-    onClose();
   };
 
-  const handleGoogleClick = () => {
-    loginWithGoogle();
-    addToast({
-      type: 'success',
-      title: 'OAuth Google Berhasil!',
-      message: 'Akun Google berhasil terhubung dengan AortaLink SaaS EHR.'
-    });
-    if (onSuccess) onSuccess();
-    onClose();
+  const handleGoogleClick = async () => {
+    try {
+      await loginWithGoogle();
+      addToast({
+        type: 'success',
+        title: 'Google OAuth Berhasil!',
+        message: 'Akun Google berhasil terhubung dan tersimpan ke MongoDB Atlas.'
+      });
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (err: any) {
+      addToast({ type: 'error', title: 'OAuth Error', message: 'Gagal menghubungkan akun Google.' });
+    }
   };
 
   return (
@@ -83,7 +105,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   AortaLink SaaS Account
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  {tab === 'login' ? 'Masuk ke Rekam Medis Cloud SaaS' : 'Buat Akun Rekam Medis Baru'}
+                  {tab === 'login' ? 'Masuk dengan Akun MongoDB Atlas Real' : 'Daftar Akun Baru ke MongoDB Atlas'}
                 </p>
               </div>
             </div>
@@ -102,7 +124,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <button
               type="button"
               onClick={handleGoogleClick}
-              className="w-full py-3 px-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 font-extrabold text-xs shadow-sm transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+              disabled={isLoading}
+              className="w-full py-3 px-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 font-extrabold text-xs shadow-sm transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -115,7 +138,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
             <div className="flex items-center gap-3">
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
-              <span className="text-[10px] font-bold uppercase text-slate-400">atau dengan email</span>
+              <span className="text-[10px] font-bold uppercase text-slate-400">atau kredensial email</span>
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
             </div>
 
@@ -161,6 +184,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       placeholder="Nama Lengkap Anda"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      disabled={isLoading}
                       className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-500"
                       required
                     />
@@ -179,6 +203,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder="email@contoh.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
                     className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-500"
                     required
                   />
@@ -196,6 +221,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
                     className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-500"
                     required
                   />
@@ -240,17 +266,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
               <button
                 type="submit"
-                className="w-full py-3 rounded-2xl bg-gradient-to-r from-teal-500 to-sky-500 hover:from-teal-600 hover:to-sky-600 text-white font-extrabold text-xs shadow-md shadow-teal-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-3"
+                disabled={isLoading}
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-teal-500 to-sky-500 hover:from-teal-600 hover:to-sky-600 text-white font-extrabold text-xs shadow-md shadow-teal-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-3 disabled:opacity-50"
               >
-                <CheckCircle2 className="w-4 h-4" />
-                {tab === 'login' ? 'Masuk ke Dashboard Cloud' : 'Daftarkan Akun SaaS EHR'}
+                {isLoading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Memproses Kredensial MongoDB...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{tab === 'login' ? 'Masuk ke Dashboard Cloud' : 'Daftarkan Akun ke MongoDB Atlas'}</span>
+                  </>
+                )}
               </button>
             </form>
           </div>
 
           {/* Footer Note */}
           <div className="p-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 text-center text-[10px] text-slate-400 font-medium shrink-0">
-            Google OAuth 2.0 • MongoDB Atlas Cloud Cluster Sync • SMART on FHIR
+            SHA-256 Hash Protection • MongoDB Atlas Data Sync • SMART on FHIR
           </div>
         </motion.div>
       </div>

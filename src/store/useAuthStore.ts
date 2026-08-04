@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { realAuthService } from '../services/auth/real-auth-service';
 
 export type SubscriptionTier = 'free_trial' | 'pro_ehr' | 'clinic_tenant';
 
@@ -16,10 +17,12 @@ export interface UserSession {
 interface AuthState {
   isAuthenticated: boolean;
   user: UserSession | null;
+  isLoading: boolean;
   
   // Actions
-  loginWithEmail: (email: string, name?: string) => void;
-  loginWithGoogle: () => void;
+  loginWithEmail: (email: string, password: string) => Promise<UserSession>;
+  registerWithEmail: (name: string, email: string, password: string, tier?: SubscriptionTier) => Promise<UserSession>;
+  loginWithGoogle: (googleProfile?: { name?: string; email?: string; picture?: string }) => Promise<UserSession>;
   logout: () => void;
   updateSubscriptionTier: (tier: SubscriptionTier) => void;
   initSessionFromStorage: () => void;
@@ -28,6 +31,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   user: null,
+  isLoading: false,
 
   initSessionFromStorage: () => {
     try {
@@ -41,34 +45,43 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  loginWithEmail: (email, name) => {
-    const userObj: UserSession = {
-      id: 'usr-' + Date.now(),
-      name: name || email.split('@')[0] || 'Pengguna AortaLink',
-      email,
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`,
-      authProvider: 'email',
-      subscriptionTier: 'pro_ehr',
-      token: 'jwt-aortalink-email-' + Math.random().toString(36).substring(2, 9),
-      loginAt: new Date().toISOString()
-    };
-    localStorage.setItem('aortalink_saas_user_session', JSON.stringify(userObj));
-    set({ isAuthenticated: true, user: userObj });
+  loginWithEmail: async (email, password) => {
+    set({ isLoading: true });
+    try {
+      const session = await realAuthService.loginUser(email, password);
+      localStorage.setItem('aortalink_saas_user_session', JSON.stringify(session));
+      set({ isAuthenticated: true, user: session, isLoading: false });
+      return session;
+    } catch (err) {
+      set({ isLoading: false });
+      throw err;
+    }
   },
 
-  loginWithGoogle: () => {
-    const userObj: UserSession = {
-      id: 'usr-google-' + Date.now(),
-      name: 'Google Health User',
-      email: 'user.google@health.org',
-      avatarUrl: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
-      authProvider: 'google',
-      subscriptionTier: 'pro_ehr',
-      token: 'jwt-aortalink-oauth-google-' + Math.random().toString(36).substring(2, 9),
-      loginAt: new Date().toISOString()
-    };
-    localStorage.setItem('aortalink_saas_user_session', JSON.stringify(userObj));
-    set({ isAuthenticated: true, user: userObj });
+  registerWithEmail: async (name, email, password, tier = 'pro_ehr') => {
+    set({ isLoading: true });
+    try {
+      const session = await realAuthService.registerUser(name, email, password, tier);
+      localStorage.setItem('aortalink_saas_user_session', JSON.stringify(session));
+      set({ isAuthenticated: true, user: session, isLoading: false });
+      return session;
+    } catch (err) {
+      set({ isLoading: false });
+      throw err;
+    }
+  },
+
+  loginWithGoogle: async (googleProfile) => {
+    set({ isLoading: true });
+    try {
+      const session = await realAuthService.loginWithGoogleOAuth(googleProfile);
+      localStorage.setItem('aortalink_saas_user_session', JSON.stringify(session));
+      set({ isAuthenticated: true, user: session, isLoading: false });
+      return session;
+    } catch (err) {
+      set({ isLoading: false });
+      throw err;
+    }
   },
 
   logout: () => {
