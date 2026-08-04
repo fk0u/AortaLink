@@ -42,7 +42,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
       if (!activeProfileId) return [];
       const logs = await db.medicationLogs.where('profileId').equals(activeProfileId).toArray();
       const today = new Date();
-      return logs.filter((log) => isSameDay(new Date(log.takenAt), today));
+      return logs.filter((log) => (log.takenAt ? isSameDay(new Date(log.takenAt), today) : false));
     },
     [activeProfileId]
   );

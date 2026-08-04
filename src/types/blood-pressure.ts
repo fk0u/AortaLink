@@ -49,11 +49,14 @@ export interface MedicationItem {
 export interface MedicationLog {
   id?: number;
   profileId: string;
-  medicationId: number;
-  medicationName: string;
-  dosage: string;
-  takenAt: string; // ISO 8601 timestamp
+  medicationId?: number;
+  medicationName?: string;
+  dosage?: string;
+  takenAt?: string; // ISO 8601 timestamp
   notes?: string;
+  date?: string;
+  takenCount?: number;
+  totalCount?: number;
 }
 
 export interface LabResult {
@@ -98,7 +101,6 @@ export interface ClinicalAlert {
 
 export interface SodiumLog { id?: number; profileId: string; date: string; sodiumMg: number; items?: string[] }
 export interface SleepLog { id?: number; profileId: string; date: string; sleepHours: number; screenTimeHours?: number; outdoorMinutes?: number }
-export interface MedicationLog { id?: number; profileId: string; date: string; takenCount: number; totalCount: number }
 
 export interface HabitLog {
   id?: number;

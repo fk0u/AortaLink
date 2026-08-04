@@ -119,7 +119,7 @@ export async function sendLocalNotification(
           url: '/reminders',
           timestamp: Date.now(),
         },
-      });
+      } as NotificationOptions & { vibrate?: number[] });
       return true;
     }
   } catch (err) {
