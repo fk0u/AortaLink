@@ -1,4 +1,4 @@
-export type DashboardSectionId = 'statcards' | 'streakbadges' | 'applerings' | 'lifestylecorrelation' | 'bptrend' | 'recentreadings';
+export type DashboardSectionId = 'statcards' | 'streakbadges' | 'applerings' | 'lifestylecorrelation' | 'medadherence' | 'circadiandipping' | 'bptrend' | 'recentreadings';
 
 export type DashboardSection = {
   id: DashboardSectionId;
@@ -12,6 +12,8 @@ const sectionDefinitions: Array<{ id: DashboardSectionId; label: string }> = [
   { id: 'streakbadges', label: 'Gamifikasi & Pencapaian' },
   { id: 'applerings', label: 'Kategori Tekanan Darah' },
   { id: 'lifestylecorrelation', label: 'Korelasi Gaya Hidup' },
+  { id: 'medadherence', label: 'Indeks Kepatuhan Obat' },
+  { id: 'circadiandipping', label: 'Analisis Sirkadian (Dipping)' },
   { id: 'bptrend', label: 'Grafik Tren' },
   { id: 'recentreadings', label: 'Catatan Terbaru' },
 ];
