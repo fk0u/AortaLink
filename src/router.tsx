@@ -42,6 +42,16 @@ const settingsRoute = createRoute({
   path: '/settings',
 });
 
+const landingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/landing',
+});
+
+const backupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/backup',
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   historyRoute,
@@ -49,6 +59,8 @@ const routeTree = rootRoute.addChildren([
   remindersRoute,
   profileRoute,
   settingsRoute,
+  landingRoute,
+  backupRoute,
 ]);
 
 export const router = createRouter({ routeTree });

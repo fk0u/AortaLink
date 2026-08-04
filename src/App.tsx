@@ -50,6 +50,9 @@ import { MedicationTrackerModal } from './components/meds/MedicationTrackerModal
 import { HabitsTrackerModal } from './components/habits/HabitsTrackerModal';
 import { ProfilePage } from './components/pages/ProfilePage';
 import { SettingsPage } from './components/pages/SettingsPage';
+import { LandingPage } from './components/landing/LandingPage';
+import { AuthModal } from './components/auth/AuthModal';
+import { JsonImportExportModal } from './components/backup/JsonImportExportModal';
 import { MobileToolsSheet } from './components/layout/MobileToolsSheet';
 
 // Bluetooth pairing
@@ -80,7 +83,8 @@ import {
   RefreshCw,
   Clock,
   FlaskConical,
-  FileCode
+  FileCode,
+  FileJson
 } from 'lucide-react';
 
 export function App() {
@@ -116,6 +120,8 @@ export function App() {
   const [isHabitsModalOpen, setIsHabitsModalOpen] = useState(false);
   const [isLabModalOpen, setIsLabModalOpen] = useState(false);
   const [isFhirModalOpen, setIsFhirModalOpen] = useState(false);
+  const [isJsonBackupModalOpen, setIsJsonBackupModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const { activeProfile } = useProfiles();
   const { readings, rawReadings, stats, isLoading } = useReadings();
@@ -283,7 +289,9 @@ export function App() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6 md:space-y-8">
 
-        {screenKey === 'profile' ? (
+        {screenKey === 'landing' ? (
+          <LandingPage onLaunchApp={() => navigate({ to: '/' })} />
+        ) : screenKey === 'profile' ? (
           <ProfilePage />
         ) : screenKey === 'settings' ? (
           <SettingsPage />
@@ -519,6 +527,24 @@ export function App() {
                   </div>
                 </button>
 
+                {/* Backup JSON Importer/Exporter */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClickSound();
+                    setIsJsonBackupModalOpen(true);
+                  }}
+                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer min-h-32 border-sky-200 dark:border-sky-900/60 bg-sky-50/20 dark:bg-sky-950/10"
+                >
+                  <div className="p-2 rounded-xl bg-sky-500 text-white w-fit shadow-md shadow-sky-500/20">
+                    <FileJson className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Ekspor/Impor JSON</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Backup &amp; Pulihkan Data</p>
+                  </div>
+                </button>
+
               </div>
             </div>
 
@@ -748,6 +774,17 @@ export function App() {
       <FhirResourceInspectorModal
         isOpen={isFhirModalOpen}
         onClose={() => setIsFhirModalOpen(false)}
+      />
+      <JsonImportExportModal
+        isOpen={isJsonBackupModalOpen || screenKey === 'backup'}
+        onClose={() => {
+          setIsJsonBackupModalOpen(false);
+          if (screenKey === 'backup') navigate({ to: '/' });
+        }}
+      />
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
       />
 
       {/* Delete Reading Confirmation Modal */}
