@@ -106,6 +106,53 @@ export function generateDoctorPDF(
   doc.setFont('helvetica', 'bold');
   doc.text(`${stats.minSystolic}/${stats.minDiastolic} - ${stats.maxSystolic}/${stats.maxDiastolic}`, 156, startY + 13);
 
+  // 4. Clinical Flags & Alerts Section
+  let flagY = startY + boxHeight + 4;
+  const flags: Array<{ level: 'critical' | 'warning' | 'info'; text: string }> = [];
+
+  // Flag: Hypertensive Crisis / Stage 2
+  if (stats.latestReading) {
+    const s = stats.latestReading.systolic;
+    const d = stats.latestReading.diastolic;
+    if (s > 180 || d > 120) flags.push({ level: 'critical', text: `KRISIS HIPERTENSI — Tensi terakhir ${s}/${d} mmHg. SEGERA hubungi IGD.` });
+    else if (s >= 140 || d >= 90) flags.push({ level: 'warning', text: `Hipertensi Tahap 2 — Tensi terakhir ${s}/${d} mmHg. Evaluasi kepatuhan obat.` });
+  }
+
+  // Flag: BP Variability (MAP, Pulse Pressure)
+  if (stats.avgPulsePressure && stats.avgPulsePressure > 60) {
+    flags.push({ level: 'warning', text: `Pulse Pressure tinggi (${stats.avgPulsePressure} mmHg) — indikator kekakuan arteri.` });
+  }
+
+  // Flag: Target compliance
+  if (stats.totalReadings >= 5 && stats.targetComplianceRate < 50) {
+    flags.push({ level: 'warning', text: `Hanya ${Math.round(stats.targetComplianceRate)}% pengukuran memenuhi target tensi.` });
+  }
+
+  if (flags.length > 0) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(darkSlate[0], darkSlate[1], darkSlate[2]);
+    doc.text('Peringatan Klinis Otomatis (Auto-Flags)', 14, flagY);
+    flagY += 4;
+
+    for (const flag of flags) {
+      const bgColor: [number, number, number] = flag.level === 'critical' ? [254, 226, 226] : flag.level === 'warning' ? [254, 243, 199] : [224, 242, 254];
+      const textColor: [number, number, number] = flag.level === 'critical' ? [153, 27, 27] : flag.level === 'warning' ? [146, 64, 14] : [12, 74, 110];
+      const symbol = flag.level === 'critical' ? '▲ KRITIS:' : flag.level === 'warning' ? '⚠ PERHATIAN:' : 'ℹ INFO:';
+
+      doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+      doc.roundedRect(14, flagY, 182, 8, 1.5, 1.5, 'F');
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${symbol} ${flag.text}`, 16, flagY + 5.5, { maxWidth: 176 });
+      flagY += 10;
+    }
+    flagY += 2;
+  } else {
+    flagY += 2;
+  }
+
   // 4. Data Table
   const tableData = readings.map((r, idx) => {
     const cat = classifyBP(r.systolic, r.diastolic);
@@ -124,7 +171,7 @@ export function generateDoctorPDF(
   });
 
   autoTable(doc, {
-    startY: 94,
+    startY: Math.max(94, flagY + 2),
     head: [['No', 'Tanggal & Waktu', 'Tensi (mmHg)', 'Nadi', 'Kategori AHA', 'Catatan & Kondisi']],
     body: tableData,
     theme: 'grid',

@@ -66,6 +66,10 @@ import { DevicePairingButton } from './components/bluetooth/DevicePairingButton'
 // Gamification
 import { StreakBadges } from './components/gamification/StreakBadges';
 import { LifestyleCorrelation } from './components/analytics/LifestyleCorrelation';
+import { CircadianDippingPanel } from './components/analytics/CircadianDippingPanel';
+import { AscvdCalculatorModal } from './components/analytics/AscvdCalculatorModal';
+import { ClinicalNotesModal } from './components/analytics/ClinicalNotesModal';
+import { MedicationAdherencePanel } from './components/analytics/MedicationAdherencePanel';
 import { DashboardCustomizer } from './components/dashboard/DashboardCustomizer';
 import { loadDashboardPreferences, saveDashboardPreferences, type DashboardSection } from './utils/dashboard-preferences';
 
@@ -89,7 +93,9 @@ import {
   Clock,
   FlaskConical,
   FileCode,
-  FileJson
+  FileJson,
+  HeartPulse,
+  Stethoscope
 } from 'lucide-react';
 
 export function App() {
@@ -127,6 +133,8 @@ export function App() {
   const [isFhirModalOpen, setIsFhirModalOpen] = useState(false);
   const [isJsonBackupModalOpen, setIsJsonBackupModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isAscvdModalOpen, setIsAscvdModalOpen] = useState(false);
+  const [isClinicalNotesModalOpen, setIsClinicalNotesModalOpen] = useState(false);
 
   const { activeProfile } = useProfiles();
   const { readings, rawReadings, stats, isLoading } = useReadings();
@@ -414,6 +422,16 @@ export function App() {
                   <summary className="cursor-pointer font-extrabold text-sm text-slate-800 dark:text-slate-100">Korelasi Gaya Hidup &amp; Tekanan Darah</summary>
                   <div className="mt-4"><LifestyleCorrelation /></div>
                 </details>
+
+                {/* Medication Adherence Panel */}
+                <div data-dashboard-section="medadherence" style={sectionStyle('medadherence')}>
+                  <MedicationAdherencePanel />
+                </div>
+
+                {/* Circadian Dipping Analysis Panel */}
+                <div data-dashboard-section="circadiandipping" style={sectionStyle('circadiandipping')}>
+                  <CircadianDippingPanel readings={rawReadings || []} />
+                </div>
               </>
             )}
 
@@ -556,6 +574,42 @@ export function App() {
                   <div>
                     <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Inspektor FHIR</h4>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400">Payload HL7 FHIR v4.0.1</p>
+                  </div>
+                </button>
+
+                {/* ASCVD Risk Calculator */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClickSound();
+                    setIsAscvdModalOpen(true);
+                  }}
+                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer min-h-32 border-rose-200 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10"
+                >
+                  <div className="p-2 rounded-xl bg-gradient-to-tr from-rose-500 to-orange-500 text-white w-fit shadow-md shadow-rose-500/20">
+                    <HeartPulse className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Risiko ASCVD</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Kalkulator 10 tahun</p>
+                  </div>
+                </button>
+
+                {/* Clinical Notes Journal */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClickSound();
+                    setIsClinicalNotesModalOpen(true);
+                  }}
+                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer min-h-32 border-violet-200 dark:border-violet-900/60 bg-violet-50/20 dark:bg-violet-950/10"
+                >
+                  <div className="p-2 rounded-xl bg-gradient-to-tr from-violet-500 to-fuchsia-500 text-white w-fit shadow-md shadow-violet-500/20">
+                    <Stethoscope className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Catatan Klinis</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Jurnal SOAP Dokter</p>
                   </div>
                 </button>
 
@@ -818,6 +872,14 @@ export function App() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={() => navigate({ to: '/dashboard' })}
+      />
+      <AscvdCalculatorModal
+        isOpen={isAscvdModalOpen}
+        onClose={() => setIsAscvdModalOpen(false)}
+      />
+      <ClinicalNotesModal
+        isOpen={isClinicalNotesModalOpen}
+        onClose={() => setIsClinicalNotesModalOpen(false)}
       />
       <NvidiaNimAiAssistantWidget />
 
