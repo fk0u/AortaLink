@@ -6,7 +6,7 @@ import { Profile, RelationshipType } from '../../types/blood-pressure';
 import { getRelationshipLabel } from '../../utils/formatters';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, UserPlus, Edit3, Trash2, Check, User } from 'lucide-react';
+import { X, UserPlus, Edit3, Trash2, User, Users, Heart, Shield, Activity, Sparkles } from '../icons/AppIcons';
 import { ConfirmModal } from '../common/ConfirmModal';
 
 export const ProfileModal: React.FC = () => {
@@ -21,7 +21,7 @@ export const ProfileModal: React.FC = () => {
   // Form states
   const [name, setName] = useState('');
   const [relationship, setRelationship] = useState<RelationshipType>('self');
-  const [avatar, setAvatar] = useState('👨‍💼');
+  const [avatar, setAvatar] = useState('user');
   const [age, setAge] = useState<number | ''>(45);
   const [gender, setGender] = useState<'male' | 'female' | 'other'>('male');
   const [targetSystolic, setTargetSystolic] = useState(120);
@@ -31,12 +31,26 @@ export const ProfileModal: React.FC = () => {
   // Delete confirm state
   const [deletingProfileId, setDeletingProfileId] = useState<string | null>(null);
 
-  const avatarOptions = ['👨‍💼', '👵', '👴', '👩‍⚕️', '👨‍👩‍👧', '🧍‍♂️', '🧍‍♀️', '❤️'];
+  const iconOptions = [
+    { id: 'user', label: 'Utama', icon: User },
+    { id: 'heart', label: 'Jantung', icon: Heart },
+    { id: 'users', label: 'Keluarga', icon: Users },
+    { id: 'shield', label: 'Proteksi', icon: Shield },
+    { id: 'activity', label: 'Vital', icon: Activity },
+    { id: 'sparkles', label: 'EHR', icon: Sparkles },
+  ];
+
+  const getProfileInitial = (pName?: string) => {
+    if (!pName) return 'P';
+    const parts = pName.trim().split(' ');
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return pName.slice(0, 2).toUpperCase();
+  };
 
   const resetForm = () => {
     setName('');
     setRelationship('self');
-    setAvatar('👨‍💼');
+    setAvatar('user');
     setAge(45);
     setGender('male');
     setTargetSystolic(120);
@@ -51,7 +65,7 @@ export const ProfileModal: React.FC = () => {
     setEditingProfile(p);
     setName(p.name);
     setRelationship(p.relationship);
-    setAvatar(p.avatar);
+    setAvatar(p.avatar || 'user');
     setAge(p.age || '');
     setGender(p.gender || 'male');
     setTargetSystolic(p.targetSystolic);
@@ -132,7 +146,7 @@ export const ProfileModal: React.FC = () => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:pb-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto">
+      <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:pb-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -143,10 +157,10 @@ export const ProfileModal: React.FC = () => {
           <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
-                <User className="w-5 h-5" />
+                <User size={20} />
               </div>
               <h3 className="text-lg font-extrabold text-slate-900 dark:text-slate-100">
-                Kelola Profil Pengguna
+                Kelola Profil Pasien
               </h3>
             </div>
             <button
@@ -157,7 +171,7 @@ export const ProfileModal: React.FC = () => {
               }}
               className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X size={20} />
             </button>
           </div>
 
@@ -178,7 +192,7 @@ export const ProfileModal: React.FC = () => {
                     }}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md transition-all active:scale-95"
                   >
-                    <UserPlus className="w-3.5 h-3.5" />
+                    <UserPlus size={14} />
                     Tambah Profil
                   </button>
                 </div>
@@ -203,7 +217,9 @@ export const ProfileModal: React.FC = () => {
                           }}
                           className="flex items-center gap-3 cursor-pointer flex-1 min-w-0"
                         >
-                          <span className="text-2xl">{p.avatar}</span>
+                          <div className="w-10 h-10 rounded-2xl bg-teal-500 text-white flex items-center justify-center font-black text-sm shadow-sm shrink-0">
+                            {getProfileInitial(p.name)}
+                          </div>
                           <div className="truncate">
                             <div className="flex items-center gap-2">
                               <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">
@@ -227,7 +243,7 @@ export const ProfileModal: React.FC = () => {
                             className="p-2 rounded-xl text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-all active:scale-90"
                             title="Edit Profil"
                           >
-                            <Edit3 className="w-4 h-4" />
+                            <Edit3 size={16} />
                           </button>
                           {profiles.length > 1 && (
                             <button
@@ -238,7 +254,7 @@ export const ProfileModal: React.FC = () => {
                               className="p-2 rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all active:scale-90"
                               title="Hapus Profil"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 size={16} />
                             </button>
                           )}
                         </div>
@@ -266,29 +282,33 @@ export const ProfileModal: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Avatar Options */}
+                {/* Avatar Icon Options */}
                 <div>
                   <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 block">
-                    Pilih Avatar Icon
+                    Pilih Simbol Profil
                   </label>
                   <div className="flex gap-2 overflow-x-auto pb-1">
-                    {avatarOptions.map((emoji) => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => {
-                          playClickSound();
-                          setAvatar(emoji);
-                        }}
-                        className={`w-10 h-10 rounded-2xl text-xl flex items-center justify-center transition-all active:scale-90 shrink-0 ${
-                          avatar === emoji
-                            ? 'bg-teal-100 dark:bg-teal-950 border-2 border-teal-500 scale-105'
-                            : 'bg-slate-100 dark:bg-slate-800'
-                        }`}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
+                    {iconOptions.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            playClickSound();
+                            setAvatar(item.id);
+                          }}
+                          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-90 shrink-0 ${
+                            avatar === item.id
+                              ? 'bg-teal-500 text-white shadow-md shadow-teal-500/25'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                          }`}
+                        >
+                          <Icon size={16} />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -302,7 +322,7 @@ export const ProfileModal: React.FC = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Contoh: Ibu Maryam / Ayah Hendra"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-105 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
                     required
                   />
                 </div>
@@ -319,7 +339,7 @@ export const ProfileModal: React.FC = () => {
                         playClickSound();
                         setRelationship(e.target.value as any);
                       }}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-105 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none"
                     >
                       <option value="self">Saya Sendiri</option>
                       <option value="parent">Orang Tua (Ibu / Ayah)</option>
@@ -340,13 +360,13 @@ export const ProfileModal: React.FC = () => {
                       placeholder="Contoh: 65"
                       min={1}
                       max={120}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-105 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 {/* Target Blood Pressure */}
-                <div className="grid grid-cols-2 gap-3 bg-slate-55 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+                <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800">
                   <div>
                     <label className="text-[11px] font-bold text-sky-600 dark:text-sky-400 block mb-1">
                       Target Sistolik (&lt; mmHg)
@@ -381,7 +401,7 @@ export const ProfileModal: React.FC = () => {
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Contoh: Memiliki riwayat alergi obat tertentu, rutin minum Amlodipine..."
                     rows={2}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-105 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none resize-none"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none resize-none"
                   />
                 </div>
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowDown, ArrowUp, Check, LayoutDashboard, Settings2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, LayoutDashboard, Settings2 } from '../icons/AppIcons';
 import type { DashboardSection } from '../../utils/dashboard-preferences';
 
 type Props = { preferences: DashboardSection[]; onChange: (preferences: DashboardSection[]) => void };

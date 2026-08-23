@@ -1,4 +1,4 @@
-/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · Apple Native APK/IPA Archetype */
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · Material 3 Mobile Archetype */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouterState, useNavigate } from '@tanstack/react-router';
 import { seedInitialData, db } from './db';
@@ -13,6 +13,7 @@ import { playClickSound, playSuccessChime } from './utils/audio-fx';
 // Layout
 import { Header } from './components/layout/Header';
 import { Navigation, NavTab } from './components/layout/Navigation';
+import { MobileQuickActionsRow } from './components/layout/MobileQuickActionsRow';
 
 // Dashboard & Calendar Components
 import { StatCards } from './components/dashboard/StatCards';
@@ -63,7 +64,7 @@ import { MobileToolsSheet } from './components/layout/MobileToolsSheet';
 // Bluetooth pairing
 import { DevicePairingButton } from './components/bluetooth/DevicePairingButton';
 
-// Gamification
+// Gamification & Analytics Panels
 import { StreakBadges } from './components/gamification/StreakBadges';
 import { LifestyleCorrelation } from './components/analytics/LifestyleCorrelation';
 import { CircadianDippingPanel } from './components/analytics/CircadianDippingPanel';
@@ -73,7 +74,6 @@ import { MedicationAdherencePanel } from './components/analytics/MedicationAdher
 import { DashboardCustomizer } from './components/dashboard/DashboardCustomizer';
 import { loadDashboardPreferences, saveDashboardPreferences, type DashboardSection } from './utils/dashboard-preferences';
 
-// Icons
 import {
   Plus,
   FileText,
@@ -95,8 +95,14 @@ import {
   FileCode,
   FileJson,
   HeartPulse,
-  Stethoscope
-} from 'lucide-react';
+  Stethoscope,
+  ListFilter,
+  Activity,
+  CheckCircle2,
+  ShieldCheck,
+  Zap
+} from './components/icons/AppIcons';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function App() {
   const routerState = useRouterState();
@@ -115,6 +121,8 @@ export function App() {
 
   const [isDbReady, setIsDbReady] = useState(false);
   const [isRestTimerOpen, setIsRestTimerOpen] = useState(false);
+  const [historyViewMode, setHistoryViewMode] = useState<'list' | 'calendar'>('list');
+
   const [dashboardPreferences, setDashboardPreferences] = useState<DashboardSection[]>(() => loadDashboardPreferences());
   const dashboardOrder = useMemo(() => new Map(dashboardPreferences.map((section) => [section.id, section])), [dashboardPreferences]);
   const updateDashboardPreferences = (preferences: DashboardSection[]) => {
@@ -258,19 +266,6 @@ export function App() {
     }
   };
 
-  const handleSpeakLatestReading = () => {
-    playClickSound();
-    const latest = stats.latestReading;
-    const category = latest ? classifyBP(latest.systolic, latest.diastolic) : null;
-    if (!latest) {
-      speakTextIndonesian('Belum ada data pengukuran tekanan darah.');
-      return;
-    }
-    const categoryText = category ? category.label : '';
-    const speechMsg = `Tekanan darah ${activeProfile?.name || 'Pasien'} saat ini adalah ${latest.systolic} per ${latest.diastolic} milimeter raksa, dengan denyut nadi ${latest.pulse} detak per menit. Kategori ${categoryText}.`;
-    speakTextIndonesian(speechMsg);
-  };
-
   const handleManualCacheRefresh = () => {
     playClickSound();
     setDataRefreshing(true);
@@ -284,37 +279,39 @@ export function App() {
         title: 'Cache Database Diperbarui',
         message: 'Memuat data paling mutakhir dari IndexedDB secara real-time.'
       });
-    }, 600);
+    }, 500);
   };
 
   if (!isDbReady) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-500 to-sky-500 flex items-center justify-center animate-bounce shadow-xl shadow-teal-500/30">
-          <Heart className="w-6 h-6 fill-white" />
+        <div className="w-14 h-14 rounded-3xl bg-gradient-to-tr from-teal-500 to-sky-500 flex items-center justify-center animate-bounce shadow-2xl shadow-teal-500/40">
+          <Heart className="w-7 h-7 fill-white text-white" />
         </div>
-        <p className="text-sm font-bold text-slate-400">Memuat AortaLink Personal EHR...</p>
+        <p className="text-sm font-black text-slate-300 tracking-tight">Memuat AortaLink Mobile EHR...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col pb-28 md:pb-8 transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col pb-28 md:pb-12 transition-colors">
       
       {/* Toast Notifications */}
       <ToastContainer />
 
-      {/* Modals */}
+      {/* Primary Reading Form (Material 3 BottomSheet) */}
       <ReadingFormModal />
       <ProfileModal />
       <ExportPdfModal />
       <ReminderModal />
 
-      {/* Apple HIG Clean Header (Only when authenticated & not on landing/privacy/terms) */}
-      {isAuthenticated && screenKey !== 'landing' && screenKey !== 'privacy' && screenKey !== 'terms' && <Header />}
+      {/* Mobile & Desktop Adaptive Top App Bar */}
+      {isAuthenticated && screenKey !== 'landing' && screenKey !== 'privacy' && screenKey !== 'terms' && (
+        <Header onOpenSOS={() => setIsSOSModalOpen(true)} />
+      )}
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6 md:space-y-8">
+      {/* Main Content: Centered, High-Impact Mobile-First Canvas */}
+      <main className="flex-1 max-w-3xl w-full mx-auto px-3.5 sm:px-6 pt-3 md:pt-6 space-y-4 md:space-y-6">
 
         {screenKey === 'privacy' ? (
           <PrivacyPolicyPage />
@@ -334,505 +331,429 @@ export function App() {
           <SettingsPage />
         ) : (
           <>
-        {/* TAB 1: DASHBOARD */}
-        {activeTab === 'dashboard' && (
-          <div className="space-y-4 md:space-y-6 animate-in fade-in duration-300">
-            
-            {/* Apple SwiftUI Pull/Tap-to-Refresh & Cache Info Bar */}
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-1 text-xs">
-              <DashboardCustomizer preferences={dashboardPreferences} onChange={updateDashboardPreferences} />
-              <div className="flex items-center gap-2 text-slate-400 font-semibold min-w-0">
-                <Clock className="w-3.5 h-3.5" />
-                <span className="min-w-0 truncate">Cache: {cacheTimestamp ? `Terakhir sinkron ${new Date(cacheTimestamp).toLocaleTimeString('id-ID')}` : 'Belum sinkron'}</span>
-              </div>
-              <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
-                <MongoAtlasSyncBadge />
-                <button
-                  type="button"
-                  onClick={handleManualCacheRefresh}
-                  disabled={isDataRefreshing}
-                  className="inline-flex items-center gap-2 font-bold text-teal-600 dark:text-teal-400 hover:underline active:scale-95 transition-all"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isDataRefreshing ? 'animate-spin' : ''}`} />
-                  {isDataRefreshing ? 'Menyinkronkan...' : 'Segarkan Data'}
-                </button>
-              </div>
-            </div>
-
-            {/* Quick Rest Protocol Banner */}
-            <div className="hallmark-card p-4 md:p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-gradient-to-r from-teal-500/10 via-sky-500/10 to-transparent border border-teal-500/30">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="p-2 rounded-2xl bg-teal-500 text-white shadow-md shadow-teal-500/20 shrink-0">
-                  <Timer className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-xs font-black text-slate-900 dark:text-slate-100">
-                    Protokol Istirahat Medis (5 Menit)
-                  </h4>
-                  <p className="text-[11px] leading-4 text-slate-500 dark:text-slate-400">
-                    Rilekskan pikiran dan tubuh sebelum melakukan pengukuran tekanan darah.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  playClickSound();
-                  setIsRestTimerOpen(true);
-                }}
-                className="hallmark-button-secondary px-4 py-3 text-xs shrink-0 font-bold active:scale-95 min-h-11"
-              >
-                Mulai Timer
-              </button>
-            </div>
-
-            {/* AI Clinical Decision Support System (CDSS) & FHIR R4 Banner */}
-            <CdssAlertBanner
-              alerts={clinicalAlerts}
-              dippingReport={dippingReport}
-              fhirCount={(rawReadings?.length || 0) + (labResults?.length || 0)}
-              onOpenFhirInspector={() => setIsFhirModalOpen(true)}
-            />
-
-            {/* Clinical Alert Auto-Flagging Banner */}
-            <ClinicalAlertBanner alerts={clinicalAlerts} />
-
-            {/* Emergency Crisis Alert */}
-            <EmergencyAlert latestReading={stats.latestReading} />
-
-            {/* Loader / Stat Cards */}
-            <div data-dashboard-section="statcards" style={sectionStyle('statcards')}>
-            {isLoading || isDataRefreshing ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
-                <div className="md:col-span-2">
-                  <ShimmerSkeletonCard type="stats" />
-                </div>
-                <ShimmerSkeletonCard type="stats" />
-              </div>
-            ) : (
-              <StatCards stats={stats} onOpenNewReading={() => openReadingModal()} />
-            )}
-            </div>
-
-            {/* Gamification: Streak & Badges */}
-            {!isLoading && !isDataRefreshing && (
-              <>
-                <div data-dashboard-section="streakbadges" style={sectionStyle('streakbadges')}><StreakBadges /></div>
-                <details data-dashboard-section="lifestylecorrelation" style={sectionStyle('lifestylecorrelation')}  className="group hallmark-card p-4 md:p-5">
-                  <summary className="cursor-pointer font-extrabold text-sm text-slate-800 dark:text-slate-100">Korelasi Gaya Hidup &amp; Tekanan Darah</summary>
-                  <div className="mt-4"><LifestyleCorrelation /></div>
-                </details>
-
-                {/* Medication Adherence Panel */}
-                <div data-dashboard-section="medadherence" style={sectionStyle('medadherence')}>
-                  <MedicationAdherencePanel />
-                </div>
-
-                {/* Circadian Dipping Analysis Panel */}
-                <div data-dashboard-section="circadiandipping" style={sectionStyle('circadiandipping')}>
-                  <CircadianDippingPanel readings={rawReadings || []} />
-                </div>
-              </>
-            )}
-
-            {/* Apple Health Style Category Breakdown */}
-            <div data-dashboard-section="applerings" style={sectionStyle('applerings')}>
-            {isLoading || isDataRefreshing ? (
-              <ShimmerSkeletonCard type="stats" />
-            ) : (
-              <AppleHealthRings readings={rawReadings || []} />
-            )}
-            </div>
-
-            {/* SwiftUI Quick Tools & Accessibility Grid */}
-            <div className="space-y-4 md:space-y-3">
-              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                Peralatan &amp; Pelacak Kebiasaan Gaya Hidup
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
+            {/* ========================================================= */}
+            {/* TAB 1: RINGKASAN (DASHBOARD)                              */}
+            {/* ========================================================= */}
+            {activeTab === 'dashboard' && (
+              <div className="space-y-4 animate-in fade-in duration-200">
                 
-                {/* Lab Parameters (Renal & Gout) */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClickSound();
-                    setIsLabModalOpen(true);
-                  }}
-                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer min-h-32 border-purple-200 dark:border-purple-900/60 bg-purple-50/20 dark:bg-purple-950/10"
-                >
-                  <div className="p-2 rounded-xl bg-purple-500 text-white w-fit shadow-md shadow-purple-500/20">
-                    <FlaskConical className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Lab Sekunder</h4>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Asam Urat &amp; Ginjal</p>
-                  </div>
-                </button>
-                
-                {/* Bluetooth BP Monitor Pairing */}
-                <DevicePairingButton />
+                {/* Critical Emergency Crisis Alert (Only >=180/120) */}
+                <EmergencyAlert latestReading={stats.latestReading} />
 
-                {/* Habits & Sleep Tracker */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClickSound();
-                    setIsHabitsModalOpen(true);
-                  }}
-                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/20 dark:bg-indigo-950/10 min-h-32"
-                >
-                  <div className="p-2 rounded-xl bg-indigo-500 text-white w-fit shadow-md shadow-indigo-500/20">
-                    <Moon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Kebiasaan &amp; Tidur</h4>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Jam tidur, HP &amp; outdoor</p>
-                  </div>
-                </button>
-
-                {/* Voice Assistant */}
-                <button
-                  type="button"
-                  onClick={handleSpeakLatestReading}
-                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer min-h-32"
-                >
-                  <div className="p-2 rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 w-fit">
-                    <Volume2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Asisten Suara</h4>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Bacakan hasil tensi terakhir</p>
-                  </div>
-                </button>
-
-                {/* Sodium Tracker */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClickSound();
-                    setIsSodiumModalOpen(true);
-                  }}
-                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer min-h-32"
-                >
-                  <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 w-fit">
-                    <Utensils className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Pelacak Garam</h4>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Batas sodium harian DASH</p>
-                  </div>
-                </button>
-
-                {/* Medication Routine */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClickSound();
-                    setIsMedModalOpen(true);
-                  }}
-                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer min-h-32"
-                >
-                  <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 w-fit">
-                    <Pill className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Jadwal Obat</h4>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Disiplin konsumsi dosis</p>
-                  </div>
-                </button>
-
-                {/* SOS Caregiver */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClickSound();
-                    setIsSOSModalOpen(true);
-                  }}
-                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 border-rose-200 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10 cursor-pointer min-h-32"
-                >
-                  <div className="p-2 rounded-xl bg-rose-500 text-white w-fit shadow-md shadow-rose-500/20">
-                    <AlertTriangle className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Kontak Darurat</h4>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Kirim SOS WhatsApp</p>
-                  </div>
-                </button>
-
-                {/* FHIR R4 JSON Inspector */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClickSound();
-                    setIsFhirModalOpen(true);
-                  }}
-                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer min-h-32 border-teal-200 dark:border-teal-900/60 bg-teal-50/20 dark:bg-teal-950/10"
-                >
-                  <div className="p-2 rounded-xl bg-teal-500 text-white w-fit shadow-md shadow-teal-500/20">
-                    <FileCode className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Inspektor FHIR</h4>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Payload HL7 FHIR v4.0.1</p>
-                  </div>
-                </button>
-
-                {/* ASCVD Risk Calculator */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClickSound();
-                    setIsAscvdModalOpen(true);
-                  }}
-                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer min-h-32 border-rose-200 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10"
-                >
-                  <div className="p-2 rounded-xl bg-gradient-to-tr from-rose-500 to-orange-500 text-white w-fit shadow-md shadow-rose-500/20">
-                    <HeartPulse className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Risiko ASCVD</h4>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Kalkulator 10 tahun</p>
-                  </div>
-                </button>
-
-                {/* Clinical Notes Journal */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClickSound();
-                    setIsClinicalNotesModalOpen(true);
-                  }}
-                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer min-h-32 border-violet-200 dark:border-violet-900/60 bg-violet-50/20 dark:bg-violet-950/10"
-                >
-                  <div className="p-2 rounded-xl bg-gradient-to-tr from-violet-500 to-fuchsia-500 text-white w-fit shadow-md shadow-violet-500/20">
-                    <Stethoscope className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Catatan Klinis</h4>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Jurnal SOAP Dokter</p>
-                  </div>
-                </button>
-
-                {/* Backup JSON Importer/Exporter */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClickSound();
-                    setIsJsonBackupModalOpen(true);
-                  }}
-                  className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer min-h-32 border-sky-200 dark:border-sky-900/60 bg-sky-50/20 dark:bg-sky-950/10"
-                >
-                  <div className="p-2 rounded-xl bg-sky-500 text-white w-fit shadow-md shadow-sky-500/20">
-                    <FileJson className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">Ekspor/Impor JSON</h4>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Backup &amp; Pulihkan Data</p>
-                  </div>
-                </button>
-
-              </div>
-            </div>
-
-            {/* Responsive Dashboard Split Layout for Desktop */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 items-start">
-              
-              {/* Left Column: Trend Graph */}
-              <div data-dashboard-section="bptrend" style={sectionStyle('bptrend')} className="lg:col-span-2">
-                {isLoading || isDataRefreshing ? (
-                  <ShimmerSkeletonCard type="chart" />
-                ) : (
-                  <BPTrendChart readings={rawReadings || []} />
-                )}
-              </div>
-
-              {/* Right Column: Recent Readings */}
-              <div data-dashboard-section="recentreadings" style={sectionStyle('recentreadings')} className="space-y-4 md:space-y-4">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 min-w-0">
-                    Catatan Terbaru ({activeProfile?.name || 'Pasien'})
-                  </h3>
-                  {readings.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => handleTabChange('history')}
-                      className="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      Lihat Semua <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
+                {/* Primary Hero Card: Latest Blood Pressure Gauge */}
+                <div data-dashboard-section="statcards" style={sectionStyle('statcards')}>
+                  {isLoading || isDataRefreshing ? (
+                    <ShimmerSkeletonCard type="stats" />
+                  ) : (
+                    <StatCards 
+                      stats={stats} 
+                      onOpenNewReading={() => openReadingModal()}
+                      onOpenRestTimer={() => setIsRestTimerOpen(true)}
+                    />
                   )}
                 </div>
 
-                {isLoading || isDataRefreshing ? (
-                  <ShimmerSkeletonCard type="list" />
-                ) : readings.length > 0 ? (
-                    <div className="space-y-3">
-                    {readings.slice(0, 3).map((r) => (
-                      <ReadingCard
-                        key={r.id}
-                        reading={r}
-                        onEdit={(readingToEdit) => openReadingModal(readingToEdit)}
-                        onDelete={(id) => setDeletingReadingId(id)}
-                      />
-                    ))}
+                {/* Compact Consolidated Clinical Evaluation Notice */}
+                <CdssAlertBanner
+                  alerts={clinicalAlerts}
+                  dippingReport={dippingReport}
+                  fhirCount={(rawReadings?.length || 0) + (labResults?.length || 0)}
+                  onOpenFhirInspector={() => setIsFhirModalOpen(true)}
+                />
+
+                {/* Refined Quick Actions */}
+                <MobileQuickActionsRow
+                  onOpenReading={() => openReadingModal()}
+                  onOpenRestTimer={() => setIsRestTimerOpen(true)}
+                  onOpenMedication={() => setIsMedModalOpen(true)}
+                  onOpenLab={() => setIsLabModalOpen(true)}
+                  onOpenHabits={() => setIsHabitsModalOpen(true)}
+                  onOpenSodium={() => setIsSodiumModalOpen(true)}
+                  onOpenAscvd={() => setIsAscvdModalOpen(true)}
+                  onOpenSOS={() => setIsSOSModalOpen(true)}
+                  onOpenExportPdf={() => openExportPdfModal()}
+                  onOpenClinicalNotes={() => setIsClinicalNotesModalOpen(true)}
+                  onOpenFhir={() => setIsFhirModalOpen(true)}
+                />
+
+                {/* Subtle Sync Indicator */}
+                <div className="flex items-center justify-between px-1 text-xs">
+                  <div className="flex items-center gap-1.5 text-slate-400 font-medium min-w-0">
+                    <Clock className="w-3.5 h-3.5 text-teal-500" />
+                    <span className="truncate">
+                      {cacheTimestamp ? `Sinkron ${new Date(cacheTimestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}` : 'Siap'}
+                    </span>
                   </div>
-                ) : (
-                  <div className="p-6 text-center hallmark-card space-y-2">
-                    <Heart className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto" />
-                    <h4 className="text-xs font-extrabold text-slate-700 dark:text-slate-300">
-                      Jurnal Masih Kosong
-                    </h4>
-                    <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
-                      Aplikasi bebas data mock. Tekan tombol + di bawah untuk memasukkan tensi real.
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <MongoAtlasSyncBadge />
+                    <button
+                      type="button"
+                      onClick={handleManualCacheRefresh}
+                      disabled={isDataRefreshing}
+                      className="inline-flex items-center gap-1.5 font-bold text-teal-600 dark:text-teal-400 active:scale-95 transition-all text-xs"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isDataRefreshing ? 'animate-spin' : ''}`} />
+                      <span>{isDataRefreshing ? 'Sync...' : 'Refresh'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Streak & Gamification */}
+                {!isLoading && !isDataRefreshing && (
+                  <div data-dashboard-section="streakbadges" style={sectionStyle('streakbadges')}>
+                    <StreakBadges />
                   </div>
                 )}
-              </div>
 
-            </div>
+                {/* Blood Pressure Trend Chart */}
+                <div data-dashboard-section="bptrend" style={sectionStyle('bptrend')}>
+                  {isLoading || isDataRefreshing ? (
+                    <ShimmerSkeletonCard type="chart" />
+                  ) : (
+                    <BPTrendChart readings={rawReadings || []} />
+                  )}
+                </div>
 
-          </div>
-        )}
+                {/* Apple Health Proportional Rings */}
+                <div data-dashboard-section="applerings" style={sectionStyle('applerings')}>
+                  {isLoading || isDataRefreshing ? (
+                    <ShimmerSkeletonCard type="stats" />
+                  ) : (
+                    <AppleHealthRings readings={rawReadings || []} />
+                  )}
+                </div>
 
-        {/* TAB 2: HISTORY & CALENDAR VIEW */}
-        {activeTab === 'history' && (
-          <div className="space-y-6 animate-in fade-in duration-300">
-            <div>
-              <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
-                Jurnal &amp; Kalender Tekanan Darah Real
-              </h2>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                Kalender bulanan interaktif, pencarian tanggal terdahulu, dan pencarian data
-              </p>
-            </div>
+                {/* Recent Readings List */}
+                <div data-dashboard-section="recentreadings" style={sectionStyle('recentreadings')} className="space-y-3 pt-1">
+                  <div className="flex items-center justify-between px-1">
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Catatan Terakhir ({activeProfile?.name || 'Pasien'})
+                    </h3>
+                    {readings.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleTabChange('history')}
+                        className="text-xs font-black text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1"
+                      >
+                        Buka Jurnal <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
 
-            {/* Interactive Calendar System */}
-            <CalendarView readings={rawReadings || []} />
+                  {isLoading || isDataRefreshing ? (
+                    <ShimmerSkeletonCard type="list" />
+                  ) : readings.length > 0 ? (
+                    <div className="space-y-2.5">
+                      {readings.slice(0, 3).map((r) => (
+                        <ReadingCard
+                          key={r.id}
+                          reading={r}
+                          onEdit={(readingToEdit) => openReadingModal(readingToEdit)}
+                          onDelete={(id) => setDeletingReadingId(id)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center m3-surface-card space-y-2">
+                      <Heart className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto" />
+                      <h4 className="text-xs font-black text-slate-700 dark:text-slate-300">
+                        Jurnal Masih Kosong
+                      </h4>
+                      <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
+                        Tekan tombol (+) di bawah untuk mencatat tensi pertama.
+                      </p>
+                    </div>
+                  )}
+                </div>
 
-            {/* History Filter Bar */}
-            <HistoryFilter />
-
-            {/* Readings List Grid */}
-            {isLoading || isDataRefreshing ? (
-              <ShimmerSkeletonCard type="list" />
-            ) : readings.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                {readings.map((r) => (
-                  <ReadingCard
-                    key={r.id}
-                    reading={r}
-                    onEdit={(readingToEdit) => openReadingModal(readingToEdit)}
-                    onDelete={(id) => setDeletingReadingId(id)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="p-10 text-center hallmark-card space-y-2">
-                <CalendarIcon className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto" />
-                <h4 className="text-sm font-extrabold text-slate-700 dark:text-slate-300">
-                  Tidak Ada Catatan
-                </h4>
-                <p className="text-xs text-slate-400">
-                  Tidak ditemukan data yang sesuai dengan pencarian.
-                </p>
               </div>
             )}
-          </div>
-        )}
 
-        {/* TAB 3: DOCTOR REPORTS */}
-        {activeTab === 'reports' && (
-          <div className="space-y-6 animate-in fade-in duration-300 max-w-3xl mx-auto">
-            <WeeklyReport />
-            <div className="text-center space-y-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 inline-flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> Laporan Medis PDF
-              </span>
-              <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">
-                Ekspor Laporan Dokter
-              </h2>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Format bersih 1-klik untuk dokter konsultasi.
-              </p>
-            </div>
+            {/* ========================================================= */}
+            {/* TAB 2: JURNAL (HISTORY & CALENDAR)                        */}
+            {/* ========================================================= */}
+            {activeTab === 'history' && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                
+                {/* Segmented Controller: Daftar List vs Kalender */}
+                <div className="m3-segmented-container">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setHistoryViewMode('list');
+                    }}
+                    className={`m3-segmented-item flex items-center justify-center gap-1.5 ${historyViewMode === 'list' ? 'm3-segmented-item-active' : 'text-slate-500 dark:text-slate-400'}`}
+                  >
+                    <ListFilter size={14} />
+                    <span>Daftar Catatan Jurnal</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setHistoryViewMode('calendar');
+                    }}
+                    className={`m3-segmented-item flex items-center justify-center gap-1.5 ${historyViewMode === 'calendar' ? 'm3-segmented-item-active' : 'text-slate-500 dark:text-slate-400'}`}
+                  >
+                    <CalendarIcon size={14} />
+                    <span>Kalender Medis</span>
+                  </button>
+                </div>
 
-            <div className="p-6 hallmark-card text-center space-y-4 bg-gradient-to-br from-white via-sky-50/40 to-teal-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-sky-500 to-teal-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-sky-500/30">
-                <FileText className="w-7 h-7" />
+                {/* Search & Filter Bar */}
+                <HistoryFilter />
+
+                {historyViewMode === 'calendar' ? (
+                  /* Interactive Calendar View */
+                  <CalendarView readings={rawReadings || []} />
+                ) : (
+                  /* Readings List */
+                  <div className="space-y-2.5">
+                    {isLoading || isDataRefreshing ? (
+                      <ShimmerSkeletonCard type="list" />
+                    ) : readings.length > 0 ? (
+                      <div className="space-y-2.5">
+                        {readings.map((r) => (
+                          <ReadingCard
+                            key={r.id}
+                            reading={r}
+                            onEdit={(readingToEdit) => openReadingModal(readingToEdit)}
+                            onDelete={(id) => setDeletingReadingId(id)}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center m3-surface-card space-y-2">
+                        <CalendarIcon className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto" />
+                        <h4 className="text-sm font-black text-slate-700 dark:text-slate-300">
+                          Tidak Ada Catatan
+                        </h4>
+                        <p className="text-xs text-slate-400">
+                          Tidak ditemukan data yang sesuai dengan pencarian.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                Mencakup identitas <strong>{activeProfile?.name}</strong>, ringkasan rata-rata, rentang min/max, pengelompokkan AHA, dan tabel tensi asli.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  playClickSound();
-                  openExportPdfModal();
-                }}
-                className="hallmark-button-primary w-full py-3.5 text-xs inline-flex items-center justify-center gap-2 active:scale-95 transition-all"
-              >
-                <Download className="w-4 h-4" />
-                Buka Generator Laporan PDF
-              </button>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* TAB 4: REMINDERS & SCHEDULES */}
-        {activeTab === 'reminders' && (
-          <div className="space-y-4 animate-in fade-in duration-300 max-w-2xl mx-auto">
-            <div className="text-center space-y-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200 inline-flex items-center gap-1">
-                <Bell className="w-3 h-3" /> Alarm Pengingat
-              </span>
-              <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">
-                Jadwal Pengingat Tensi &amp; Obat
-              </h2>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Atur waktu pengingat harian untuk pemeriksaan.
-              </p>
-            </div>
+            {/* ========================================================= */}
+            {/* TAB 3: LAPORAN (REPORTS & INSIGHTS)                       */}
+            {/* ========================================================= */}
+            {activeTab === 'reports' && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                <WeeklyReport />
 
-            <div className="p-6 hallmark-card text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-amber-500/30">
-                <Bell className="w-7 h-7" />
+                {/* PDF Generator Card */}
+                <div className="p-5 m3-card-elevated text-center space-y-3 bg-gradient-to-br from-white via-sky-50/40 to-teal-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-500 to-teal-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-sky-500/25">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
+                      Ekspor Laporan PDF Dokter
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Format terstandar untuk konsultasi dokter ({activeProfile?.name || 'Pasien'}).
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      openExportPdfModal();
+                    }}
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-sky-500 to-teal-500 text-white font-black text-xs shadow-lg shadow-sky-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Buka Generator PDF
+                  </button>
+                </div>
+
+                {/* ASCVD Risk Card */}
+                <div className="m3-surface-card p-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-2xl bg-rose-500 text-white shadow-md shadow-rose-500/20">
+                      <HeartPulse className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-slate-900 dark:text-slate-100">
+                        Kalkulator Risiko ASCVD 10-Tahun
+                      </h4>
+                      <p className="text-[10px] text-slate-500">
+                        Estimasi risiko penyakit kardiovaskular aterosklerotik
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setIsAscvdModalOpen(true);
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-bold text-xs active:scale-95 border border-rose-200 dark:border-rose-900/60"
+                  >
+                    Hitung
+                  </button>
+                </div>
+
+                {/* Circadian Dipping Nocturnal Panel */}
+                <CircadianDippingPanel readings={rawReadings || []} />
+
+                {/* Lifestyle Correlation */}
+                <details className="group m3-surface-card p-4">
+                  <summary className="cursor-pointer font-black text-xs text-slate-800 dark:text-slate-200">
+                    Korelasi Gaya Hidup &amp; Tekanan Darah
+                  </summary>
+                  <div className="mt-3">
+                    <LifestyleCorrelation />
+                  </div>
+                </details>
               </div>
-              <p className="text-xs text-slate-500">
-                Pengingat akan membunyikan notifikasi lokal browser di waktu yang disesuaikan.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  playClickSound();
-                  openReminderModal();
-                }}
-                className="w-full py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-xl shadow-amber-500/25 inline-flex items-center justify-center gap-2 active:scale-95 transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                Atur Jadwal Pengingat
-              </button>
-            </div>
-          </div>
-        )}
+            )}
 
+            {/* ========================================================= */}
+            {/* TAB 4: TERAPI (MEDICATION & HABITS)                       */}
+            {/* ========================================================= */}
+            {activeTab === 'reminders' && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                
+                {/* Medication Adherence Panel */}
+                <MedicationAdherencePanel />
+
+                {/* Combination Therapy Action Tile */}
+                <div className="m3-card-elevated p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-purple-500 text-white shadow-sm">
+                        <Pill className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-slate-900 dark:text-slate-100">
+                          Resep Kombinasi Terapi Hipertensi
+                        </h4>
+                        <p className="text-[10px] text-slate-500">
+                          Amlodipine (CCB), Candesartan (ARB), Allopurinol
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClickSound();
+                        setIsMedModalOpen(true);
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 font-bold text-xs active:scale-95 border border-purple-200 dark:border-purple-800"
+                    >
+                      Buka Resep
+                    </button>
+                  </div>
+                </div>
+
+                {/* Habit & Sleep Tracker Tile */}
+                <div className="m3-surface-card p-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-indigo-500 text-white shadow-sm">
+                      <Moon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-slate-900 dark:text-slate-100">
+                        Pelacak Tidur &amp; Kebiasaan
+                      </h4>
+                      <p className="text-[10px] text-slate-500">
+                        Durasi tidur, paparan layar &amp; aktivitas luar ruang
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setIsHabitsModalOpen(true);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold text-xs active:scale-95 border border-indigo-200 dark:border-indigo-800"
+                  >
+                    Catat
+                  </button>
+                </div>
+
+                {/* DASH Sodium Tracker Tile */}
+                <div className="m3-surface-card p-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-amber-500 text-white shadow-sm">
+                      <Utensils className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-slate-900 dark:text-slate-100">
+                        Pelacak Garam Harian (Diet DASH)
+                      </h4>
+                      <p className="text-[10px] text-slate-500">
+                        Batas natrium &le; 2.000 mg per hari
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setIsSodiumModalOpen(true);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 font-bold text-xs active:scale-95 border border-amber-200 dark:border-amber-800"
+                  >
+                    Batas DASH
+                  </button>
+                </div>
+
+                {/* Reminders / Alarm Manager */}
+                <div className="p-5 m3-card-elevated text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center mx-auto shadow-md shadow-amber-500/25">
+                    <Bell className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">
+                      Jadwal Pengingat Tensi &amp; Obat
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Pengingat otomatis browser pada jam periksa rutin.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      openReminderModal();
+                    }}
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs shadow-lg shadow-amber-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Atur Alarm Pengingat
+                  </button>
+                </div>
+
+              </div>
+            )}
           </>
         )}
 
       </main>
 
-      {/* Floating Bottom Navigation Bar (Hidden on desktop via Tailwind md:hidden inside component) */}
+      {/* Material 3 Bottom Navigation Bar */}
       {showPrimaryNavigation && <Navigation activeTab={activeTab} onTabChange={handleTabChange} />}
 
+      {/* Material 3 Mobile Tools BottomSheet */}
       <MobileToolsSheet />
 
-      {/* Rest Protocol Modal */}
+      {/* Rest Protocol 5-Minute Modal */}
       <BPRestTimerModal
         isOpen={isRestTimerOpen}
         onClose={() => setIsRestTimerOpen(false)}
         onTimerComplete={() => openReadingModal()}
       />
 
-      {/* Modals */}
+      {/* All Subsystem Modals */}
       <SecurityBackupModal
         isOpen={isSecurityModalOpen}
         onClose={() => setIsSecurityModalOpen(false)}
@@ -894,13 +815,13 @@ export function App() {
         onCancel={() => setDeletingReadingId(null)}
       />
 
-      {/* Footer */}
-      <footer className="mt-12 border-t border-slate-200/80 dark:border-slate-800/80 py-6 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1">
-        <p className="font-extrabold text-slate-700 dark:text-slate-300">
-          AortaLink — Personal EHR &amp; Clinical Interoperability Platform
+      {/* Mobile Footer */}
+      <footer className="mt-8 border-t border-slate-200/80 dark:border-slate-800/80 py-4 text-center text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5">
+        <p className="font-bold text-slate-700 dark:text-slate-300">
+          AortaLink — Open-Source AI Personal EHR
         </p>
-        <p className="text-[11px] font-medium">
-          Apple Health Controlled Cache • Clinical Data Normalization • Offline-First Storage
+        <p className="text-[10px] font-medium text-slate-400">
+          HL7 FHIR R4 • Offline-First Dexie v4 • Cloud MongoDB Atlas
         </p>
       </footer>
     </div>

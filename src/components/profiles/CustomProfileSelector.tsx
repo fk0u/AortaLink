@@ -4,7 +4,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { getRelationshipLabel } from '../../utils/formatters';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Plus, Check, User, Users } from 'lucide-react';
+import { ChevronDown, Plus, Check, User, Users } from '../icons/AppIcons';
 
 export const CustomProfileSelector: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,8 +35,15 @@ export const CustomProfileSelector: React.FC = () => {
     });
   };
 
+  const getProfileInitial = (name?: string) => {
+    if (!name) return 'P';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  };
+
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative select-none" ref={dropdownRef}>
       {/* Trigger Button */}
       <button
         type="button"
@@ -46,13 +53,15 @@ export const CustomProfileSelector: React.FC = () => {
         }}
         className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 transition-all active:scale-95 shadow-sm"
       >
-        <span className="text-base leading-none">{activeProfile?.avatar || '👤'}</span>
+        <div className="w-6 h-6 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold text-[10px]">
+          {getProfileInitial(activeProfile?.name)}
+        </div>
         <div className="text-left max-w-[100px] truncate">
-          <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200 block truncate">
+          <span className="text-xs font-black text-slate-800 dark:text-slate-200 block truncate">
             {activeProfile?.name || 'Pasien'}
           </span>
         </div>
-        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Animated Dropdown Menu */}
@@ -63,7 +72,7 @@ export const CustomProfileSelector: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-2 z-50 overflow-hidden"
+            className="absolute left-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-2 z-50 overflow-hidden"
           >
             <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
@@ -90,7 +99,9 @@ export const CustomProfileSelector: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      <span className="text-xl shrink-0">{p.avatar}</span>
+                      <div className="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-700 dark:text-teal-300 flex items-center justify-center font-bold text-xs shrink-0">
+                        {getProfileInitial(p.name)}
+                      </div>
                       <div className="text-left truncate">
                         <span className={`text-xs font-bold block truncate ${isActive ? 'text-teal-700 dark:text-teal-300' : 'text-slate-800 dark:text-slate-200'}`}>
                           {p.name}
@@ -101,7 +112,7 @@ export const CustomProfileSelector: React.FC = () => {
                       </div>
                     </div>
 
-                    {isActive && <Check className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />}
+                    {isActive && <Check size={16} className="text-teal-600 dark:text-teal-400 shrink-0" />}
                   </button>
                 );
               })}
@@ -118,7 +129,7 @@ export const CustomProfileSelector: React.FC = () => {
                 }}
                 className="w-full flex items-center justify-center gap-1.5 p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors active:scale-95"
               >
-                <Plus className="w-4 h-4 text-teal-500" />
+                <Plus size={14} className="text-teal-500" />
                 Kelola &amp; Tambah Profil
               </button>
             </div>

@@ -2,87 +2,66 @@ import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { useProfiles } from '../../hooks/useProfiles';
 import { db } from '../../db';
+import { BodyPosition, ArmUsed, MeasurementContext, BPReading } from '../../types/blood-pressure';
 import { classifyBP } from '../../utils/bp-classifier';
-import { BodyPosition, ArmUsed, MeasurementContext } from '../../types/blood-pressure';
-import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
-import { startVoiceBPRecognition } from '../../utils/voice-recognition';
-import { sanitizeText, validateBPRange } from '../../security/sanitizer';
+import { playClickSound, playSuccessChime, playAlertSound } from '../../utils/audio-fx';
+import { sanitizeText } from '../../security/sanitizer';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Minus, Heart, Calendar, Clock, Tag, MessageSquare, Check, Mic, MicOff } from 'lucide-react';
-import { format } from 'date-fns';
+import { 
+  X, 
+  Plus, 
+  Minus, 
+  Heart, 
+  Calendar, 
+  Clock, 
+  Tag, 
+  MessageSquare, 
+  Check, 
+  Mic, 
+  MicOff, 
+  Sparkles, 
+  Activity 
+} from '../icons/AppIcons';
 
 export const ReadingFormModal: React.FC = () => {
   const isOpen = useAppStore((state) => state.isReadingModalOpen);
-  const editingReading = useAppStore((state) => state.editingReading);
   const closeModal = useAppStore((state) => state.closeReadingModal);
+  const editingReading = useAppStore((state) => state.editingReading);
   const addToast = useAppStore((state) => state.addToast);
-  const { activeProfileId } = useProfiles();
+  const { activeProfileId, activeProfile } = useProfiles();
 
-  // Local form states
-  const [systolic, setSystolic] = useState(120);
-  const [diastolic, setDiastolic] = useState(80);
-  const [pulse, setPulse] = useState(72);
-  const [dateStr, setDateStr] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [timeStr, setTimeStr] = useState(format(new Date(), 'HH:mm'));
+  // Form inputs state
+  const [systolic, setSystolic] = useState<number>(120);
+  const [diastolic, setDiastolic] = useState<number>(80);
+  const [pulse, setPulse] = useState<number>(72);
+  const [timestamp, setTimestamp] = useState<string>(new Date().toISOString().slice(0, 16));
   const [position, setPosition] = useState<BodyPosition>('duduk');
   const [arm, setArm] = useState<ArmUsed>('kiri');
   const [measurementContext, setMeasurementContext] = useState<MeasurementContext>('Home');
-  const [selectedTags, setSelectedTags] = useState<string[]>(['Bangun Tidur']);
-  const [notes, setNotes] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isListeningVoice, setIsListeningVoice] = useState(false);
 
-  const handleStartVoiceDictation = () => {
-    playClickSound();
-    setIsListeningVoice(true);
-    addToast({
-      type: 'info',
-      title: 'Mendengarkan Dikte Suara...',
-      message: 'Ucapkan tensi Anda (Contoh: "Tensi 120 per 80 nadi 72")'
-    });
+  // Web Speech API Voice Dictation State
+  const [isListening, setIsListening] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
 
-    startVoiceBPRecognition(
-      (parsed) => {
-        if (parsed.systolic) setSystolic(parsed.systolic);
-        if (parsed.diastolic) setDiastolic(parsed.diastolic);
-        if (parsed.pulse) setPulse(parsed.pulse);
+  const commonTags = ['Pagi', 'Malam', 'Sesudah Obat', 'Sebelum Obat', 'Klinik / RS', 'Stres / Kerja', 'Olahraga', 'Kopi / Kafein'];
 
-        playSuccessChime();
-        addToast({
-          type: 'success',
-          title: 'Dikte Suara Diterima!',
-          message: `Terdeteksi: ${parsed.systolic || '-'}/${parsed.diastolic || '-'} mmHg${parsed.pulse ? `, Nadi ${parsed.pulse}` : ''}`
-        });
-      },
-      (errorMsg) => {
-        addToast({ type: 'warning', title: 'Dikte Suara', message: errorMsg });
-      },
-      () => {
-        setIsListeningVoice(false);
-      }
-    );
-  };
-
-  // Available tag choices
-  const availableTags = [
-    'Bangun Tidur',
-    'Sebelum Obat',
-    'Sesudah Obat',
-    'Pasca Olahraga',
-    'Stres',
-    'Santai',
-    'Sebelum Tidur',
-    'Setelah Makan'
+  const contextOptions: { value: MeasurementContext; label: string }[] = [
+    { value: 'Home', label: 'Rumah (Rutin)' },
+    { value: 'Clinic/Hospital', label: 'Klinik / RS (White Coat)' },
+    { value: 'Post-Medication', label: 'Sesudah Minum Obat' },
+    { value: 'Stress', label: 'Saat Stres / Lelah' }
   ];
 
+  // Initialize or reset form values
   useEffect(() => {
     if (editingReading) {
       setSystolic(editingReading.systolic);
       setDiastolic(editingReading.diastolic);
       setPulse(editingReading.pulse);
-      const dateObj = new Date(editingReading.timestamp);
-      setDateStr(format(dateObj, 'yyyy-MM-dd'));
-      setTimeStr(format(dateObj, 'HH:mm'));
+      setTimestamp(new Date(editingReading.timestamp).toISOString().slice(0, 16));
       setPosition(editingReading.position || 'duduk');
       setArm(editingReading.arm || 'kiri');
       setMeasurementContext(editingReading.measurement_context || 'Home');
@@ -92,477 +71,498 @@ export const ReadingFormModal: React.FC = () => {
       setSystolic(120);
       setDiastolic(80);
       setPulse(72);
-      setDateStr(format(new Date(), 'yyyy-MM-dd'));
-      setTimeStr(format(new Date(), 'HH:mm'));
+      setTimestamp(new Date().toISOString().slice(0, 16));
       setPosition('duduk');
       setArm('kiri');
       setMeasurementContext('Home');
-      setSelectedTags(['Bangun Tidur']);
+      setSelectedTags([]);
       setNotes('');
     }
   }, [editingReading, isOpen]);
 
-  // Real-time BP Classification Preview
-  const currentCategory = classifyBP(systolic, diastolic);
-
-  const toggleTag = (tag: string) => {
+  // Voice Dictation handler (Web Speech API)
+  const toggleVoiceDictation = () => {
     playClickSound();
-    if (selectedTags.includes(tag)) {
-      setSelectedTags(selectedTags.filter((t) => t !== tag));
-    } else {
-      setSelectedTags([...selectedTags, tag]);
-    }
-  };
-
-  const handleAdjustValue = (setter: React.Dispatch<React.SetStateAction<number>>, delta: number, min: number, max: number) => {
-    playClickSound();
-    setter((prev) => Math.min(max, Math.max(min, prev + delta)));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeProfileId) {
-      addToast({ type: 'error', title: 'Gagal Simpan', message: 'Tidak ada profil aktif.' });
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      addToast({
+        type: 'warning',
+        title: 'Browser Tidak Mendukung Dikte',
+        message: 'Browser Anda belum mendukung Web Speech API.'
+      });
       return;
     }
 
-    // Validation
-    const validation = validateBPRange(systolic, diastolic, pulse);
-    if (!validation.valid) {
-      addToast({ type: 'warning', title: 'Data Tidak Valid', message: validation.error });
+    if (isListening) {
+      setIsListening(false);
       return;
     }
 
     try {
-      setIsSubmitting(true);
-      const timestampIso = new Date(`${dateStr}T${timeStr}:00`).toISOString();
-      const sanitizedNotes = sanitizeText(notes);
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'id-ID';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        addToast({
+          type: 'info',
+          title: 'Mendengarkan...',
+          message: 'Ucapkan contoh: "Tensi 130 per 85 nadi 75"'
+        });
+      };
+
+      recognition.onresult = (event: any) => {
+        const text = event.results[0][0].transcript;
+        setVoiceTranscript(text);
+        
+        // Parse numbers from Indonesian voice text
+        const numbers = text.match(/\d+/g);
+        if (numbers && numbers.length >= 2) {
+          const sys = parseInt(numbers[0], 10);
+          const dia = parseInt(numbers[1], 10);
+          if (sys >= 60 && sys <= 250) setSystolic(sys);
+          if (dia >= 40 && dia <= 160) setDiastolic(dia);
+          if (numbers.length >= 3) {
+            const pul = parseInt(numbers[2], 10);
+            if (pul >= 40 && pul <= 200) setPulse(pul);
+          }
+          playSuccessChime();
+          addToast({
+            type: 'success',
+            title: 'Suara Berhasil Dikenali',
+            message: `Tensi terdeteksi: ${sys}/${dia} mmHg`
+          });
+        } else {
+          setNotes((prev) => (prev ? `${prev} | ${text}` : text));
+          addToast({
+            type: 'info',
+            title: 'Dikte Ditambahkan ke Catatan',
+            message: `"${text}"`
+          });
+        }
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch (e) {
+      setIsListening(false);
+    }
+  };
+
+  const handleTagToggle = (tag: string) => {
+    playClickSound();
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeProfileId) {
+      addToast({ type: 'error', title: 'Profil Belum Dipilih', message: 'Silakan pilih profil pasien terlebih dahulu.' });
+      return;
+    }
+
+    if (systolic < 60 || systolic > 260 || diastolic < 40 || diastolic > 180) {
+      playAlertSound();
+      addToast({ type: 'error', title: 'Nilai Tidak Valid', message: 'Periksa kembali nilai sistolik & diastolik Anda.' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const sanitized = sanitizeText(notes);
 
       if (editingReading && editingReading.id) {
         await db.readings.update(editingReading.id, {
           systolic,
           diastolic,
           pulse,
-          timestamp: timestampIso,
+          timestamp: new Date(timestamp).toISOString(),
           position,
           arm,
+          measurement_context: measurementContext,
           tags: selectedTags,
-          notes: sanitizedNotes,
-          measurement_context: measurementContext
+          notes: sanitized
         });
-
         playSuccessChime();
-        addToast({
-          type: 'success',
-          title: 'Berhasil Diperbarui',
-          message: `Catatan tensi ${systolic}/${diastolic} mmHg telah diperbarui.`
-        });
+        addToast({ type: 'success', title: 'Catatan Diperbarui', message: `Data ${systolic}/${diastolic} mmHg tersimpan.` });
       } else {
         await db.readings.add({
           profileId: activeProfileId,
           systolic,
           diastolic,
           pulse,
-          timestamp: timestampIso,
+          timestamp: new Date(timestamp).toISOString(),
           position,
           arm,
+          measurement_context: measurementContext,
           tags: selectedTags,
-          notes: sanitizedNotes,
-          measurement_context: measurementContext
+          notes: sanitized
         });
-
         playSuccessChime();
-        addToast({
-          type: 'success',
-          title: 'Berhasil Disimpan',
-          message: `Tensi real ${systolic}/${diastolic} mmHg tersimpan di jurnal kesehatan.`
-        });
+        addToast({ type: 'success', title: 'Catatan Tersimpan', message: `Data tensi ${systolic}/${diastolic} mmHg berhasil dicatat.` });
       }
 
       closeModal();
-    } catch (error) {
-      addToast({
-        type: 'error',
-        title: 'Terjadi Kesalahan',
-        message: 'Gagal menyimpan catatan tekanan darah.'
-      });
+    } catch (err) {
+      addToast({ type: 'error', title: 'Gagal Menyimpan', message: 'Terjadi kesalahan sistem saat menyimpan ke database.' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!isOpen) return null;
+  const currentCategory = classifyBP(systolic, diastolic);
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:pb-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ duration: 0.25 }}
-          className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[90vh] flex flex-col"
-        >
-          {/* Header */}
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
-            <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
-              {editingReading ? 'Edit Catatan Tensi Real' : 'Catat Tekanan Darah Real'}
-            </h3>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleStartVoiceDictation}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 ${
-                  isListeningVoice
-                    ? 'bg-rose-500 text-white animate-pulse'
-                    : 'bg-teal-500/10 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20'
-                }`}
-                title="Dikte Suara Hasil Tensi (Web Speech API)"
-              >
-                {isListeningVoice ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                <span>{isListeningVoice ? 'Mendengarkan...' : 'Dikte Suara'}</span>
-              </button>
-              <button
-                onClick={closeModal}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+      {isOpen && (
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          
+          {/* Backdrop Blur */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeModal}
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+          />
 
-          {/* Form Body */}
-          <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-6 flex-1 text-xs">
-            
-            {/* Live Category Preview Badge */}
-            <div className={`p-4 rounded-2xl border ${currentCategory.bgLightClass} ${currentCategory.borderClass} flex items-center justify-between transition-colors duration-300`}>
-              <div className="flex items-center gap-3">
-                <span className={`w-3.5 h-3.5 rounded-full ${currentCategory.colorClass} animate-pulse`}></span>
-                <div>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Klasifikasi AHA:</span>
-                  <div className={`text-sm font-extrabold ${currentCategory.textClass}`}>
-                    {currentCategory.label}
-                  </div>
-                </div>
-              </div>
-              <span className="text-xl font-black text-slate-900 dark:text-slate-100">
-                {systolic} / {diastolic}
-              </span>
-            </div>
+          {/* Material 3 Bottom Sheet / Modal Card */}
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-[32px] border border-slate-200/90 dark:border-slate-800 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col z-10"
+          >
+            {/* Grabber Handle */}
+            <div className="m3-bottom-sheet-grabber sm:hidden" />
 
-            {/* Systolic & Diastolic Steppers / Inputs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              
-              {/* Systolic Control */}
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">
-                    Sistolik (Atas)
-                  </label>
-                  <span className="text-[10px] text-slate-400 font-semibold">mmHg</span>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleAdjustValue(setSystolic, -1, 50, 250)}
-                    className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-lg shadow-sm hover:bg-slate-100 active:scale-90 transition-all"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <input
-                    type="number"
-                    value={systolic}
-                    onChange={(e) => setSystolic(Number(e.target.value))}
-                    min={50}
-                    max={250}
-                    className="w-20 text-center text-3xl font-black text-slate-900 dark:text-slate-100 bg-transparent focus:outline-none"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleAdjustValue(setSystolic, +1, 50, 250)}
-                    className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-lg shadow-sm hover:bg-slate-100 active:scale-90 transition-all"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="flex justify-center gap-1.5 pt-1">
-                  {[-5, +5].map((val) => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => handleAdjustValue(setSystolic, val, 50, 250)}
-                      className="px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors"
-                    >
-                      {val > 0 ? `+${val}` : val}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Diastolic Control */}
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400">
-                    Diastolik (Bawah)
-                  </label>
-                  <span className="text-[10px] text-slate-400 font-semibold">mmHg</span>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleAdjustValue(setDiastolic, -1, 40, 150)}
-                    className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-lg shadow-sm hover:bg-slate-100 active:scale-90 transition-all"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <input
-                    type="number"
-                    value={diastolic}
-                    onChange={(e) => setDiastolic(Number(e.target.value))}
-                    min={40}
-                    max={150}
-                    className="w-20 text-center text-3xl font-black text-slate-900 dark:text-slate-100 bg-transparent focus:outline-none"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleAdjustValue(setDiastolic, +1, 40, 150)}
-                    className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-lg shadow-sm hover:bg-slate-100 active:scale-90 transition-all"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="flex justify-center gap-1.5 pt-1">
-                  {[-5, +5].map((val) => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => handleAdjustValue(setDiastolic, val, 40, 150)}
-                      className="px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors"
-                    >
-                      {val > 0 ? `+${val}` : val}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-
-            {/* Pulse Rate Control */}
-            <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
-                  <Heart className="w-5 h-5 fill-rose-500/20" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Denyut Nadi (Pulse)
-                  </div>
-                  <div className="text-[10px] text-slate-400">Detak per menit (BPM)</div>
-                </div>
-              </div>
-
+            {/* Header */}
+            <div className="px-5 pt-3 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleAdjustValue(setPulse, -1, 30, 220)}
-                  className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-sm shadow-sm"
-                >
-                  <Minus className="w-3.5 h-3.5" />
-                </button>
-                <input
-                  type="number"
-                  value={pulse}
-                  onChange={(e) => setPulse(Number(e.target.value))}
-                  min={30}
-                  max={220}
-                  className="w-14 text-center text-xl font-bold text-slate-900 dark:text-slate-100 bg-transparent focus:outline-none"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => handleAdjustValue(setPulse, +1, 30, 220)}
-                  className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-sm shadow-sm"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Date & Time Selectors */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" /> Tanggal
-                </label>
-                <input
-                  type="date"
-                  value={dateStr}
-                  onChange={(e) => setDateStr(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" /> Waktu
-                </label>
-                <input
-                  type="time"
-                  value={timeStr}
-                  onChange={(e) => setTimeStr(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Body Position & Arm Selectors */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 block">
-                  Posisi Tubuh
-                </label>
-                <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                  {(['duduk', 'baring', 'berdiri'] as BodyPosition[]).map((pos) => (
-                    <button
-                      key={pos}
-                      type="button"
-                      onClick={() => {
-                        playClickSound();
-                        setPosition(pos);
-                      }}
-                      className={`py-1.5 rounded-lg text-[11px] font-semibold capitalize transition-all ${
-                        position === pos
-                          ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm'
-                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
-                      }`}
-                    >
-                      {pos}
-                    </button>
-                  ))}
+                <div className="w-8 h-8 rounded-xl bg-teal-500 text-white flex items-center justify-center font-bold">
+                  <Activity size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-slate-100 leading-tight">
+                    {editingReading ? 'Edit Catatan Tensi' : 'Catat Tekanan Darah'}
+                  </h3>
+                  <span className="text-[11px] font-bold text-teal-600 dark:text-teal-400">
+                    Profil: {activeProfile?.name || 'Pasien'}
+                  </span>
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 block">
-                  Lengan Diukur
-                </label>
-                <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                  {(['kiri', 'kanan'] as ArmUsed[]).map((a) => (
-                    <button
-                      key={a}
-                      type="button"
-                      onClick={() => {
-                        playClickSound();
-                        setArm(a);
-                      }}
-                      className={`py-1.5 rounded-lg text-[11px] font-semibold capitalize transition-all ${
-                        arm === a
-                          ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm'
-                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
-                      }`}
-                    >
-                      {a}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex items-center gap-1.5">
+                {/* Voice Input Button */}
+                <button
+                  type="button"
+                  onClick={toggleVoiceDictation}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                    isListening
+                      ? 'bg-rose-500 text-white animate-bounce shadow-md shadow-rose-500/30'
+                      : 'bg-teal-50 dark:bg-teal-950 text-teal-600 dark:text-teal-400 border border-teal-200 dark:border-teal-800'
+                  }`}
+                  title="Dikte Suara Hasil Pengukuran"
+                >
+                  {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  aria-label="Tutup modal"
+                >
+                  <X size={18} />
+                </button>
               </div>
             </div>
 
-            {/* Measurement Context (White-Coat Hypertension Protection) */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Konteks Pengukuran Vital
-                </label>
-                <span className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">
-                  Proteksi Sindrom Jas Putih
+            {/* Scrollable Form Body */}
+            <form onSubmit={handleSave} className="overflow-y-auto px-5 py-4 space-y-4 flex-1">
+              
+              {/* Category Live Preview Badge */}
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                    Kategori Klinis AHA
+                  </span>
+                  <span className="text-xs font-black text-slate-800 dark:text-slate-200">
+                    {currentCategory.label}
+                  </span>
+                </div>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-black border ${currentCategory.badgeClass}`}>
+                  {systolic}/{diastolic} mmHg
                 </span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl">
-                {[
-                  { key: 'Home', label: 'Rumah (Mandiri)' },
-                  { key: 'Clinic/Hospital', label: 'Klinik / RS' },
-                  { key: 'Post-Medication', label: 'Pasca Obat' },
-                  { key: 'Stress', label: 'Stres / Lelah' }
-                ].map((ctx) => (
-                  <button
-                    key={ctx.key}
-                    type="button"
-                    onClick={() => {
-                      playClickSound();
-                      setMeasurementContext(ctx.key as MeasurementContext);
-                    }}
-                    className={`py-1.5 px-2 rounded-lg text-[10px] font-extrabold transition-all text-center ${
-                      measurementContext === ctx.key
-                        ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
-                    }`}
-                  >
-                    {ctx.label}
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            {/* Mood & Activity Tags */}
-            <div>
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
-                <Tag className="w-3.5 h-3.5" /> Label Kondisi / Aktivitas
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {availableTags.map((tag) => {
-                  const isSelected = selectedTags.includes(tag);
-                  return (
+              {/* Big Stepper Inputs: Systolic, Diastolic, Pulse */}
+              <div className="grid grid-cols-3 gap-2.5">
+                
+                {/* Systolic Stepper */}
+                <div className="p-3 rounded-2xl bg-sky-50/50 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/50 text-center space-y-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-sky-700 dark:text-sky-400 block">
+                    Sistolik
+                  </span>
+                  <div className="text-2xl font-black font-mono text-sky-900 dark:text-sky-100">
+                    {systolic}
+                  </div>
+                  <div className="flex items-center justify-center gap-1">
                     <button
-                      key={tag}
                       type="button"
-                      onClick={() => toggleTag(tag)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${
-                        isSelected
-                          ? 'bg-teal-500 text-white font-semibold'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      onClick={() => {
+                        playClickSound();
+                        setSystolic((v) => Math.max(60, v - 1));
+                      }}
+                      className="w-7 h-7 rounded-lg bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-black shadow-sm flex items-center justify-center active:scale-90"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClickSound();
+                        setSystolic((v) => Math.min(250, v + 1));
+                      }}
+                      className="w-7 h-7 rounded-lg bg-sky-600 text-white font-black shadow-sm flex items-center justify-center active:scale-90"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Diastolic Stepper */}
+                <div className="p-3 rounded-2xl bg-teal-50/50 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-800/50 text-center space-y-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-teal-700 dark:text-teal-400 block">
+                    Diastolik
+                  </span>
+                  <div className="text-2xl font-black font-mono text-teal-900 dark:text-teal-100">
+                    {diastolic}
+                  </div>
+                  <div className="flex items-center justify-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClickSound();
+                        setDiastolic((v) => Math.max(40, v - 1));
+                      }}
+                      className="w-7 h-7 rounded-lg bg-white dark:bg-slate-800 text-teal-700 dark:text-teal-300 font-black shadow-sm flex items-center justify-center active:scale-90"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClickSound();
+                        setDiastolic((v) => Math.min(160, v + 1));
+                      }}
+                      className="w-7 h-7 rounded-lg bg-teal-600 text-white font-black shadow-sm flex items-center justify-center active:scale-90"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Pulse Stepper */}
+                <div className="p-3 rounded-2xl bg-rose-50/50 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-800/50 text-center space-y-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-400 block">
+                    Nadi / BPM
+                  </span>
+                  <div className="text-2xl font-black font-mono text-rose-900 dark:text-rose-100">
+                    {pulse}
+                  </div>
+                  <div className="flex items-center justify-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClickSound();
+                        setPulse((v) => Math.max(40, v - 1));
+                      }}
+                      className="w-7 h-7 rounded-lg bg-white dark:bg-slate-800 text-rose-700 dark:text-rose-300 font-black shadow-sm flex items-center justify-center active:scale-90"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClickSound();
+                        setPulse((v) => Math.min(200, v + 1));
+                      }}
+                      className="w-7 h-7 rounded-lg bg-rose-600 text-white font-black shadow-sm flex items-center justify-center active:scale-90"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Context Selektor (White-Coat Guard) */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <Sparkles size={14} className="text-indigo-500" />
+                  Konteks &amp; Lingkungan Pengukuran
+                </label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {contextOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        playClickSound();
+                        setMeasurementContext(opt.value);
+                      }}
+                      className={`px-2.5 py-2 rounded-xl text-[11px] font-bold transition-all text-left truncate ${
+                        measurementContext === opt.value
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
                       }`}
                     >
-                      {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                      {tag}
+                      {opt.label}
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Notes */}
-            <div>
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1.5">
-                <MessageSquare className="w-3.5 h-3.5" /> Catatan Tambahan (Opsional)
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Contoh: Terasa sedikit pusing setelah berjalan jam 12 siang..."
-                rows={2}
-                className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
-              />
-            </div>
+              {/* Position & Arm Chips */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Posisi Tubuh
+                  </label>
+                  <div className="grid grid-cols-3 gap-1">
+                    {(['duduk', 'baring', 'berdiri'] as BodyPosition[]).map((pos) => (
+                      <button
+                        key={pos}
+                        type="button"
+                        onClick={() => {
+                          playClickSound();
+                          setPosition(pos);
+                        }}
+                        className={`py-1.5 rounded-lg text-[11px] font-bold capitalize ${
+                          position === pos
+                            ? 'bg-teal-500 text-white'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                        }`}
+                      >
+                        {pos}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            {/* Submit Button */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="hallmark-button-primary w-full py-3.5 text-sm"
-              >
-                {isSubmitting ? 'Menyimpan...' : editingReading ? 'Simpan Perubahan' : 'Simpan Catatan Tensi Real'}
-              </button>
-            </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Lengan Pengukuran
+                  </label>
+                  <div className="grid grid-cols-2 gap-1">
+                    {(['kiri', 'kanan'] as ArmUsed[]).map((a) => (
+                      <button
+                        key={a}
+                        type="button"
+                        onClick={() => {
+                          playClickSound();
+                          setArm(a);
+                        }}
+                        className={`py-1.5 rounded-lg text-[11px] font-bold capitalize ${
+                          arm === a
+                            ? 'bg-teal-500 text-white'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                        }`}
+                      >
+                        {a}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-          </form>
-        </motion.div>
-      </div>
+              {/* Timestamp Picker */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <Clock size={14} className="text-teal-500" />
+                  Waktu Pengukuran
+                </label>
+                <input
+                  type="datetime-local"
+                  value={timestamp}
+                  onChange={(e) => setTimestamp(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              {/* Context Tags */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <Tag size={14} className="text-teal-500" />
+                  Label Kondisi Terkait
+                </label>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {commonTags.map((tag) => {
+                    const isSelected = selectedTags.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => handleTagToggle(tag)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                          isSelected
+                            ? 'bg-teal-500 text-white shadow-sm'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Clinical Notes */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <MessageSquare size={14} className="text-teal-500" />
+                  Catatan Tambahan (Opsional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Catatan gejala pusing, obat yang diminum, aktivitas fisik..."
+                  className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                />
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-2 pb-8 sm:pb-3">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-teal-500 to-sky-500 text-white font-black text-sm shadow-xl shadow-teal-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  <Check size={18} strokeWidth={3} />
+                  {isSubmitting ? 'Menyimpan...' : editingReading ? 'Simpan Perubahan' : 'Catat Tensi Sekarang'}
+                </button>
+              </div>
+
+            </form>
+
+          </motion.div>
+
+        </div>
+      )}
     </AnimatePresence>
   );
 };

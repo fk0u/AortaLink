@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../db';
 import { useProfiles } from '../../hooks/useProfiles';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Utensils, AlertCircle, Plus, CheckCircle2, ShieldCheck, Flame } from 'lucide-react';
+import { X, Utensils, AlertCircle, Plus, CheckCircle2, ShieldCheck, Flame } from '../icons/AppIcons';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 
 interface SodiumTrackerModalProps {
@@ -49,7 +49,7 @@ export const SodiumTrackerModal: React.FC<SodiumTrackerModalProps> = ({ isOpen, 
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:pb-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto">
+      <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:pb-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -97,10 +97,18 @@ export const SodiumTrackerModal: React.FC<SodiumTrackerModalProps> = ({ isOpen, 
                   style={{ width: `${pct}%` }}
                 ></div>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                {dailySodiumMg > recommendedLimit
-                  ? '⚠️ Peringatan: Asupan garam Anda melebihi batas rekomendasi DASH (2.000 mg/hari).'
-                  : '✅ Asupan garam Anda masih berada di batas aman DASH diet.'}
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                {dailySodiumMg > recommendedLimit ? (
+                  <>
+                    <AlertCircle size={13} className="text-amber-500 shrink-0" />
+                    <span>Peringatan: Asupan garam melebihi rekomendasi DASH (2.000 mg/hari).</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                    <span>Asupan garam Anda masih berada di batas aman DASH diet.</span>
+                  </>
+                )}
               </p>
             </div>
 

@@ -1,7 +1,7 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 */
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, FileCode, Copy, Check, ShieldCheck, Database, Layers } from 'lucide-react';
+import { X, FileCode, Copy, Check, ShieldCheck, Database, Layers } from '../icons/AppIcons';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db';
 import { useProfiles } from '../../hooks/useProfiles';
@@ -78,7 +78,7 @@ export const FhirResourceInspectorModal: React.FC<FhirResourceInspectorModalProp
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:pb-4 bg-slate-950/80 backdrop-blur-xl overflow-y-auto">
+      <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:pb-4 bg-slate-950/80 backdrop-blur-xl overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}

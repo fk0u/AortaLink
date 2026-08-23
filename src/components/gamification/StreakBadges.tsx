@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Trophy, Flame, Heart } from 'lucide-react';
+import { 
+  Trophy, 
+  Flame, 
+  Heart, 
+  Target, 
+  Pill, 
+  Utensils, 
+  Moon, 
+  Sparkles, 
+  Lock 
+} from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
 import { useProfiles } from '../../hooks/useProfiles';
 import {
@@ -25,8 +35,7 @@ export const StreakBadges: React.FC = () => {
         const state = await refreshGamification(activeProfileId);
         if (mounted) setGamification(state);
       } catch (err) {
-        console.error('[HeartSync] Failed to load gamification:', err);
-        // Fallback to cached state
+        console.error('[AortaLink] Failed to load gamification:', err);
         try {
           const cached = await getGamificationState();
           if (mounted) setGamification(cached);
@@ -44,9 +53,22 @@ export const StreakBadges: React.FC = () => {
     };
   }, [activeProfileId, cacheDirty]);
 
+  const renderBadgeIcon = (iconKey: string, className?: string) => {
+    switch (iconKey) {
+      case 'trophy': return <Trophy size={16} className={className} />;
+      case 'target': return <Target size={16} className={className} />;
+      case 'heart': return <Heart size={16} className={className} />;
+      case 'pill': return <Pill size={16} className={className} />;
+      case 'utensils': return <Utensils size={16} className={className} />;
+      case 'moon': return <Moon size={16} className={className} />;
+      case 'sparkles': return <Sparkles size={16} className={className} />;
+      default: return <Trophy size={16} className={className} />;
+    }
+  };
+
   if (isLoading || !gamification) {
     return (
-      <div className="hallmark-card p-5 animate-pulse">
+      <div className="m3-surface-card p-5 animate-pulse">
         <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded mb-4" />
         <div className="h-8 w-48 bg-slate-200 dark:bg-slate-700 rounded mb-3" />
         <div className="h-4 w-full bg-slate-200 dark:bg-slate-700 rounded" />
@@ -56,11 +78,9 @@ export const StreakBadges: React.FC = () => {
 
   const { streak, longestStreak, score, earnedBadges } = gamification;
 
-  // Map badge keys to badge objects
   const earnedBadgeObjects = BADGES.filter((b) => earnedBadges.includes(b.key));
   const lockedBadges = BADGES.filter((b) => !earnedBadges.includes(b.key));
 
-  // Determine score color
   const scoreColor =
     score >= 80
       ? 'from-emerald-500 to-teal-500'
@@ -69,19 +89,19 @@ export const StreakBadges: React.FC = () => {
         : 'from-rose-500 to-red-500';
 
   return (
-    <div className="hallmark-card p-5 space-y-5">
+    <div className="m3-surface-card p-5 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/20">
-            <Trophy className="w-4 h-4" />
+            <Trophy size={16} />
           </div>
           <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">
-            Kesehatan Jantung
+            Kesehatan Kardiovaskular
           </h3>
         </div>
         <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">
-          Gamifikasi
+          Kepatuhan Rutin
         </span>
       </div>
 
@@ -90,7 +110,7 @@ export const StreakBadges: React.FC = () => {
         {/* Streak Card */}
         <div className="rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/20 border border-orange-200 dark:border-orange-800/50 p-4 text-center">
           <div className="flex items-center justify-center gap-1.5 mb-1">
-            <Flame className="w-5 h-5 text-orange-500" />
+            <Flame size={20} className="text-orange-500" />
             <span className="text-2xl font-black text-orange-600 dark:text-orange-400">
               {streak}
             </span>
@@ -108,13 +128,13 @@ export const StreakBadges: React.FC = () => {
         {/* Heart Health Score */}
         <div className="rounded-2xl bg-gradient-to-br from-teal-50 to-sky-50 dark:from-teal-950/30 dark:to-sky-950/20 border border-teal-200 dark:border-teal-800/50 p-4 text-center">
           <div className="flex items-center justify-center gap-1.5 mb-1">
-            <Heart className="w-5 h-5 text-teal-500" />
+            <Heart size={20} className="text-teal-500" />
             <span className="text-2xl font-black text-teal-600 dark:text-teal-400">
               {score}
             </span>
           </div>
           <p className="text-[10px] font-bold text-teal-600/70 dark:text-teal-400/70">
-            Skor Kesehatan
+            Skor Kepatuhan
           </p>
         </div>
       </div>
@@ -135,13 +155,6 @@ export const StreakBadges: React.FC = () => {
             style={{ width: `${score}%` }}
           />
         </div>
-        <div className="flex justify-between mt-1.5 text-[9px] font-semibold text-slate-400 dark:text-slate-500">
-          <span>0</span>
-          <span>25</span>
-          <span>50</span>
-          <span>75</span>
-          <span>100</span>
-        </div>
       </div>
 
       {/* Earned Badges */}
@@ -154,10 +167,12 @@ export const StreakBadges: React.FC = () => {
             {earnedBadgeObjects.map((badge) => (
               <div
                 key={badge.key}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-950/50 dark:to-yellow-950/50 border border-amber-300 dark:border-amber-700/50 shadow-sm"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/50 shadow-sm"
                 title={badge.description}
               >
-                <span className="text-lg">{badge.emoji}</span>
+                <div className="p-1 rounded-lg bg-amber-500 text-white shrink-0">
+                  {renderBadgeIcon(badge.iconKey)}
+                </div>
                 <div className="text-left leading-tight">
                   <p className="text-[10px] font-extrabold text-amber-800 dark:text-amber-300">
                     {badge.name}
@@ -182,10 +197,12 @@ export const StreakBadges: React.FC = () => {
             {lockedBadges.map((badge) => (
               <div
                 key={badge.key}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 opacity-50"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 opacity-60"
                 title={badge.description}
               >
-                <span className="text-lg grayscale">🔒</span>
+                <div className="p-1 rounded-lg bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 shrink-0">
+                  <Lock size={14} />
+                </div>
                 <div className="text-left leading-tight">
                   <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                     {badge.name}

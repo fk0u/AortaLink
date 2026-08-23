@@ -5,7 +5,7 @@ import { useProfiles } from '../../hooks/useProfiles';
 import { useReadings } from '../../hooks/useReadings';
 import { createWeeklyReport, formatWeeklyRange } from '../../utils/weekly-report';
 import { generateWeeklyReportPDF } from '../../utils/pdf-generator';
-import { Download, TrendingUp, CalendarDays } from 'lucide-react';
+import { Download, TrendingUp, CalendarDays } from '../icons/AppIcons';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export const WeeklyReport: React.FC = () => {

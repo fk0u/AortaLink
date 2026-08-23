@@ -1,7 +1,7 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · Google OAuth Verification Compliant Privacy Policy */
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Heart, ArrowLeft, Lock, Database, UserCheck } from 'lucide-react';
+import { ShieldCheck, Heart, ArrowLeft, Lock, Database, UserCheck } from '../icons/AppIcons';
 import { useNavigate } from '@tanstack/react-router';
 
 export const PrivacyPolicyPage: React.FC = () => {

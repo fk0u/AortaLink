@@ -6,7 +6,7 @@ import { db } from '../../db';
 import { useAppStore } from '../../store/useAppStore';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, HeartPulse, Save, AlertTriangle, CheckCircle2, Info, TrendingUp } from 'lucide-react';
+import { X, HeartPulse, Save, AlertTriangle, CheckCircle2, Info, TrendingUp } from '../icons/AppIcons';
 
 interface AscvdCalculatorModalProps {
   isOpen: boolean;
@@ -63,7 +63,7 @@ export const AscvdCalculatorModal: React.FC<AscvdCalculatorModalProps> = ({ isOp
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:pb-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto">
+      <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:pb-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}

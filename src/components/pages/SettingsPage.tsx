@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useAppStore } from '../../store/useAppStore';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { createBackupFilename, createBackupPayload, downloadJsonFile, normalizeBackupPayload, restoreBackupPayload } from '../../utils/backup';
-import { ArrowLeft, CloudUpload, Download, Palette, RefreshCw, ShieldCheck, Smartphone, Upload, Wifi, Database, FileJson, MoonStar, SunMedium, CircleGauge, Bell, BellOff } from 'lucide-react';
+import { ArrowLeft, CloudUpload, Download, Palette, RefreshCw, ShieldCheck, Smartphone, Upload, Wifi, Database, FileJson, MoonStar, SunMedium, CircleGauge, Bell, BellOff } from '../icons/AppIcons';
 import {
   isNotificationSupported,
   requestNotificationPermission,

@@ -13,7 +13,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   ArrowRight
-} from 'lucide-react';
+} from '../icons/AppIcons';
 import {
   format,
   addMonths,

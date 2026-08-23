@@ -1,7 +1,7 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · Light Mode Minimalist JSON Backup Modal */
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Upload, FileJson, FileUp, Sparkles } from 'lucide-react';
+import { X, Download, Upload, FileJson, FileUp, Sparkles } from '../icons/AppIcons';
 import {
   exportFullAortaLinkJsonPayload,
   createAortaLinkJsonFilename,

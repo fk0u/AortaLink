@@ -1,7 +1,7 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · Google OAuth Verification Compliant Terms of Service */
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Heart, ArrowLeft, ShieldAlert, Layers, CheckCircle2 } from 'lucide-react';
+import { FileText, Heart, ArrowLeft, ShieldAlert, Layers, CheckCircle2 } from '../icons/AppIcons';
 import { useNavigate } from '@tanstack/react-router';
 
 export const TermsOfServicePage: React.FC = () => {

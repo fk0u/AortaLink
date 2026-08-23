@@ -1,12 +1,21 @@
 import React from 'react';
 import { DesktopHeader } from './DesktopHeader';
-import { MobileHeader } from './MobileHeader';
+import { MobileTopAppBar } from './MobileTopAppBar';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onOpenSOS?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onOpenSOS }) => {
   return (
     <>
+      {/* Mobile Top App Bar */}
+      <div className="md:hidden sticky top-0 z-40">
+        <MobileTopAppBar onOpenSOS={onOpenSOS} />
+      </div>
+
+      {/* Desktop Header */}
       <DesktopHeader />
-      <MobileHeader />
     </>
   );
 };

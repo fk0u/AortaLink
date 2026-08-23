@@ -5,7 +5,7 @@ import { useReadings } from '../../hooks/useReadings';
 import { useAppStore } from '../../store/useAppStore';
 import { getRelationshipLabel } from '../../utils/formatters';
 import { playClickSound } from '../../utils/audio-fx';
-import { ArrowLeft, HeartPulse, Settings, SquarePen, Target, Users } from 'lucide-react';
+import { ArrowLeft, HeartPulse, Settings, SquarePen, Target, Users } from '../icons/AppIcons';
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
@@ -15,6 +15,13 @@ export const ProfilePage: React.FC = () => {
 
   const activeTarget = activeProfile ? `${activeProfile.targetSystolic}/${activeProfile.targetDiastolic} mmHg` : '-';
 
+  const getProfileInitial = (name?: string) => {
+    if (!name) return 'P';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  };
+
   return (
     <section className="space-y-6 animate-in fade-in duration-300 max-w-5xl mx-auto">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -23,16 +30,16 @@ export const ProfilePage: React.FC = () => {
             type="button"
             onClick={() => {
               playClickSound();
-              navigate({ to: '/' });
+              navigate({ to: '/dashboard' });
             }}
             className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Kembali ke Dashboard
+            <ArrowLeft size={16} />
+            Kembali ke Ringkasan
           </button>
           <div>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-teal-100 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border border-teal-200 inline-flex items-center gap-1">
-              <Users className="w-3 h-3" /> Profil Keluarga
+              <Users size={12} /> Profil Pasien
             </span>
             <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-2">
               Halaman Profil Pasien
@@ -52,7 +59,7 @@ export const ProfilePage: React.FC = () => {
             }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-gradient-to-r from-teal-500 to-sky-500 text-white font-extrabold text-xs shadow-lg shadow-teal-500/20 active:scale-95 transition-all"
           >
-            <SquarePen className="w-4 h-4" />
+            <SquarePen size={16} />
             Kelola Profil
           </button>
           <button
@@ -63,18 +70,18 @@ export const ProfilePage: React.FC = () => {
             }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-extrabold text-xs text-slate-700 dark:text-slate-200 shadow-sm active:scale-95 transition-all"
           >
-            <Settings className="w-4 h-4" />
+            <Settings size={16} />
             Pengaturan
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-5">
-        <article className="hallmark-card p-6 space-y-5 bg-gradient-to-br from-white via-teal-50/40 to-sky-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
+        <article className="m3-surface-card p-6 space-y-5">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4 min-w-0">
-              <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-teal-500 to-sky-500 text-white flex items-center justify-center text-3xl shadow-xl shadow-teal-500/25 shrink-0">
-                {activeProfile?.avatar || '👤'}
+              <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-teal-500 to-sky-500 text-white flex items-center justify-center font-black text-xl shadow-xl shadow-teal-500/25 shrink-0">
+                {getProfileInitial(activeProfile?.name)}
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-black">Profil Aktif</p>
@@ -95,14 +102,14 @@ export const ProfilePage: React.FC = () => {
             <div className="rounded-2xl p-4 bg-white/80 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Target Tensi</p>
               <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1 flex items-center gap-2">
-                <Target className="w-4 h-4 text-teal-500" />
+                <Target size={16} className="text-teal-500" />
                 {activeTarget}
               </p>
             </div>
             <div className="rounded-2xl p-4 bg-white/80 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Catatan</p>
               <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1 flex items-center gap-2">
-                <HeartPulse className="w-4 h-4 text-rose-500" />
+                <HeartPulse size={16} className="text-rose-500" />
                 {stats.totalReadings}
               </p>
             </div>
@@ -131,7 +138,9 @@ export const ProfilePage: React.FC = () => {
                       : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800'
                   }`}
                 >
-                  <span>{profile.avatar}</span>
+                  <span className="w-5 h-5 rounded-full bg-teal-500/20 text-teal-700 dark:text-teal-300 text-[10px] flex items-center justify-center font-black">
+                    {getProfileInitial(profile.name)}
+                  </span>
                   {profile.name}
                 </button>
               );
@@ -140,7 +149,7 @@ export const ProfilePage: React.FC = () => {
         </article>
 
         <aside className="space-y-4">
-          <div className="hallmark-card p-5 space-y-4">
+          <div className="m3-surface-card p-5 space-y-4">
             <h4 className="text-sm font-black text-slate-900 dark:text-slate-100">
               Ringkasan Profil
             </h4>
@@ -160,7 +169,7 @@ export const ProfilePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="hallmark-card p-5 space-y-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+          <div className="m3-surface-card p-5 space-y-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
             <h4 className="text-sm font-black text-white">Aksi Cepat</h4>
             <p className="text-sm text-slate-300">
               Tambah atau edit detail profil tanpa perlu kembali ke modal utama.
@@ -173,7 +182,7 @@ export const ProfilePage: React.FC = () => {
               }}
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white text-slate-900 font-extrabold text-sm active:scale-95 transition-all"
             >
-              <SquarePen className="w-4 h-4" />
+              <SquarePen size={16} />
               Buka Editor Profil
             </button>
           </div>

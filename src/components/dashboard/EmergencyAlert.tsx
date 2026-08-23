@@ -1,7 +1,7 @@
 import React from 'react';
 import { BPReading } from '../../types/blood-pressure';
 import { classifyBP } from '../../utils/bp-classifier';
-import { AlertOctagon, PhoneCall, ShieldAlert } from 'lucide-react';
+import { AlertOctagon, PhoneCall, ShieldAlert } from '../icons/AppIcons';
 import { motion } from 'framer-motion';
 
 interface EmergencyAlertProps {
@@ -13,12 +13,12 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ latestReading })
 
   const category = classifyBP(latestReading.systolic, latestReading.diastolic);
   
-  // Show alert only for Stage 2 or Crisis
-  if (category.key !== 'crisis' && category.key !== 'stage2') {
+  // Show emergency alert only for true Hypertensive Crisis (>=180/120)
+  if (category.key !== 'crisis') {
     return null;
   }
 
-  const isCrisis = category.key === 'crisis';
+  const isCrisis = true;
 
   return (
     <motion.div
@@ -32,12 +32,12 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ latestReading })
     >
       <div className="flex items-start gap-4">
         <div className={`p-3 rounded-2xl shrink-0 ${isCrisis ? 'bg-purple-800 animate-pulse' : 'bg-rose-800'}`}>
-          {isCrisis ? <AlertOctagon className="w-7 h-7 text-purple-200" /> : <ShieldAlert className="w-7 h-7 text-rose-200" />}
+          {isCrisis ? <AlertOctagon size={28} className="text-purple-200" /> : <ShieldAlert size={28} className="text-rose-200" />}
         </div>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <h4 className="text-base font-extrabold tracking-wide">
-              {isCrisis ? '🚨 PERINGATAN KRISIS HIPERTENSI' : '⚠️ PERHATIAN: HIPERTENSI TAHAP 2'}
+              {isCrisis ? 'PERINGATAN: KRISIS HIPERTENSI' : 'PERHATIAN: HIPERTENSI TAHAP 2'}
             </h4>
             <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 font-bold">
               {latestReading.systolic}/{latestReading.diastolic} mmHg
@@ -56,7 +56,7 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ latestReading })
           href="tel:119"
           className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white text-rose-900 font-bold text-xs shadow-lg hover:bg-slate-100 transition-colors"
         >
-          <PhoneCall className="w-4 h-4 text-rose-600" />
+          <PhoneCall size={16} className="text-rose-600" />
           Panggil Ambulans (119)
         </a>
       </div>

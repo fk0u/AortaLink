@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, AlertTriangle, Phone, Share2, Send, Heart, ShieldAlert } from 'lucide-react';
+import { X, AlertTriangle, Phone, Share2, Send, Heart, ShieldAlert } from '../icons/AppIcons';
 import { useProfiles } from '../../hooks/useProfiles';
 import { useReadings } from '../../hooks/useReadings';
 import { classifyBP } from '../../utils/bp-classifier';
@@ -26,7 +26,7 @@ export const FamilySOSModal: React.FC<FamilySOSModalProps> = ({ isOpen, onClose 
     const cleanPhone = phone.replace(/[^0-9]/g, '');
     const formattedPhone = cleanPhone.startsWith('0') ? `62${cleanPhone.slice(1)}` : cleanPhone;
 
-    const message = `🚨 *DARURAT AORTALINK - KONDISI MEDIS KRITIS* 🚨\n\nNama Pasien: *${activeProfile?.name || 'Pasien'}*\nTekanan Darah Terakhir: *${latest ? `${latest.systolic}/${latest.diastolic} mmHg` : 'Tidak Diketahui'}*\nDenyut Nadi: *${latest?.pulse || '--'} BPM*\nStatus AHA: *${category?.label || 'Krisis Hipertensi'}*\nWaktu Pengukuran: *${latest ? new Date(latest.timestamp).toLocaleString('id-ID') : new Date().toLocaleString('id-ID')}*\n\n_Dimohon untuk segera menghubungi pasien atau datang ke lokasi!_`;
+    const message = `[DARURAT AORTALINK - KONDISI MEDIS KRITIS]\n\nNama Pasien: *${activeProfile?.name || 'Pasien'}*\nTekanan Darah Terakhir: *${latest ? `${latest.systolic}/${latest.diastolic} mmHg` : 'Tidak Diketahui'}*\nDenyut Nadi: *${latest?.pulse || '--'} BPM*\nStatus AHA: *${category?.label || 'Krisis Hipertensi'}*\nWaktu Pengukuran: *${latest ? new Date(latest.timestamp).toLocaleString('id-ID') : new Date().toLocaleString('id-ID')}*\n\n_Dimohon untuk segera menghubungi pasien atau datang ke lokasi!_`;
 
     const waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
     window.open(waUrl, '_blank');
@@ -36,7 +36,7 @@ export const FamilySOSModal: React.FC<FamilySOSModalProps> = ({ isOpen, onClose 
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:pb-4 bg-rose-950/80 backdrop-blur-xl overflow-y-auto">
+      <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:pb-4 bg-rose-950/80 backdrop-blur-xl overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}

@@ -5,7 +5,7 @@ import { db } from '../../db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, FlaskConical, Plus, Trash2, Calendar, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { X, FlaskConical, Plus, Trash2, Calendar, ShieldAlert, CheckCircle2 } from '../icons/AppIcons';
 import { format } from 'date-fns';
 
 interface LabResultsModalProps {

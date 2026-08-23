@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Pause, RotateCcw, Heart, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { X, Play, Pause, RotateCcw, Heart, CheckCircle2, ShieldCheck } from '../icons/AppIcons';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 
 interface BPRestTimerModalProps {
@@ -62,7 +62,7 @@ export const BPRestTimerModal: React.FC<BPRestTimerModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:pb-4 bg-slate-950/70 backdrop-blur-xl overflow-y-auto">
+      <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:pb-4 bg-slate-950/70 backdrop-blur-xl overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -110,10 +110,10 @@ export const BPRestTimerModal: React.FC<BPRestTimerModalProps> = ({
               </div>
               {isRunning && (
                 <span className="inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
-                  {breathPhase === 'Inhale' && '🫁 Tarik Napas (4s)'}
-                  {breathPhase === 'Tahan' && '⏸️ Tahan Napas (4s)'}
-                  {breathPhase === 'Exhale' && '💨 Hembuskan (4s)'}
-                  {breathPhase === 'Santai' && '😌 Santai (4s)'}
+                  {breathPhase === 'Inhale' && 'Tarik Napas (4s)'}
+                  {breathPhase === 'Tahan' && 'Tahan Napas (4s)'}
+                  {breathPhase === 'Exhale' && 'Hembuskan Napas (4s)'}
+                  {breathPhase === 'Santai' && 'Istirahat Santai (4s)'}
                 </span>
               )}
             </div>

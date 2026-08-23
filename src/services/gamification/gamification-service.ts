@@ -20,7 +20,7 @@ export interface GamificationState {
 
 export interface Badge {
   key: string;
-  emoji: string;
+  iconKey: 'trophy' | 'target' | 'heart' | 'pill' | 'utensils' | 'moon' | 'sparkles';
   name: string;
   description: string;
   condition: string;
@@ -31,49 +31,49 @@ export interface Badge {
 export const BADGES: Badge[] = [
   {
     key: 'pemula-sehat',
-    emoji: '🥉',
+    iconKey: 'trophy',
     name: 'Pemula Sehat',
     description: 'Mencatat tensi 3 hari berturut-turut',
     condition: 'streak_3',
   },
   {
     key: 'pejuang-tensi',
-    emoji: '🥈',
+    iconKey: 'target',
     name: 'Pejuang Tensi',
     description: 'Mencatat tensi 7 hari berturut-turut',
     condition: 'streak_7',
   },
   {
     key: 'master-jantung',
-    emoji: '🥇',
+    iconKey: 'heart',
     name: 'Master Jantung',
     description: 'Mencatat tensi 30 hari berturut-turut',
     condition: 'streak_30',
   },
   {
     key: 'disiplin-obat',
-    emoji: '💊',
+    iconKey: 'pill',
     name: 'Disiplin Obat',
     description: 'Log obat 7 hari berturut',
     condition: 'med_7',
   },
   {
     key: 'sadar-garam',
-    emoji: '🧂',
+    iconKey: 'utensils',
     name: 'Sadar Garam',
     description: 'Track sodium 7 hari berturut',
     condition: 'sodium_7',
   },
   {
     key: 'tidur-cukup',
-    emoji: '🌙',
+    iconKey: 'moon',
     name: 'Tidur Cukup',
     description: 'Track tidur 7 hari berturut',
     condition: 'sleep_7',
   },
   {
     key: 'komplit',
-    emoji: '⭐',
+    iconKey: 'sparkles',
     name: 'Komplit',
     description: 'Semua pelacak aktif selama 7 hari',
     condition: 'all_trackers_7',

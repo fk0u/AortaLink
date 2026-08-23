@@ -21,7 +21,7 @@ export class PredictiveAlertEngine {
 
     let recommendedAction = 'Kondisi stabil. Lanjutkan pemantauan rutin dan jaga gaya hidup sehat.';
     if (hasCriticalAnomaly) {
-      recommendedAction = '⚠️ TERDETEKSI ANOMALI KRITIS: Konsultasikan segera dengan Dokter Spesialis Penyakit Dalam (Sp.PD) untuk evaluasi dosis terapi!';
+      recommendedAction = 'TERDETEKSI ANOMALI KRITIS: Konsultasikan segera dengan Dokter Spesialis Penyakit Dalam (Sp.PD) untuk evaluasi dosis terapi!';
     } else if (alerts.length > 0) {
       recommendedAction = 'Perhatikan peringatan klinis yang aktif dan pastikan konsumsi obat sesuai jadwal (CCB Pagi / ARB Malam).';
     }

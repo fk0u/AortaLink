@@ -1,7 +1,18 @@
 import React from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpRight, Bell, FileText, Settings, UserRound, X } from 'lucide-react';
+import { 
+  X, 
+  UserRound, 
+  Settings, 
+  Bell, 
+  FileText, 
+  Database, 
+  ShieldCheck, 
+  Plus,
+  BrainCircuit,
+  Sparkles
+} from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
 import { playClickSound } from '../../utils/audio-fx';
 
@@ -14,7 +25,7 @@ export const MobileToolsSheet: React.FC = () => {
   const openReminderModal = useAppStore((state) => state.openReminderModal);
   const openExportPdfModal = useAppStore((state) => state.openExportPdfModal);
 
-  const goTo = (to: '/profile' | '/settings' | '/reports' | '/reminders' | '/') => {
+  const goTo = (to: '/profile' | '/settings' | '/reports' | '/reminders' | '/backup' | '/') => {
     playClickSound();
     closeSheet();
     navigate({ to });
@@ -24,10 +35,10 @@ export const MobileToolsSheet: React.FC = () => {
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.button
-            type="button"
-            aria-label="Tutup menu"
-            className="fixed inset-0 z-[60] bg-slate-950/55 backdrop-blur-sm md:hidden"
+          {/* Backdrop Blur */}
+          <motion.div
+            aria-label="Tutup menu alat"
+            className="fixed inset-0 z-[60] bg-slate-950/60 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -38,21 +49,31 @@ export const MobileToolsSheet: React.FC = () => {
             }}
           />
 
+          {/* Material 3 Bottom Sheet Container */}
           <motion.section
             role="dialog"
             aria-modal="true"
-            aria-label="Menu tambahan mobile"
-            className="fixed inset-x-0 bottom-0 z-[70] md:hidden px-3 pb-3"
-            initial={{ y: 32, opacity: 0, scale: 0.98 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 32, opacity: 0, scale: 0.98 }}
+            aria-label="Menu Alat Tambahan AortaLink"
+            className="fixed inset-x-0 bottom-0 z-[70] max-h-[85vh] overflow-y-auto px-3 pb-safe pt-2 bg-white dark:bg-slate-900 border-t border-slate-200/90 dark:border-slate-800 rounded-t-[32px] shadow-2xl"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 300, mass: 0.9 }}
           >
-            <div className="mx-auto max-w-md rounded-[28px] border border-slate-200 dark:border-slate-800 bg-white/96 dark:bg-slate-900/96 backdrop-blur-2xl shadow-2xl shadow-slate-950/25 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-4 border-b border-slate-200 dark:border-slate-800">
+            {/* Grabber Handle */}
+            <div className="m3-bottom-sheet-grabber" />
+
+            <div className="max-w-lg mx-auto pb-6 space-y-4">
+              
+              {/* Sheet Header */}
+              <div className="flex items-center justify-between px-2 pt-1 border-b border-slate-100 dark:border-slate-800 pb-3">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Lainnya</p>
-                  <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Aksi Cepat Thumb-Zone</h3>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">
+                    AortaLink Hub
+                  </span>
+                  <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
+                    Peralatan &amp; Pengaturan
+                  </h3>
                 </div>
                 <button
                   type="button"
@@ -60,76 +81,164 @@ export const MobileToolsSheet: React.FC = () => {
                     playClickSound();
                     closeSheet();
                   }}
-                  className="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-200 active:scale-95 transition-all"
-                  aria-label="Tutup menu"
+                  className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 active:scale-95 transition-all"
+                  aria-label="Tutup"
                 >
-                  <X className="w-4 h-4" />
+                  <X size={20} />
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 p-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClickSound();
-                    closeSheet();
-                    openProfileModal();
-                  }}
-                  className="min-h-[88px] rounded-3xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col items-start justify-between p-4 text-left active:scale-95 transition-all"
-                >
-                  <UserRound className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-                  <div>
-                    <p className="text-sm font-black text-slate-900 dark:text-slate-100">Profil</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Kelola anggota</p>
-                  </div>
-                </button>
+              {/* Category 1: Manajemen Akun & Klinis */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-2">
+                  Profil &amp; Rekam Medis
+                </span>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      closeSheet();
+                      openProfileModal();
+                    }}
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 active:scale-[0.98] transition-all text-left"
+                  >
+                    <div className="p-2 rounded-xl bg-teal-500 text-white shrink-0">
+                      <UserRound size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100">Kelola Profil</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">Pasien &amp; Keluarga</p>
+                    </div>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => goTo('/settings')}
-                  className="min-h-[88px] rounded-3xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col items-start justify-between p-4 text-left active:scale-95 transition-all"
-                >
-                  <Settings className="w-5 h-5 text-sky-600 dark:text-sky-400" />
-                  <div>
-                    <p className="text-sm font-black text-slate-900 dark:text-slate-100">Pengaturan</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Tema, PWA, backup</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClickSound();
-                    closeSheet();
-                    openReminderModal();
-                  }}
-                  className="min-h-[88px] rounded-3xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col items-start justify-between p-4 text-left active:scale-95 transition-all"
-                >
-                  <Bell className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                  <div>
-                    <p className="text-sm font-black text-slate-900 dark:text-slate-100">Pengingat</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Atur jadwal</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClickSound();
-                    closeSheet();
-                    openExportPdfModal();
-                  }}
-                  className="min-h-[88px] rounded-3xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col items-start justify-between p-4 text-left active:scale-95 transition-all"
-                >
-                  <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                  <div>
-                    <p className="text-sm font-black text-slate-900 dark:text-slate-100">Laporan</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">PDF dokter</p>
-                  </div>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      closeSheet();
+                      openExportPdfModal();
+                    }}
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 active:scale-[0.98] transition-all text-left"
+                  >
+                    <div className="p-2 rounded-xl bg-sky-500 text-white shrink-0">
+                      <FileText size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100">Laporan PDF</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">Format Dokter</p>
+                    </div>
+                  </button>
+                </div>
               </div>
 
-              <div className="px-4 pb-4 grid grid-cols-2 gap-3">
+              {/* AI & Intelligence */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-2">
+                  Kecerdasan Buatan (AI CDSS)
+                </span>
+                <div className="grid grid-cols-1 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      closeSheet();
+                      useAppStore.getState().openAiModal();
+                    }}
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-900/60 active:scale-[0.98] transition-all text-left"
+                  >
+                    <div className="p-2 rounded-xl bg-teal-600 text-white shrink-0 shadow-sm">
+                      <BrainCircuit size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                        <span>Konsultasi AI Spesialis Penyakit Dalam</span>
+                        <Sparkles size={12} className="text-amber-500" />
+                      </p>
+                      <p className="text-[10px] text-teal-700 dark:text-teal-400 font-semibold">NVIDIA NIM • Model z-ai/glm-5.2</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Category 2: Terapi & Jadwal */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-2">
+                  Terapi &amp; Pengingat
+                </span>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      closeSheet();
+                      openReminderModal();
+                    }}
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 active:scale-[0.98] transition-all text-left"
+                  >
+                    <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0">
+                      <Bell size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100">Alarm Tensi</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">Jadwal Harian</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => goTo('/settings')}
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 active:scale-[0.98] transition-all text-left"
+                  >
+                    <div className="p-2 rounded-xl bg-purple-500 text-white shrink-0">
+                      <Settings size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100">Pengaturan</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">Tema &amp; Preferensi</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Category 3: Ekosistem & Backup */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-2">
+                  Cloud &amp; Keamanan Data
+                </span>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => goTo('/backup')}
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 active:scale-[0.98] transition-all text-left"
+                  >
+                    <div className="p-2 rounded-xl bg-indigo-500 text-white shrink-0">
+                      <Database size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100">Backup JSON</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">Ekspor &amp; Pulihkan</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => goTo('/settings')}
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 active:scale-[0.98] transition-all text-left"
+                  >
+                    <div className="p-2 rounded-xl bg-emerald-500 text-white shrink-0">
+                      <ShieldCheck size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100">Audit Keamanan</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">Hash Chain EMR</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Big Direct Action */}
+              <div className="pt-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -137,20 +246,13 @@ export const MobileToolsSheet: React.FC = () => {
                     closeSheet();
                     openReadingModal();
                   }}
-                  className="min-h-12 rounded-2xl bg-gradient-to-r from-teal-500 to-sky-500 text-white font-extrabold text-sm active:scale-95 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-teal-500 to-sky-500 text-white font-black text-sm shadow-xl shadow-teal-500/25 active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
-                  Catat Tensi
-                  <ArrowUpRight className="w-4 h-4" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => goTo('/')}
-                  className="min-h-12 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-extrabold text-sm active:scale-95 transition-all"
-                >
-                  Dashboard
+                  <Plus size={20} strokeWidth={3} />
+                  Input Pengukuran Tensi Baru
                 </button>
               </div>
+
             </div>
           </motion.section>
         </>

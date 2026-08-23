@@ -5,7 +5,7 @@ import { db } from '../../db';
 import { BackupDataFormat } from '../../types/blood-pressure';
 import { encryptBackupData, decryptBackupData, EncryptedPayload } from '../../utils/crypto-storage';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Lock, Key, ShieldCheck, Download, Upload, FileText, CheckCircle2, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { X, Lock, Key, ShieldCheck, Download, Upload, FileText, CheckCircle2, Eye, EyeOff, AlertTriangle, Database } from '../icons/AppIcons';
 
 interface SecurityBackupModalProps {
   isOpen: boolean;
@@ -193,7 +193,7 @@ export const SecurityBackupModal: React.FC<SecurityBackupModalProps> = ({ isOpen
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:pb-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto">
+      <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:pb-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -361,12 +361,14 @@ export const SecurityBackupModal: React.FC<SecurityBackupModalProps> = ({ isOpen
                         Berkas Terpilih
                       </span>
                       {isEncryptedFile ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300">
-                          🔒 Terenkripsi (AES-GCM)
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 inline-flex items-center gap-1">
+                          <Lock size={12} />
+                          <span>Terenkripsi (AES-GCM)</span>
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
-                          🔓 JSON Standar
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 inline-flex items-center gap-1">
+                          <Database size={12} />
+                          <span>JSON Standar</span>
                         </span>
                       )}
                     </div>

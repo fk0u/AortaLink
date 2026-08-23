@@ -3,7 +3,7 @@ import { useRouterState, useNavigate } from '@tanstack/react-router';
 import { CustomProfileSelector } from '../profiles/CustomProfileSelector';
 import { NavTab } from './Navigation';
 import { playClickSound } from '../../utils/audio-fx';
-import { Heart, LayoutDashboard, History, FileText, Bell, Plus, Settings, UserRound, LogOut, SunMedium, MoonStar } from 'lucide-react';
+import { Heart, LayoutDashboard, History, FileText, Bell, Plus, Settings, UserRound, LogOut, SunMedium, MoonStar } from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -39,11 +39,11 @@ export const DesktopHeader: React.FC = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  const navItems: { id: NavTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'dashboard', label: 'Ringkasan', icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: 'history', label: 'Jurnal Riwayat', icon: <History className="w-4 h-4" /> },
-    { id: 'reports', label: 'Laporan Dokter', icon: <FileText className="w-4 h-4" /> },
-    { id: 'reminders', label: 'Jadwal Pengingat', icon: <Bell className="w-4 h-4" /> },
+  const navItems: { id: NavTab; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
+    { id: 'dashboard', label: 'Ringkasan', icon: LayoutDashboard },
+    { id: 'history', label: 'Jurnal Riwayat', icon: History },
+    { id: 'reports', label: 'Laporan Dokter', icon: FileText },
+    { id: 'reminders', label: 'Jadwal Pengingat', icon: Bell },
   ];
 
   return (
@@ -56,7 +56,7 @@ export const DesktopHeader: React.FC = () => {
           className="flex items-center gap-2.5 cursor-pointer group shrink-0"
         >
           <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-teal-500 to-sky-500 flex items-center justify-center shadow-lg shadow-teal-500/25 group-hover:scale-105 transition-transform">
-            <Heart className="w-5 h-5 text-white fill-white animate-pulse" />
+            <Heart size={20} className="text-white fill-white" />
           </div>
           <div>
             <h1 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none">
@@ -72,6 +72,7 @@ export const DesktopHeader: React.FC = () => {
         <nav className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-full border border-slate-200/80 dark:border-slate-700/80">
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
+            const Icon = item.icon;
             return (
               <button
                 key={item.id}
@@ -83,7 +84,7 @@ export const DesktopHeader: React.FC = () => {
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
-                {item.icon}
+                <Icon size={16} />
                 <span>{item.label}</span>
               </button>
             );
@@ -99,7 +100,7 @@ export const DesktopHeader: React.FC = () => {
             className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 transition-all active:scale-95"
             title={theme === 'dark' ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
           >
-            {theme === 'dark' ? <SunMedium className="w-4 h-4 text-amber-400" /> : <MoonStar className="w-4 h-4 text-slate-600" />}
+            {theme === 'dark' ? <SunMedium size={16} className="text-amber-400" /> : <MoonStar size={16} className="text-slate-600" />}
           </button>
 
           <button
@@ -110,7 +111,7 @@ export const DesktopHeader: React.FC = () => {
             }}
             className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 font-extrabold text-xs transition-all active:scale-95"
           >
-            <UserRound className="w-4 h-4" />
+            <UserRound size={16} />
             Profil
           </button>
 
@@ -122,7 +123,7 @@ export const DesktopHeader: React.FC = () => {
             }}
             className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 font-extrabold text-xs transition-all active:scale-95"
           >
-            <Settings className="w-4 h-4" />
+            <Settings size={16} />
             Pengaturan
           </button>
 
@@ -134,7 +135,7 @@ export const DesktopHeader: React.FC = () => {
             }}
             className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-teal-500 to-sky-500 hover:from-teal-600 hover:to-sky-600 text-white font-extrabold text-xs shadow-md shadow-teal-500/20 active:scale-95 transition-all"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
+            <Plus size={16} strokeWidth={3} />
             Catat Tensi
           </button>
 
@@ -148,7 +149,7 @@ export const DesktopHeader: React.FC = () => {
               className="p-2 rounded-full text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 transition-colors"
               title={`Keluar (${user.name})`}
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut size={16} />
             </button>
           )}
         </div>

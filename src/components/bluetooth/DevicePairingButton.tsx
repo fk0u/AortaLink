@@ -15,7 +15,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Bluetooth, BluetoothOff, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Bluetooth, BluetoothOff, Loader2, CheckCircle2, AlertCircle } from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
 import { useProfiles } from '../../hooks/useProfiles';
 import {

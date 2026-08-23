@@ -138,7 +138,7 @@ export function generateDoctorPDF(
     for (const flag of flags) {
       const bgColor: [number, number, number] = flag.level === 'critical' ? [254, 226, 226] : flag.level === 'warning' ? [254, 243, 199] : [224, 242, 254];
       const textColor: [number, number, number] = flag.level === 'critical' ? [153, 27, 27] : flag.level === 'warning' ? [146, 64, 14] : [12, 74, 110];
-      const symbol = flag.level === 'critical' ? '▲ KRITIS:' : flag.level === 'warning' ? '⚠ PERHATIAN:' : 'ℹ INFO:';
+      const symbol = flag.level === 'critical' ? '[KRITIS]:' : flag.level === 'warning' ? '[PERHATIAN]:' : '[INFO]:';
 
       doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
       doc.roundedRect(14, flagY, 182, 8, 1.5, 1.5, 'F');

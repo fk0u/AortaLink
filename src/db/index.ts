@@ -127,7 +127,7 @@ export async function seedInitialData() {
       id: defaultProfileId,
       name: 'Saya',
       relationship: 'self',
-      avatar: '👤',
+      avatar: 'user',
       targetSystolic: 120,
       targetDiastolic: 80,
       createdAt: new Date().toISOString(),

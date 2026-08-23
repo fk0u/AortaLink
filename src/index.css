@@ -1,5 +1,5 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 */
-/* Hallmark Design System: Anti-AI-Slop Tactile Medical Architecture */
+/* AortaLink Material 3 / Flutter & Jetpack Compose Mobile-First Design System */
 
 @tailwind base;
 @tailwind components;
@@ -7,36 +7,83 @@
 
 @layer base {
   :root {
-    --color-paper: #f8fafc;
-    --color-paper-card: #ffffff;
-    --color-ink: #0f172a;
-    --color-accent: #0284c7;
-    --color-medical: #10b981;
-    --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --m3-surface: #f8fafc;
+    --m3-surface-dim: #f1f5f9;
+    --m3-surface-bright: #ffffff;
+    --m3-surface-container-lowest: #ffffff;
+    --m3-surface-container-low: #f8fafc;
+    --m3-surface-container: #f1f5f9;
+    --m3-surface-container-high: #e2e8f0;
+    --m3-surface-container-highest: #cbd5e1;
+    --m3-on-surface: #0f172a;
+    --m3-on-surface-variant: #475569;
+    --m3-outline: #cbd5e1;
+    --m3-outline-variant: #e2e8f0;
+
+    --m3-primary: #0d9488;
+    --m3-primary-container: #ccfbf1;
+    --m3-on-primary-container: #115e59;
+
+    --m3-secondary: #0284c7;
+    --m3-secondary-container: #e0f2fe;
+    --m3-on-secondary-container: #0369a1;
+
+    --m3-tertiary: #6366f1;
+    --m3-tertiary-container: #e0e7ff;
+    --m3-on-tertiary-container: #3730a3;
+
+    --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
   }
 
   .dark {
-    --color-paper: #090d16;
-    --color-paper-card: #0f172a;
-    --color-ink: #f8fafc;
-    --color-accent: #38bdf8;
-    --color-medical: #34d399;
+    --m3-surface: #090d16;
+    --m3-surface-dim: #050810;
+    --m3-surface-bright: #1e293b;
+    --m3-surface-container-lowest: #0c1220;
+    --m3-surface-container-low: #0f172a;
+    --m3-surface-container: #131d33;
+    --m3-surface-container-high: #1e293b;
+    --m3-surface-container-highest: #334155;
+    --m3-on-surface: #f8fafc;
+    --m3-on-surface-variant: #94a3b8;
+    --m3-outline: #334155;
+    --m3-outline-variant: #1e293b;
+
+    --m3-primary: #2dd4bf;
+    --m3-primary-container: #134e4a;
+    --m3-on-primary-container: #ccfbf1;
+
+    --m3-secondary: #38bdf8;
+    --m3-secondary-container: #0c4a6e;
+    --m3-on-secondary-container: #e0f2fe;
+
+    --m3-tertiary: #818cf8;
+    --m3-tertiary-container: #312e81;
+    --m3-on-tertiary-container: #e0e7ff;
   }
 
   html {
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
     overflow-x: clip;
   }
 
   body {
-    background-color: var(--color-paper);
-    color: var(--color-ink);
+    background-color: var(--m3-surface);
+    color: var(--m3-on-surface);
     font-family: var(--font-display);
     min-height: 100vh;
     overflow-x: clip;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  input, textarea, [contenteditable="true"] {
+    user-select: text;
+    -webkit-user-select: text;
   }
 
   @media (max-width: 767px) {
@@ -44,65 +91,103 @@
       font-size: 15px;
       line-height: 1.45;
     }
-
-    h1 {
-      font-size: 1.5rem;
-      line-height: 1.2;
-    }
-
-    h2 {
-      font-size: 1.125rem;
-      line-height: 1.25;
-    }
-
-    h3 {
-      font-size: 1rem;
-      line-height: 1.3;
-    }
-
-    h4 {
-      font-size: 0.9375rem;
-      line-height: 1.35;
-    }
   }
 }
 
-/* Custom Scrollbar */
+/* Custom Sleek Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 dark:bg-slate-800 rounded-full;
+  @apply bg-slate-300/80 dark:bg-slate-700/80 rounded-full;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-400 dark:bg-slate-700;
+  @apply bg-slate-400 dark:bg-slate-600;
 }
 
-/* Hallmark Tactile Utility Classes */
+/* Safe Area Inset Support for Mobile Browsers & PWAs */
+.pb-safe {
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 1.25rem));
+}
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0.5rem));
+}
+
+/* Material 3 & Jetpack Compose / Flutter Tonal Surface Classes */
+.m3-surface-card {
+  @apply bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 rounded-[24px] shadow-sm hover:shadow-md transition-all duration-200;
+}
+
+.m3-card-elevated {
+  @apply bg-gradient-to-b from-white to-slate-50/60 dark:from-slate-900 dark:to-slate-950/80 border border-slate-200/90 dark:border-slate-800/90 rounded-[28px] shadow-xl shadow-slate-950/5 dark:shadow-black/40 transition-all duration-200;
+}
+
+.m3-card-hero {
+  @apply relative overflow-hidden rounded-[32px] border border-slate-200/90 dark:border-slate-800/90 shadow-2xl transition-all duration-300;
+}
+
+/* Dynamic AHA Blood Pressure Glow Effects */
+.glow-normal {
+  box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.25);
+}
+.glow-elevated {
+  box-shadow: 0 10px 30px -10px rgba(245, 158, 11, 0.25);
+}
+.glow-stage1 {
+  box-shadow: 0 10px 30px -10px rgba(249, 115, 22, 0.28);
+}
+.glow-stage2 {
+  box-shadow: 0 10px 30px -10px rgba(239, 68, 68, 0.32);
+}
+.glow-crisis {
+  box-shadow: 0 10px 35px -8px rgba(190, 18, 60, 0.45);
+}
+
+/* Material 3 Action Chip */
+.m3-chip {
+  @apply inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition-all duration-150 active:scale-95 cursor-pointer border select-none;
+}
+
+/* Material 3 Segmented Button */
+.m3-segmented-container {
+  @apply flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80;
+}
+.m3-segmented-item {
+  @apply flex-1 py-1.5 px-3 rounded-xl text-xs font-bold text-center transition-all duration-200 cursor-pointer select-none active:scale-95;
+}
+.m3-segmented-item-active {
+  @apply bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-md shadow-slate-950/5;
+}
+
+/* Material 3 Floating Action Button (FAB) */
+.m3-fab {
+  @apply w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-500 to-sky-500 text-white flex items-center justify-center shadow-xl shadow-teal-500/35 active:scale-90 transition-all duration-150 focus:outline-none focus:ring-4 focus:ring-teal-500/30;
+}
+
+/* Material 3 Tonal Button */
+.m3-tonal-button {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-extrabold text-xs transition-all duration-150 active:scale-95 cursor-pointer select-none disabled:opacity-50 disabled:pointer-events-none;
+}
+
+/* Material 3 Bottom Sheet Grabber */
+.m3-bottom-sheet-grabber {
+  @apply w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600 mx-auto my-2.5 shrink-0;
+}
+
+/* Legacy Utility Compat */
 .hallmark-card {
-  @apply bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none transition-all duration-200;
+  @apply m3-surface-card;
 }
-
 .hallmark-button-primary {
   @apply bg-gradient-to-r from-teal-600 to-sky-600 hover:from-teal-500 hover:to-sky-500 text-white font-bold rounded-2xl shadow-lg shadow-teal-500/25 active:scale-[0.98] transition-all duration-200 focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
 }
-
 .hallmark-button-secondary {
   @apply bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded-2xl active:scale-[0.98] transition-all duration-200 focus-visible:ring-2 focus-visible:ring-slate-400;
 }
-
-.mobile-surface {
-  @apply px-4 py-4;
-}
-
-.mobile-card {
-  @apply rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 shadow-lg shadow-slate-200/40 dark:shadow-none;
-}
-
 .hallmark-badge {
   @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold border tracking-tight transition-all duration-300;
 }

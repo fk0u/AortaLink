@@ -1,7 +1,7 @@
 import React from 'react';
 import { ClinicalAlert } from '../../types/blood-pressure';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, AlertOctagon, Activity, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, AlertOctagon, Activity, ShieldAlert } from '../icons/AppIcons';
 
 interface ClinicalAlertBannerProps {
   alerts: ClinicalAlert[];

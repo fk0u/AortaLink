@@ -1,9 +1,10 @@
-/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · Light Mode Minimalist Auth Modal with Real MongoDB Atlas Auth */
+/* Hallmark · Light Mode Minimalist Auth Modal with Real MongoDB Atlas Auth & Skip Login Option */
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, LogIn, UserPlus, Heart, Lock, Mail, ShieldCheck, CheckCircle2, RefreshCw } from 'lucide-react';
+import { X, LogIn, UserPlus, Heart, Lock, Mail, ShieldCheck, CheckCircle2, RefreshCw, ArrowRight, Info } from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore, SubscriptionTier } from '../../store/useAuthStore';
+import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         }
 
         await registerWithEmail(name, email, password, selectedTier);
+        playSuccessChime();
         addToast({
           type: 'success',
           title: 'Registrasi MongoDB Atlas Berhasil!',
@@ -52,6 +54,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         });
       } else {
         await loginWithEmail(email, password);
+        playSuccessChime();
         addToast({
           type: 'success',
           title: 'Autentikasi Berhasil!',
@@ -73,6 +76,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const handleGoogleClick = async () => {
     try {
       await loginWithGoogle();
+      playSuccessChime();
       addToast({
         type: 'success',
         title: 'Google OAuth Berhasil!',
@@ -85,6 +89,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
+  const handleSkipLogin = () => {
+    playClickSound();
+    addToast({
+      type: 'info',
+      title: 'Mode Offline-First Aktif',
+      message: 'Anda menggunakan AortaLink secara lokal. Data tersimpan di browser perangkat Anda.'
+    });
+    if (onSuccess) onSuccess();
+    onClose();
+  };
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
@@ -92,20 +107,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden my-auto flex flex-col text-slate-900 dark:text-slate-100 max-h-[90vh]"
+          className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden my-auto flex flex-col text-slate-900 dark:text-slate-100 max-h-[92vh]"
         >
           {/* Header */}
-          <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
+          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-teal-500 to-sky-500 flex items-center justify-center shadow-md shadow-teal-500/20 text-white">
-                <Heart className="w-5 h-5 fill-white" />
+              <div className="w-10 h-10 rounded-2xl bg-teal-600 flex items-center justify-center shadow-md shadow-teal-600/25 text-white">
+                <Heart size={20} className="fill-white" />
               </div>
               <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">
-                  AortaLink SaaS Account
+                  AortaLink EHR Platform
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  {tab === 'login' ? 'Masuk dengan Akun MongoDB Atlas Real' : 'Daftar Akun Baru ke MongoDB Atlas'}
+                  {tab === 'login' ? 'Masuk dengan Akun Cloud' : 'Daftar Akun Baru'}
                 </p>
               </div>
             </div>
@@ -115,17 +130,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               onClick={onClose}
               className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X size={18} />
             </button>
           </div>
 
-          <div className="p-6 space-y-5 overflow-y-auto">
+          <div className="p-6 space-y-4 overflow-y-auto">
+            
             {/* Google OAuth Button */}
             <button
               type="button"
               onClick={handleGoogleClick}
               disabled={isLoading}
-              className="w-full py-3 px-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 font-extrabold text-xs shadow-sm transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50"
+              className="w-full py-3 px-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -138,155 +154,136 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
             <div className="flex items-center gap-3">
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
-              <span className="text-[10px] font-bold uppercase text-slate-400">atau kredensial email</span>
+              <span className="text-[10px] font-bold uppercase text-slate-400">atau email password</span>
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
             </div>
 
             {/* Tab Switcher */}
-            <div className="p-1.5 bg-slate-100/80 dark:bg-slate-800/60 rounded-2xl flex items-center">
+            <div className="p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl flex items-center">
               <button
                 type="button"
                 onClick={() => setTab('login')}
-                className={`flex-1 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   tab === 'login'
-                    ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-sm'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
                     : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
                 }`}
               >
-                <LogIn className="w-4 h-4" />
-                Masuk
+                <LogIn size={13} />
+                <span>Masuk</span>
               </button>
-              
               <button
                 type="button"
                 onClick={() => setTab('register')}
-                className={`flex-1 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                   tab === 'register'
-                    ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-sm'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
                     : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
                 }`}
               >
-                <UserPlus className="w-4 h-4" />
-                Daftar Baru
+                <UserPlus size={13} />
+                <span>Daftar Akun</span>
               </button>
             </div>
 
-            {/* Form Area */}
-            <form onSubmit={handleEmailSubmit} className="space-y-3.5">
+            {/* Form */}
+            <form onSubmit={handleEmailSubmit} className="space-y-3 pt-1">
               {tab === 'register' && (
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Nama Lengkap Pasien / Dokter
+                    Nama Lengkap Pasien / Nakes
                   </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Nama Lengkap Anda"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      disabled={isLoading}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-500"
-                      required
-                    />
-                    <ShieldCheck className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  </div>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Ghani Hendra"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                  />
                 </div>
               )}
 
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Alamat Email
+                  Email
                 </label>
                 <div className="relative">
                   <input
                     type="email"
-                    placeholder="email@contoh.com"
+                    required
+                    placeholder="nama@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    disabled={isLoading}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    required
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   />
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <Mail size={15} className="absolute left-3 top-3 text-slate-400" />
                 </div>
               </div>
 
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Kata Sandi (Password)
+                  Kata Sandi
                 </label>
                 <div className="relative">
                   <input
                     type="password"
-                    placeholder="••••••••"
+                    required
+                    placeholder="Minimal 6 karakter"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    required
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   />
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <Lock size={15} className="absolute left-3 top-3 text-slate-400" />
                 </div>
               </div>
-
-              {tab === 'register' && (
-                <div className="space-y-1.5 pt-1">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Tipe Akses Akun Open-Source
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedTier('pro_ehr')}
-                      className={`p-2.5 rounded-2xl border text-left text-xs transition-all ${
-                        selectedTier === 'pro_ehr'
-                          ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/40 text-teal-950 dark:text-teal-100 font-extrabold'
-                          : 'border-slate-200 dark:border-slate-800 text-slate-600'
-                      }`}
-                    >
-                      <div>Personal Open EHR</div>
-                      <div className="text-[10px] text-teal-600 font-bold">100% Gratis & Open-Source</div>
-                    </button>
-                    
-                    <button
-                      type="button"
-                      onClick={() => setSelectedTier('clinic_tenant')}
-                      className={`p-2.5 rounded-2xl border text-left text-xs transition-all ${
-                        selectedTier === 'clinic_tenant'
-                          ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/40 text-sky-950 dark:text-sky-100 font-extrabold'
-                          : 'border-slate-200 dark:border-slate-800 text-slate-600'
-                      }`}
-                    >
-                      <div>Klinik & Interop</div>
-                      <div className="text-[10px] text-sky-600 font-bold">100% Gratis & Open-Source</div>
-                    </button>
-                  </div>
-                </div>
-              )}
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 rounded-2xl bg-gradient-to-r from-teal-500 to-sky-500 hover:from-teal-600 hover:to-sky-600 text-white font-extrabold text-xs shadow-md shadow-teal-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-3 disabled:opacity-50"
+                className="w-full py-3 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
               >
                 {isLoading ? (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Memproses Kredensial MongoDB...</span>
+                    <RefreshCw size={14} className="animate-spin" />
+                    <span>Memproses Autentikasi...</span>
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>{tab === 'login' ? 'Masuk ke Dashboard Cloud' : 'Daftarkan Akun ke MongoDB Atlas'}</span>
+                    <CheckCircle2 size={14} />
+                    <span>{tab === 'login' ? 'Masuk ke Dashboard Cloud' : 'Daftarkan Akun'}</span>
                   </>
                 )}
               </button>
             </form>
+
+            {/* Skip Login Section with Medical Disclaimer */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+              <div className="p-3 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 space-y-1.5 text-left">
+                <div className="flex items-center gap-1.5 text-amber-900 dark:text-amber-200 font-bold text-xs">
+                  <Info size={14} className="text-amber-600 shrink-0" />
+                  <span>Mode Tamu / Offline-First</span>
+                </div>
+                <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                  <strong>Disclaimer:</strong> Anda dapat menggunakan seluruh fitur aplikasi tanpa akun. Data rekam medis Anda disimpan secara lokal di browser perangkat ini (Dexie.js). Fitur sinkronisasi multi-perangkat MongoDB Atlas dinonaktifkan hingga Anda masuk.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSkipLogin}
+                className="w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs active:scale-95 transition-all flex items-center justify-center gap-2 group"
+              >
+                <span>Lanjutkan Offline (Lewati Login)</span>
+                <ArrowRight size={13} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+
           </div>
 
           {/* Footer Note */}
-          <div className="p-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 text-center text-[10px] text-slate-400 font-medium shrink-0">
-            SHA-256 Hash Protection • MongoDB Atlas Data Sync • SMART on FHIR
+          <div className="p-3 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 text-center text-[10px] text-slate-400 font-medium shrink-0">
+            SHA-256 Hash Protection • MongoDB Atlas Cloud Sync • HL7 FHIR R4
           </div>
         </motion.div>
       </div>

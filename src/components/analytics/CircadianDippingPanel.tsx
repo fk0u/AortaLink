@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { BPReading, CircadianDippingReport } from '../../types/blood-pressure';
+import { BPReading } from '../../types/blood-pressure';
 import { calculateNocturnalDipping, separateCircadianReadings } from '../../utils/advanced-analytics';
 import { motion } from 'framer-motion';
-import { Sun, Moon, Activity, AlertTriangle, CheckCircle2, TrendingDown, ArrowDown, ArrowUp } from 'lucide-react';
+import { Sun, Moon, Activity, AlertTriangle, CheckCircle2, TrendingDown, ArrowUp } from '../icons/AppIcons';
 
 interface CircadianDippingPanelProps {
   readings: BPReading[];
@@ -15,10 +15,10 @@ export const CircadianDippingPanel: React.FC<CircadianDippingPanelProps> = ({ re
   const hasData = daytime.length > 0 && nighttime.length > 0;
 
   const patternConfig = {
-    dipper: { color: 'emerald', icon: CheckCircle2, emoji: '✅' },
-    non_dipper: { color: 'amber', icon: AlertTriangle, emoji: '⚠️' },
-    riser: { color: 'rose', icon: ArrowUp, emoji: '🔴' },
-    extreme_dipper: { color: 'sky', icon: TrendingDown, emoji: '⚡' }
+    dipper: { color: 'emerald', icon: CheckCircle2 },
+    non_dipper: { color: 'amber', icon: AlertTriangle },
+    riser: { color: 'rose', icon: ArrowUp },
+    extreme_dipper: { color: 'sky', icon: TrendingDown }
   };
 
   const cfg = patternConfig[report.pattern] || patternConfig.dipper;
@@ -33,13 +33,13 @@ export const CircadianDippingPanel: React.FC<CircadianDippingPanelProps> = ({ re
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="hallmark-card p-4 md:p-6 space-y-4"
+      className="m3-surface-card p-4 md:p-6 space-y-4"
     >
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/20">
-            <Activity className="w-5 h-5" />
+            <Activity size={18} />
           </div>
           <div>
             <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
@@ -51,20 +51,20 @@ export const CircadianDippingPanel: React.FC<CircadianDippingPanelProps> = ({ re
           </div>
         </div>
         {hasData && (
-          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold border
+          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold border inline-flex items-center gap-1
             ${cfg.color === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : ''}
             ${cfg.color === 'amber' ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800' : ''}
             ${cfg.color === 'rose' ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800' : ''}
             ${cfg.color === 'sky' ? 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800' : ''}
           `}>
-            {cfg.emoji} {report.label}
+            <PatternIcon size={12} /> {report.label}
           </span>
         )}
       </div>
 
       {!hasData ? (
         <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center space-y-2">
-          <Moon className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
+          <Moon size={28} className="text-slate-300 dark:text-slate-600 mx-auto" />
           <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Data Belum Cukup</p>
           <p className="text-[10px] text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
             Diperlukan minimal 1 pengukuran siang hari (06:00-21:59) dan 1 pengukuran malam hari (22:00-05:59) untuk analisis nocturnal dipping.
@@ -77,7 +77,7 @@ export const CircadianDippingPanel: React.FC<CircadianDippingPanelProps> = ({ re
             {/* Daytime */}
             <div className="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
-                <Sun className="w-3.5 h-3.5" /> Siang Hari
+                <Sun size={14} /> Siang Hari
               </div>
               <div className="text-xl font-black text-slate-900 dark:text-slate-100">
                 {report.daytimeAvgSystolic}<span className="text-slate-400 font-bold">/</span>{report.daytimeAvgDiastolic}
@@ -91,7 +91,7 @@ export const CircadianDippingPanel: React.FC<CircadianDippingPanelProps> = ({ re
             {/* Nighttime */}
             <div className="p-4 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/50 space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider">
-                <Moon className="w-3.5 h-3.5" /> Malam Hari
+                <Moon size={14} /> Malam Hari
               </div>
               <div className="text-xl font-black text-slate-900 dark:text-slate-100">
                 {report.nighttimeAvgSystolic}<span className="text-slate-400 font-bold">/</span>{report.nighttimeAvgDiastolic}
@@ -159,7 +159,7 @@ export const CircadianDippingPanel: React.FC<CircadianDippingPanelProps> = ({ re
             ${cfg.color === 'sky' ? 'bg-sky-50 dark:bg-sky-950/30 border-sky-200 dark:border-sky-800/60' : ''}
           `}>
             <div className="flex items-center gap-1.5 font-extrabold text-slate-900 dark:text-slate-100">
-              <PatternIcon className="w-4 h-4 shrink-0" />
+              <PatternIcon size={16} className="shrink-0" />
               {report.description}
             </div>
             <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">

@@ -1,6 +1,6 @@
 import React from 'react';
 import { CustomProfileSelector } from '../profiles/CustomProfileSelector';
-import { Heart, SunMedium, MoonStar } from 'lucide-react';
+import { Heart, SunMedium, MoonStar } from '../icons/AppIcons';
 import { playClickSound } from '../../utils/audio-fx';
 import { useNavigate } from '@tanstack/react-router';
 import { useAppStore } from '../../store/useAppStore';
@@ -28,7 +28,7 @@ export const MobileHeader: React.FC = () => {
           className="flex items-center gap-2 cursor-pointer min-w-0"
         >
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-teal-500 to-sky-500 flex items-center justify-center shadow-md shadow-teal-500/25 shrink-0">
-            <Heart className="w-4.5 h-4.5 text-white fill-white animate-pulse" />
+            <Heart size={20} className="text-white fill-white" />
           </div>
           <div className="min-w-0">
             <span className="block text-sm font-black text-slate-900 dark:text-slate-100 tracking-tight truncate">
@@ -48,7 +48,7 @@ export const MobileHeader: React.FC = () => {
             className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 transition-all active:scale-95"
             title={theme === 'dark' ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
           >
-            {theme === 'dark' ? <SunMedium className="w-4 h-4 text-amber-400" /> : <MoonStar className="w-4 h-4 text-slate-600" />}
+            {theme === 'dark' ? <SunMedium size={16} className="text-amber-400" /> : <MoonStar size={16} className="text-slate-600" />}
           </button>
 
           {/* Custom Apple Profile Selector */}

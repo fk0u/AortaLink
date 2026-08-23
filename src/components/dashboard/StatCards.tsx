@@ -1,229 +1,316 @@
-/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 */
 import React, { useState } from 'react';
 import { BPSummaryStats } from '../../types/blood-pressure';
 import { classifyBP, classifyPulse } from '../../utils/bp-classifier';
 import { formatDateIndonesian } from '../../utils/formatters';
 import { playClickSound } from '../../utils/audio-fx';
-import { Activity, Heart, Calendar, ShieldCheck, Target, BookOpen, Plus, Sparkles, AlertCircle } from 'lucide-react';
+import { speakTextIndonesian } from '../../utils/speech-reader';
+import { 
+  Activity, 
+  Heart, 
+  Calendar, 
+  BookOpen, 
+  Volume2, 
+  HeartPulse
+} from '../icons/AppIcons';
 import { motion } from 'framer-motion';
 import { KnowledgeGuideModal } from '../common/KnowledgeGuideModal';
+import { useProfiles } from '../../hooks/useProfiles';
 
 interface StatCardsProps {
   stats: BPSummaryStats;
   onOpenNewReading: () => void;
+  onOpenRestTimer?: () => void;
 }
 
-export const StatCards: React.FC<StatCardsProps> = ({ stats, onOpenNewReading }) => {
+export const StatCards: React.FC<StatCardsProps> = ({ 
+  stats, 
+  onOpenNewReading
+}) => {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const { activeProfile } = useProfiles();
 
   const latest = stats.latestReading;
   const latestCategory = latest ? classifyBP(latest.systolic, latest.diastolic) : null;
   const pulseStatus = classifyPulse(stats.avgPulse);
 
+  // Mean Arterial Pressure (MAP) = (2 * Diastolic + Systolic) / 3
+  const mapValue = latest ? Math.round((2 * latest.diastolic + latest.systolic) / 3) : null;
+  // Pulse Pressure (PP) = Systolic - Diastolic
+  const pulsePressure = latest ? latest.systolic - latest.diastolic : null;
+
+  const getGlowClass = (catKey?: string) => {
+    switch (catKey) {
+      case 'normal': return 'glow-normal border-emerald-500/30 dark:border-emerald-500/40 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.05]';
+      case 'elevated': return 'glow-elevated border-amber-500/30 dark:border-amber-500/40 bg-amber-500/[0.03] dark:bg-amber-500/[0.05]';
+      case 'stage1': return 'glow-stage1 border-orange-500/30 dark:border-orange-500/40 bg-orange-500/[0.03] dark:bg-orange-500/[0.05]';
+      case 'stage2': return 'glow-stage2 border-rose-500/30 dark:border-rose-500/40 bg-rose-500/[0.03] dark:bg-rose-500/[0.05]';
+      case 'crisis': return 'glow-crisis border-rose-600/40 dark:border-rose-600/50 bg-rose-600/[0.06] dark:bg-rose-600/[0.08]';
+      default: return 'border-teal-500/20 bg-white dark:bg-slate-900';
+    }
+  };
+
+  const handleSpeak = () => {
+    playClickSound();
+    if (!latest) {
+      speakTextIndonesian('Belum ada data pengukuran tekanan darah.');
+      return;
+    }
+    const catLabel = latestCategory ? latestCategory.label : '';
+    const text = `Tekanan darah ${activeProfile?.name || 'Pasien'} adalah ${latest.systolic} per ${latest.diastolic} milimeter raksa, dengan denyut nadi ${latest.pulse} detak per menit. Kategori ${catLabel}.`;
+    speakTextIndonesian(text);
+  };
+
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+      <div className="space-y-4">
         
-        {/* Card 1: Latest Reading / Fresh Onboarding Widget */}
+        {/* MATERIAL 3 HERO CARD: DYNAMIC BLOOD PRESSURE GAUGE */}
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="md:col-span-2 relative overflow-hidden hallmark-card p-5 md:p-6 flex flex-col justify-between"
+          initial={{ opacity: 0, scale: 0.98, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className={`m3-card-hero p-5 sm:p-6 ${getGlowClass(latestCategory?.key)}`}
         >
-          {/* Subtle Ambient Glow */}
-          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-48 h-48 bg-gradient-to-bl from-teal-400/10 via-sky-400/5 to-transparent rounded-full blur-2xl pointer-events-none"></div>
+          {/* Ambient lighting */}
+          <div className="absolute -top-12 -right-12 w-48 h-48 bg-teal-400/10 dark:bg-teal-400/15 rounded-full blur-3xl pointer-events-none" />
 
-          <div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative z-10 space-y-4">
+            
+            {/* Top Bar */}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2 min-w-0">
-                <div className="p-2 rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 shrink-0">
-                  <Activity className="w-5 h-5" />
+                <div className="w-8 h-8 rounded-xl bg-teal-500 text-white flex items-center justify-center shadow-md shadow-teal-500/25 shrink-0">
+                  <Activity size={18} />
                 </div>
-                <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-0">
-                  {latest ? 'Pengukuran Terakhir (Real Data)' : 'Selamat Datang di AortaLink'}
-                </span>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block truncate">
+                    {latest ? 'Pengukuran Terakhir (Real-time)' : 'Jurnal Tensi Kosong'}
+                  </span>
+                  {latest && (
+                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                      <Calendar size={12} className="text-teal-500" />
+                      {formatDateIndonesian(latest.timestamp)}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              {/* Action Buttons: Medical Guide */}
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => {
                     playClickSound();
                     setIsGuideOpen(true);
                   }}
-                  className="hallmark-button-secondary px-3 py-2 text-xs inline-flex items-center gap-1.5 active:scale-95 min-h-11"
+                  className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-[11px] font-bold inline-flex items-center gap-1.5 active:scale-95 transition-all"
                   title="Panduan Medis Cara Ukur Tensi"
                 >
-                  <BookOpen className="w-3.5 h-3.5 text-teal-500" />
-                  Panduan Medis
+                  <BookOpen size={14} className="text-teal-500" />
+                  <span>Panduan Medis</span>
                 </button>
-
-                {latest && (
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 hidden sm:flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {formatDateIndonesian(latest.timestamp)}
-                  </span>
-                )}
               </div>
             </div>
 
+            {/* Main Numeric Presentation: Large Systolic/Diastolic + Pulse */}
             {latest ? (
-              <div className="mt-6 flex flex-col sm:flex-row sm:items-baseline justify-between gap-4">
-                <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-[2.5rem] sm:text-5xl font-black tracking-tight text-slate-900 dark:text-slate-100">
-                      {latest.systolic} / {latest.diastolic}
-                    </span>
-                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400">
-                      mmHg
-                    </span>
+              <div className="pt-1">
+                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3">
+                  
+                  {/* BP Numbers */}
+                  <div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-slate-900 dark:text-slate-50">
+                        {latest.systolic} / {latest.diastolic}
+                      </span>
+                      <span className="text-xs font-black uppercase text-slate-400 dark:text-slate-500">
+                        mmHg
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 mt-1.5 flex-wrap">
+                      {/* Pulse BPM */}
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-lg border border-rose-200 dark:border-rose-900/60">
+                        <Heart size={14} className="text-rose-500 fill-rose-500 animate-pulse" />
+                        {latest.pulse} BPM
+                      </span>
+
+                      {/* Position & Arm */}
+                      {latest.position && (
+                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg capitalize">
+                          {latest.position} • {latest.arm || 'kiri'}
+                        </span>
+                      )}
+
+                      {/* Measurement Context */}
+                      {latest.measurement_context && (
+                        <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-lg border border-indigo-200 dark:border-indigo-900/60">
+                          {latest.measurement_context}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    <span className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-slate-300">
-                      <Heart className="w-4 h-4 text-rose-500 fill-rose-500 animate-pulse" />
-                      {latest.pulse} BPM (Nadi)
-                    </span>
-                    {latest.position && (
-                      <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold capitalize">
-                        {latest.position} • {latest.arm || 'kiri'}
+
+                  {/* Category Status Pill */}
+                  {latestCategory && (
+                    <div className="sm:text-right shrink-0">
+                      <span className={`m3-chip ${latestCategory.badgeClass} shadow-sm text-xs font-black py-1.5 px-3`}>
+                        <span className={`w-2.5 h-2.5 rounded-full ${latestCategory.colorClass} animate-pulse`} />
+                        {latestCategory.label}
+                      </span>
+                    </div>
+                  )}
+
+                </div>
+
+                {/* Split Visual Meter Bar: Systolic & Diastolic */}
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    {/* Systolic Gauge */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                        <span>Sistolik ({latest.systolic})</span>
+                        <span className={latest.systolic <= 120 ? 'text-emerald-500' : 'text-amber-500'}>
+                          Target &le; 120
+                        </span>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            latest.systolic <= 120 ? 'bg-emerald-500' :
+                            latest.systolic <= 129 ? 'bg-amber-500' :
+                            latest.systolic <= 139 ? 'bg-orange-500' : 'bg-rose-500'
+                          }`}
+                          style={{ width: `${Math.min(100, Math.max(15, (latest.systolic / 180) * 100))}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Diastolic Gauge */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                        <span>Diastolik ({latest.diastolic})</span>
+                        <span className={latest.diastolic <= 80 ? 'text-emerald-500' : 'text-amber-500'}>
+                          Target &le; 80
+                        </span>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            latest.diastolic <= 80 ? 'bg-emerald-500' :
+                            latest.diastolic <= 89 ? 'bg-orange-500' : 'bg-rose-500'
+                          }`}
+                          style={{ width: `${Math.min(100, Math.max(15, (latest.diastolic / 120) * 100))}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Calculated Clinical Metrics: MAP & Pulse Pressure */}
+                  <div className="pt-2 flex items-center gap-2 flex-wrap text-[11px]">
+                    {mapValue && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 font-bold border border-teal-200 dark:border-teal-900/60">
+                        <HeartPulse size={12} className="text-teal-500" />
+                        MAP: {mapValue} mmHg (Perfusi Normal 70-105)
+                      </span>
+                    )}
+
+                    {pulsePressure && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
+                        Tekanan Nadi: {pulsePressure} mmHg (Normal 30-50)
                       </span>
                     )}
                   </div>
-                </div>
 
-                {/* AHA Category Badge */}
-                {latestCategory && (
-                  <div className="shrink-0 space-y-1 text-right">
-                    <span className={`hallmark-badge ${latestCategory.badgeClass} shadow-sm`}>
-                      <span className={`w-2.5 h-2.5 rounded-full ${latestCategory.colorClass}`}></span>
-                      {latestCategory.label}
-                    </span>
-                  </div>
-                )}
+                </div>
               </div>
             ) : (
-              /* Fresh Onboarding Card for New Real Users */
-              <div className="mt-6 py-6 px-4 text-center space-y-3 bg-slate-50/60 dark:bg-slate-800/40 rounded-2xl border border-slate-200/60 dark:border-slate-800">
-                <div className="w-12 h-12 rounded-2xl bg-teal-100 dark:bg-teal-950/80 text-teal-600 dark:text-teal-400 flex items-center justify-center mx-auto">
-                  <Sparkles className="w-6 h-6" />
+              /* Empty Jurnal State */
+              <div className="py-6 text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950 text-teal-600 dark:text-teal-400 flex items-center justify-center mx-auto shadow-inner">
+                  <Activity size={24} />
                 </div>
-                <h4 className="text-base font-extrabold text-slate-900 dark:text-slate-100">
-                  Siap Mencatat Tekanan Darah Real Anda
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-                  Belum ada data pengukuran tekanan darah. AortaLink bebas dari data sampel/palsu. Mulai rekam medis Anda sekarang!
-                </p>
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playClickSound();
-                      onOpenNewReading();
-                    }}
-                    className="hallmark-button-primary px-5 py-3 text-xs inline-flex items-center gap-2 active:scale-95"
-                  >
-                    <Plus className="w-4 h-4 stroke-[3]" />
-                    Catat Tensi Pertama Anda
-                  </button>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-black text-slate-800 dark:text-slate-200">
+                    Mulai Catat Tekanan Darah Pertama
+                  </h4>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    Aplikasi ini 100% bebas dari data dummy. Tekan tombol di bawah untuk mencatat tensi Anda.
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClickSound();
+                    onOpenNewReading();
+                  }}
+                  className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-teal-500 to-sky-500 text-white font-extrabold text-xs shadow-lg shadow-teal-500/25 active:scale-95 transition-all"
+                >
+                  + Catat Pengukuran Real
+                </button>
               </div>
             )}
-          </div>
 
-          {/* Recommendation Quote Tip */}
-          {latestCategory && (
-            <div className={`mt-6 p-4 rounded-2xl border ${latestCategory.bgLightClass} ${latestCategory.borderClass} flex items-start gap-3`}>
-              <ShieldCheck className={`w-5 h-5 shrink-0 mt-0.5 ${latestCategory.textClass}`} />
-              <div>
-                <h5 className={`text-xs font-extrabold ${latestCategory.textClass}`}>
-                  Saran Medis Klinis:
-                </h5>
-                <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
-                  {latestCategory.recommendation}
-                </p>
-              </div>
-            </div>
-          )}
+          </div>
         </motion.div>
 
-        {/* Card 2 & 3 Column: Period Average & Pulse Summary */}
-        <div className="space-y-5 flex flex-col justify-between">
+        {/* SECONDARY METRICS: 7-DAY AVERAGE & PULSE HEALTH */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
           
-          {/* Average BP & MAP Widget */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="hallmark-card p-4 md:p-5 space-y-3"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 min-w-0">
-                Rata-rata Tekanan Darah
+          {/* Card: Rata-Rata Sistolik/Diastolik */}
+          <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+              Rata-Rata 7 Hari
+            </span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg sm:text-xl font-black font-mono text-slate-900 dark:text-slate-100">
+                {stats.avgSystolic || '-'}/{stats.avgDiastolic || '-'}
               </span>
-              <span className="text-xs font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-2.5 py-1 rounded-lg">
-                {stats.totalReadings} data real
-              </span>
+              <span className="text-[10px] text-slate-400 font-semibold">mmHg</span>
             </div>
-
-            <div className="flex items-baseline justify-between">
-              <div>
-                <span className="text-[1.75rem] sm:text-3xl font-black text-slate-900 dark:text-slate-100">
-                  {stats.avgSystolic || '--'} / {stats.avgDiastolic || '--'}
-                </span>
-                <span className="text-xs font-bold text-slate-400 ml-1.5">mmHg</span>
-              </div>
-            </div>
-
-            {/* MAP & Pulse Pressure Indicators */}
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-[11px]">
-                <span className="text-slate-400 block font-semibold">Rata MAP:</span>
-                <span className="font-extrabold text-sky-600 dark:text-sky-400">{stats.avgMAP || '--'} mmHg</span>
-              </div>
-              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-[11px]">
-                <span className="text-slate-400 block font-semibold">Selisih PP:</span>
-                <span className="font-extrabold text-teal-600 dark:text-teal-400">{stats.avgPulsePressure || '--'} mmHg</span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Goal Compliance Rate Widget */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="hallmark-card p-4 md:p-5"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Target className="w-4 h-4 text-emerald-500" />
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  Capaian Target Tensi
-                </span>
-              </div>
-              <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
-                {stats.totalReadings > 0 ? `${stats.targetComplianceRate}%` : '0%'}
-              </span>
-            </div>
-
-            <div className="mt-3 w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${stats.totalReadings > 0 ? stats.targetComplianceRate : 0}%` }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-              />
-            </div>
-            <p className="text-[10px] text-slate-400 mt-1.5 text-right font-medium">
-              {stats.totalReadings > 0 ? `${stats.targetComplianceRate}% pengukuran memenuhi target` : 'Belum ada data pengukuran'}
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+              {stats.totalReadings} pengukuran
             </p>
-          </motion.div>
+          </div>
+
+          {/* Card: Rata-Rata Nadi / Heart Rate */}
+          <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+              Rata-Rata Nadi
+            </span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg sm:text-xl font-black font-mono text-rose-500">
+                {stats.avgPulse || '-'}
+              </span>
+              <span className="text-[10px] text-slate-400 font-semibold">BPM</span>
+            </div>
+            <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+              {pulseStatus.label}
+            </p>
+          </div>
+
+          {/* Card: Rentang Min - Max Tensi */}
+          <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-1 col-span-2 sm:col-span-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+              Rentang Min &mdash; Max
+            </span>
+            <div className="text-sm font-black text-slate-900 dark:text-slate-100 font-mono pt-0.5">
+              {stats.minSystolic ? `${stats.minSystolic}/${stats.minDiastolic}` : '-'} &mdash; {stats.maxSystolic ? `${stats.maxSystolic}/${stats.maxDiastolic}` : '-'}
+            </div>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+              Variabilitas tekanan darah
+            </p>
+          </div>
 
         </div>
+
       </div>
 
-      <KnowledgeGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+      {/* Panduan Medis Knowledge Modal */}
+      <KnowledgeGuideModal
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+      />
     </>
   );
 };

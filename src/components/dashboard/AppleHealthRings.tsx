@@ -2,7 +2,7 @@ import React from 'react';
 import { BPReading } from '../../types/blood-pressure';
 import { classifyBP } from '../../utils/bp-classifier';
 import { motion } from 'framer-motion';
-import { Heart, ShieldCheck, Activity } from 'lucide-react';
+import { Heart, ShieldCheck, Activity } from '../icons/AppIcons';
 
 interface AppleHealthRingsProps {
   readings: BPReading[];

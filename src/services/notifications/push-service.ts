@@ -177,8 +177,8 @@ export function scheduleReminder(reminder: ReminderRecord): void {
   const timeoutId = setTimeout(() => {
     const notifTitle =
       reminder.type === 'medication'
-        ? `💊 ${reminder.title}`
-        : `🩺 ${reminder.title}`;
+        ? `Pengingat Obat: ${reminder.title}`
+        : `Pengingat Tensi: ${reminder.title}`;
 
     const dosageInfo = reminder.dosage ? ` — Dosis: ${reminder.dosage}` : '';
     const notifBody =
@@ -228,14 +228,14 @@ export async function syncAllReminders(): Promise<void> {
       }
     }
   } catch (err) {
-    console.error('[HeartSync] Failed to sync reminders for notifications:', err);
+    console.error('[AortaLink] Failed to sync reminders for notifications:', err);
   }
 }
 
 /** Schedule a test notification (fires after 3 seconds) */
 export async function sendTestNotification(): Promise<boolean> {
   return sendLocalNotification(
-    '🔔 HeartSync Pengingat Aktif',
+    'AortaLink: Pengingat Aktif',
     'Notifikasi pengingat tensi & obat berhasil diaktifkan di perangkat Anda!',
     '/favicon.svg'
   );

@@ -43,10 +43,10 @@ export function calculateASCVD10YearRisk(input: ASCVDRiskInput): ASCVDRiskResult
 
   if (totalRisk >= 20) {
     category = 'high';
-    advice = '⚠️ Risiko Tinggi (≥20%). Diperlukan evaluasi medis segera & kepatuhan penuh terapi antihipertensi.';
+    advice = 'Risiko Tinggi (≥20%). Diperlukan evaluasi medis segera & kepatuhan penuh terapi antihipertensi.';
   } else if (totalRisk >= 7.5) {
     category = 'intermediate';
-    advice = '⚠️ Risiko Menengah (7.5%-19.9%). Disarankan konsultasi dokter untuk evaluasi statin & penyesuaian dosis obat.';
+    advice = 'Risiko Menengah (7.5%-19.9%). Disarankan konsultasi dokter untuk evaluasi statin & penyesuaian dosis obat.';
   } else if (totalRisk >= 5) {
     category = 'borderline';
     advice = 'Risiko Perbatasan (5%-7.4%). Disarankan modifikasi gaya hidup intensif & kurangi natrium.';

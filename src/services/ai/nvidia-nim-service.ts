@@ -120,7 +120,7 @@ function generateClinicalFallbackResponse(request: NvidiaNimConsultationRequest)
   const q = (request.userQuestion || '').toLowerCase();
   
   if (q.includes('amlodipine') || q.includes('candesartan') || q.includes('obat') || q.includes('tensi')) {
-    return `### 🩺 Rekomendasi Klinis AI (Spesialis Penyakit Dalam - Sp.PD)\n\n` +
+    return `### Rekomendasi Klinis AI (Spesialis Penyakit Dalam - Sp.PD)\n\n` +
       `**1. Kombinasi Terapi Hipertensi (CCB + ARB):**\n` +
       `- **Amlodipine 5mg (Pagi Hari):** Berfungsi meredakan lonjakan tekanan darah sistolik selama aktivitas siang hari.\n` +
       `- **Candesartan 8mg (Malam Hari):** Melindungi target organ (ginjal & jantung) serta memelihara ritme sirkadian *nocturnal dipping* normal saat tidur.\n\n` +
@@ -131,7 +131,7 @@ function generateClinicalFallbackResponse(request: NvidiaNimConsultationRequest)
   }
 
   if (q.includes('asam urat') || q.includes('uric') || q.includes('allopurinol')) {
-    return `### 🩺 Evaluasi Asam Urat & Proteksi Ginjal (AI CDSS)\n\n` +
+    return `### Evaluasi Asam Urat & Proteksi Ginjal (AI CDSS)\n\n` +
       `**1. Target Kadar Asam Urat Darah:**\n` +
       `- Target kadar asam urat pasien hipertensi adalah **< 6.0 mg/dL** untuk mencegah kristalisasi tofi dan nefropati asam urat.\n\n` +
       `**2. Terapi Allopurinol:**\n` +
@@ -139,7 +139,7 @@ function generateClinicalFallbackResponse(request: NvidiaNimConsultationRequest)
       `*Catatan: Hindari makanan tinggi purin seperti jeroan, emping, dan hidangan laut berlebih.*`;
   }
 
-  return `### 🩺 Analisis Rekam Medis Elektronik AortaLink\n\n` +
+  return `### Analisis Rekam Medis Elektronik AortaLink\n\n` +
     `Berdasarkan data vital signs yang terindeks:\n` +
     `- **Status Tekanan Darah:** Terkontrol dengan baik dalam target panduan JNC-8 & AHA/ACC.\n` +
     `- **Rekomendasi:** Lanjutkan jadwal pengukuran rutin (sebelum tidur dan bangun tidur) untuk mendeteksi variabilitas sirkadian.\n\n` +

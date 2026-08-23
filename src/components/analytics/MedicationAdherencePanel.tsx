@@ -4,7 +4,7 @@ import { db } from '../../db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { calculateMedicationAdherence } from '../../utils/medication-adherence';
 import { motion } from 'framer-motion';
-import { Pill, CheckCircle2, AlertTriangle, XCircle, TrendingUp, Calendar } from 'lucide-react';
+import { Pill, CheckCircle2, AlertTriangle, XCircle, TrendingUp, Calendar } from '../icons/AppIcons';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 export const MedicationAdherencePanel: React.FC = () => {

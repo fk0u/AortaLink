@@ -3,7 +3,8 @@ import { useAppStore } from '../../store/useAppStore';
 import { useProfiles } from '../../hooks/useProfiles';
 import { db } from '../../db';
 import { BPCategoryKey, DateFilterRange, BPReading, BackupDataFormat } from '../../types/blood-pressure';
-import { Search, Filter, Download, Upload, X, Database } from 'lucide-react';
+import { Search, Filter, Download, Upload, X, Database } from '../icons/AppIcons';
+import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 
 export const HistoryFilter: React.FC = () => {
   const searchQuery = useAppStore((state) => state.searchQuery);
@@ -20,6 +21,7 @@ export const HistoryFilter: React.FC = () => {
 
   // Export CSV helper
   const handleExportCSV = async () => {
+    playClickSound();
     if (!activeProfileId) return;
     const readings = await db.readings.where('profileId').equals(activeProfileId).sortBy('timestamp');
     if (readings.length === 0) {
@@ -49,11 +51,13 @@ export const HistoryFilter: React.FC = () => {
     link.click();
     document.body.removeChild(link);
 
+    playSuccessChime();
     addToast({ type: 'success', title: 'Ekspor CSV Berhasil', message: `${readings.length} data tensi berhasil diekspor.` });
   };
 
   // Export Full JSON Backup
   const handleExportJSON = async () => {
+    playClickSound();
     try {
       const profiles = await db.profiles.toArray();
       const readings = await db.readings.toArray();
@@ -75,6 +79,7 @@ export const HistoryFilter: React.FC = () => {
       downloadAnchor.click();
       downloadAnchor.remove();
 
+      playSuccessChime();
       addToast({ type: 'success', title: 'Cadangan JSON Siap', message: 'Seluruh profil & riwayat berhasil disimpan.' });
     } catch (err) {
       addToast({ type: 'error', title: 'Gagal Ekspor JSON', message: 'Terjadi kesalahan ekspor database.' });
@@ -110,6 +115,7 @@ export const HistoryFilter: React.FC = () => {
           switchProfile(backupData.profiles[0].id);
         }
 
+        playSuccessChime();
         addToast({
           type: 'success',
           title: 'Restorasi Database Berhasil',
@@ -154,6 +160,7 @@ export const HistoryFilter: React.FC = () => {
 
         if (newReadings.length > 0) {
           await db.readings.bulkAdd(newReadings);
+          playSuccessChime();
           addToast({
             type: 'success',
             title: 'Impor CSV Berhasil',
@@ -168,57 +175,62 @@ export const HistoryFilter: React.FC = () => {
   };
 
   return (
-    <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 shadow-lg shadow-slate-200/40 dark:shadow-none space-y-4">
+    <div className="rounded-[24px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm space-y-3">
       
-      {/* Top Search & Action Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+      {/* Top Search & Actions */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
         
-        {/* Search Input */}
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        {/* Search Bar */}
+        <div className="relative flex-1">
+          <Search size={16} className="text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari catatan, label, atau angka tensi..."
-            className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            placeholder="Cari angka tensi, catatan, atau label..."
+            className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
           />
           {searchQuery && (
             <button
+              type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+              aria-label="Hapus pencarian"
             >
-              <X className="w-3.5 h-3.5" />
+              <X size={14} />
             </button>
           )}
         </div>
 
-        {/* Export / Import Actions */}
-        <div className="flex items-center gap-1.5 flex-wrap self-end sm:self-auto">
+        {/* Quick Export/Import Buttons */}
+        <div className="flex items-center gap-1.5 self-end sm:self-auto flex-wrap">
           <button
+            type="button"
             onClick={handleExportCSV}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs active:scale-95 transition-all"
             title="Ekspor Data ke File CSV"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download size={14} />
             CSV
           </button>
 
           <button
+            type="button"
             onClick={handleExportJSON}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900/60 text-teal-700 dark:text-teal-300 font-semibold text-xs transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900/60 text-teal-700 dark:text-teal-300 font-bold text-xs active:scale-95 transition-all border border-teal-200 dark:border-teal-900/60"
             title="Backup Seluruh Database JSON"
           >
-            <Database className="w-3.5 h-3.5" />
-            Backup JSON
+            <Database size={14} />
+            JSON
           </button>
 
           <button
+            type="button"
             onClick={() => jsonInputRef.current?.click()}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs active:scale-95 transition-all"
             title="Pulihkan Cadangan Database JSON"
           >
-            <Upload className="w-3.5 h-3.5" />
+            <Upload size={14} />
             Restore
           </button>
 
@@ -240,28 +252,32 @@ export const HistoryFilter: React.FC = () => {
         </div>
       </div>
 
-      {/* Date & Category Filter Bars */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+      {/* Filter Chips Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80">
         
-        {/* Date Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+        {/* Date Filter Chips */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
           {(['7days', '30days', '90days', 'all'] as DateFilterRange[]).map((range) => {
             const labels: Record<string, string> = {
-              '7days': '7 Hari Terakhir',
-              '30days': '30 Hari Terakhir',
+              '7days': '7 Hari',
+              '30days': '30 Hari',
               '90days': '90 Hari',
-              'all': 'Semua Riwayat'
+              'all': 'Semua'
             };
             const isSelected = dateFilter === range;
 
             return (
               <button
                 key={range}
-                onClick={() => setDateFilter(range)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                type="button"
+                onClick={() => {
+                  playClickSound();
+                  setDateFilter(range);
+                }}
+                className={`m3-chip whitespace-nowrap text-[11px] py-1 px-3 ${
                   isSelected
-                    ? 'bg-teal-600 text-white shadow-md shadow-teal-500/20'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    ? 'bg-teal-500 text-white border-teal-500 shadow-md shadow-teal-500/25'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
                 {labels[range]}
@@ -270,24 +286,28 @@ export const HistoryFilter: React.FC = () => {
           })}
         </div>
 
-        {/* AHA Category Selector Dropdown */}
-        <div className="flex items-center gap-2">
-          <Filter className="w-3.5 h-3.5 text-slate-400" />
+        {/* AHA Category Selector Pill */}
+        <div className="flex items-center gap-1.5 self-start sm:self-auto">
+          <Filter size={14} className="text-slate-400 shrink-0" />
           <select
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value as any)}
-            className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none"
+            onChange={(e) => {
+              playClickSound();
+              setCategoryFilter(e.target.value as any);
+            }}
+            className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
           >
-            <option value="all">Semua Kategori</option>
-            <option value="normal">🟢 Normal</option>
-            <option value="elevated">🟡 Meningkat (Elevated)</option>
-            <option value="stage1">🟠 Hipertensi Tahap 1</option>
-            <option value="stage2">🔴 Hipertensi Tahap 2</option>
-            <option value="crisis">🚨 Krisis Hipertensi</option>
+            <option value="all">Semua Kategori AHA</option>
+            <option value="normal">Normal (&lt; 120/80)</option>
+            <option value="elevated">Elevated (120-129/&lt;80)</option>
+            <option value="stage1">Hipertensi Tahap 1 (130-139/80-89)</option>
+            <option value="stage2">Hipertensi Tahap 2 (&ge; 140/90)</option>
+            <option value="crisis">Krisis Hipertensi (&gt; 180/120)</option>
           </select>
         </div>
 
       </div>
+
     </div>
   );
 };

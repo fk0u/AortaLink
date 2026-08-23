@@ -1,6 +1,6 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · Clean Minimalist MongoDB Atlas Sync Badge */
 import React, { useState } from 'react';
-import { Database, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Database, RefreshCw, CheckCircle2 } from '../icons/AppIcons';
 import { mongoDbAtlasService } from '../../services/db/mongodb-service';
 import { useAppStore } from '../../store/useAppStore';
 
