@@ -293,6 +293,29 @@ export function App() {
     );
   }
 
+  if (screenKey === 'landing' || !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F6] text-slate-900 flex flex-col transition-colors">
+        <ToastContainer />
+        <LandingPage onLaunchApp={() => {
+          if (isAuthenticated) {
+            navigate({ to: '/dashboard' });
+          } else {
+            setIsAuthModalOpen(true);
+          }
+        }} />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onSuccess={() => {
+            setIsAuthModalOpen(false);
+            navigate({ to: '/dashboard' });
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col pb-28 md:pb-12 transition-colors">
       
@@ -306,25 +329,17 @@ export function App() {
       <ReminderModal />
 
       {/* Mobile & Desktop Adaptive Top App Bar */}
-      {isAuthenticated && screenKey !== 'landing' && screenKey !== 'privacy' && screenKey !== 'terms' && (
+      {screenKey !== 'privacy' && screenKey !== 'terms' && (
         <Header onOpenSOS={() => setIsSOSModalOpen(true)} />
       )}
 
-      {/* Main Content: Centered, High-Impact Mobile-First Canvas */}
-      <main className="flex-1 max-w-3xl w-full mx-auto px-3.5 sm:px-6 pt-3 md:pt-6 space-y-4 md:space-y-6">
+      {/* Main Content: Adaptive Widescreen on Desktop, Compact on Mobile */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 pt-3 md:pt-6 space-y-4 md:space-y-6">
 
         {screenKey === 'privacy' ? (
           <PrivacyPolicyPage />
         ) : screenKey === 'terms' ? (
           <TermsOfServicePage />
-        ) : screenKey === 'landing' || !isAuthenticated ? (
-          <LandingPage onLaunchApp={() => {
-            if (isAuthenticated) {
-              navigate({ to: '/dashboard' });
-            } else {
-              setIsAuthModalOpen(true);
-            }
-          }} />
         ) : screenKey === 'profile' ? (
           <ProfilePage />
         ) : screenKey === 'settings' ? (

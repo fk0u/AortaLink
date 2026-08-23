@@ -29,6 +29,6 @@
 - [x] **Phase 8: Rich Motion & High-End Asset Architecture**:
   - Interactive 24-Hour Diurnal Dipping Simulator, Combination Therapy Showcase, Live HL7 FHIR JSON, Infinite Marquee, dan Film Grain Overlay.
 - [x] **Phase 9: Full-Width Bulletproof Sticky Glass Header & Adaptive Layout**:
-  - Mengubah header menjadi **Full-Width Sticky Glass Bar (`w-full border-b backdrop-blur-2xl px-4 sm:px-8`)** yang membentang sempurna dari ujung ke ujung layar laptop tanpa pernah memotong tombol aksi atau tautan navigasi.
-  - Penataan hero section yang proporsional dan elegan di berbagai resolusi layar (laptop, tablet, maupun monitor besar).
-- [x] Verified full typecheck (`npm run lint` — 0 errors) dan production build (`npm run build` — 0 errors dalam 3.08s).
+  - Header membentang penuh (*sticky top-0 w-full*) dengan batas bawah kaca buram (*glassmorphic hairline border*), menjamin tombol aksi dan brand logo selalu utuh tanpa risiko terpotong di laptop/desktop.
+  - Layout hero 2-kolom seimbang di widescreen dan tersusun rapi di layar ponsel/tablet.
+- [x] Verified full typecheck (`npm run lint` — 0 errors) dan production build (`npm run build` — 0 errors dalam 2.75s).
