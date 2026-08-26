@@ -32,8 +32,19 @@ export interface BPReading {
   measurement_context?: MeasurementContext;
 }
 
-export type DrugClass = 'Golongan CCB' | 'Golongan ARB' | 'Penurun Asam Urat' | 'Lainnya';
-export type MedicationSchedule = 'pagi' | 'malam' | 'pagi_malam';
+export type DrugClass = 
+  | 'Golongan CCB' 
+  | 'Golongan ARB' 
+  | 'Golongan ACE Inhibitor' 
+  | 'Golongan Beta Blocker' 
+  | 'Golongan Diuretik' 
+  | 'Golongan ARNI' 
+  | 'Penurun Asam Urat' 
+  | 'Statin / Lipid' 
+  | 'Antidiabetes' 
+  | 'Antiplatelet' 
+  | 'Lainnya';
+export type MedicationSchedule = 'pagi' | 'siang' | 'sore' | 'malam' | 'pagi_malam' | 'sesuai_kebutuhan';
 
 export interface MedicationItem {
   id?: number;
@@ -65,7 +76,17 @@ export interface LabResult {
   timestamp: string; // ISO 8601 string
   bloodUrea: number; // Ureum Darah (mg/dL) - Normal ~15-45
   serumCreatinine: number; // Kreatinin Darah (mg/dL) - Normal ~0.6-1.2
-  uricAcid: number; // Asam Urat Darah (mg/dL) - Normal < 7.0 (High > 7.0)
+  uricAcid: number; // Asam Urat Darah (mg/dL) - Normal < 7.0
+  eGfr?: number; // Estimated Glomerular Filtration Rate (mL/min/1.73m2)
+  totalCholesterol?: number; // Kolesterol Total (mg/dL)
+  ldlCholesterol?: number; // LDL-C (mg/dL)
+  hdlCholesterol?: number; // HDL-C (mg/dL)
+  triglycerides?: number; // Trigliserida (mg/dL)
+  fastingBloodSugar?: number; // Gula Darah Puasa (mg/dL)
+  hba1c?: number; // HbA1c (%)
+  potassium?: number; // Kalium Serum K+ (mEq/L) - Normal 3.5-5.0
+  sodium?: number; // Natrium Serum Na+ (mEq/L) - Normal 135-145
+  proteinuria?: 'negatif' | 'trace' | '+1' | '+2' | '+3'; // Urin Lengkap
   notes?: string;
 }
 

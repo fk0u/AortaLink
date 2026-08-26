@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Utensils, AlertCircle, Plus, CheckCircle2, ShieldCheck, Flame } from '../icons/AppIcons';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 
+import { timeService } from '../../services/time/time-service';
+
 interface SodiumTrackerModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -13,17 +15,26 @@ interface SodiumTrackerModalProps {
 export const SodiumTrackerModal: React.FC<SodiumTrackerModalProps> = ({ isOpen, onClose }) => {
   const { activeProfile } = useProfiles();
   const [dailySodiumMg, setDailySodiumMg] = useState(0);
-  const [logHistory, setLogHistory] = useState<Array<{ name: string; mg: number; time: string }>>([
-    { name: 'Sarapan Nasi Uduk + Telur', mg: 400, time: '07:30' },
-    { name: 'Buah Segar', mg: 250, time: '10:00' }
-  ]);
+  const [logHistory, setLogHistory] = useState<Array<{ name: string; mg: number; time: string }>>([]);
   const [customItemName, setCustomItemName] = useState('');
   const [customItemMg, setCustomItemMg] = useState(300);
 
+  const todayLocalDate = timeService.getLocalDateString();
+
   useEffect(() => {
     if (!isOpen || !activeProfile?.id) return;
-    db.sodiumLogs.where('profileId').equals(activeProfile.id).filter(x => x.date === new Date().toISOString().slice(0, 10)).toArray().then(logs => { setDailySodiumMg(logs.reduce((sum, x) => sum + x.sodiumMg, 0)); setLogHistory(logs.flatMap(x => (x.items || []).map(name => ({ name, mg: x.sodiumMg, time: '' })))); });
-  }, [isOpen, activeProfile?.id]);
+    db.sodiumLogs
+      .where('profileId')
+      .equals(activeProfile.id)
+      .filter((x) => x.date === todayLocalDate)
+      .toArray()
+      .then((logs) => {
+        setDailySodiumMg(logs.reduce((sum, x) => sum + x.sodiumMg, 0));
+        setLogHistory(
+          logs.flatMap((x) => (x.items || []).map((name) => ({ name, mg: x.sodiumMg, time: '' })))
+        );
+      });
+  }, [isOpen, activeProfile?.id, todayLocalDate]);
 
   const recommendedLimit = 2000; // 2,000 mg DASH diet limit
 
@@ -32,7 +43,14 @@ export const SodiumTrackerModal: React.FC<SodiumTrackerModalProps> = ({ isOpen, 
     const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     setDailySodiumMg((prev) => prev + mg);
     setLogHistory((prev) => [{ name, mg, time: timeStr }, ...prev]);
-    if (activeProfile?.id) db.sodiumLogs.add({ profileId: activeProfile.id, date: new Date().toISOString().slice(0, 10), sodiumMg: mg, items: [name] });
+    if (activeProfile?.id) {
+      db.sodiumLogs.add({
+        profileId: activeProfile.id,
+        date: todayLocalDate,
+        sodiumMg: mg,
+        items: [name]
+      });
+    }
   };
 
   const handleAddCustom = (e: React.FormEvent) => {

@@ -175,23 +175,23 @@ export function calculateNocturnalDipping(readings: BPReading[]): import('../typ
   let pattern: import('../types/blood-pressure').DippingPattern = 'dipper';
   let label = 'Dipper (Normal)';
   let description = 'Tekanan darah mengalami penurunan fisiologis normal (10% - 20%) saat tidur malam hari.';
-  let clinicalAdvice = 'Ritme sirkadian sehat. Pertahankan jadwal konsumsi Candesartan 8mg pada malam hari untuk memelihara proteksi organ.';
+  let clinicalAdvice = 'Ritme sirkadian sehat. Pertahankan jadwal konsumsi obat antihipertensi secara konsisten dan pola tidur teratur.';
 
   if (sysDipping < 0) {
     pattern = 'riser';
     label = 'Riser / Reverse Dipper (Risiko Tinggi)';
     description = 'PERINGATAN: Tekanan darah malam hari justru LEBIH TINGGI daripada siang hari.';
-    clinicalAdvice = 'Sangat disarankan evaluasi Spesialis Penyakit Dalam! Risiko penyakit serebrovaskular/stroke nocturnal meningkat signifikan. Evaluasi kepatuhan Candesartan 8mg di malam hari.';
+    clinicalAdvice = 'Sangat disarankan evaluasi Spesialis Penyakit Dalam! Risiko penyakit serebrovaskular/stroke nocturnal meningkat signifikan. Diskusikan evaluasi dosis atau kronoterapi obat malam dengan dokter.';
   } else if (sysDipping < 10) {
     pattern = 'non_dipper';
     label = 'Non-Dipper (Risiko Kardiovaskular)';
     description = 'Penurunan tekanan darah saat tidur kurang dari 10%. Organ target tetap menerima tekanan tinggi di malam hari.';
-    clinicalAdvice = 'Diskusikan dengan dokter untuk optimalisasi dosis atau waktu konsumsi ARB (Candesartan) menjelang tidur.';
+    clinicalAdvice = 'Diskusikan dengan dokter mengenai penyesuaian waktu minum obat (kronoterapi) menjelang tidur untuk perlindungan organ target.';
   } else if (sysDipping > 20) {
     pattern = 'extreme_dipper';
     label = 'Extreme Dipper';
     description = 'Penurunan tekanan darah malam hari sangat tajam (> 20%).';
-    clinicalAdvice = 'Waspadai hipotensi nocturnal atau gelisah saat tidur. Konsultasikan dengan dokter spesialis.';
+    clinicalAdvice = 'Waspadai hipotensi nocturnal atau rasa melayang saat bangun tidur. Konsultasikan dengan dokter spesialis.';
   }
 
   return {
@@ -230,7 +230,7 @@ export function evaluateClinicalAlerts(
         category: 'hyperuricemia',
         severity: latestLab.uricAcid > 9.0 ? 'critical' : 'warning',
         message: `Kadar Asam Urat darah mencatat ${latestLab.uricAcid} mg/dL (Batas normal < 7.0 mg/dL).`,
-        recommendation: 'Risiko gout (arthropathy) dan kalkulus ginjal. Pastikan konsumsi Allopurinol 100mg teratur & perbanyak konsumsi air putih.',
+        recommendation: 'Risiko gout dan kalkulus ginjal. Tingkatkan konsumsi air putih (min. 2.5L/hari), batasi purin tinggi, dan konsultasikan terapi penurun asam urat dengan dokter.',
         valueString: `${latestLab.uricAcid} mg/dL`,
         timestamp: latestLab.timestamp
       });
@@ -275,7 +275,7 @@ export function evaluateClinicalAlerts(
         category: 'hypertension_stage',
         severity: 'warning',
         message: `Pengukuran tensi terbaru ${sys}/${dia} mmHg masuk kategori Hipertensi Tahap 2.`,
-        recommendation: 'Periksa kepatuhan kombinasi terapi obat (Amlodipine 5mg Pagi & Candesartan 8mg Malam). Jaga asupan garam < 2g/hari.',
+        recommendation: 'Evaluasi kepatuhan jadwal minum obat yang diresepkan dan jaga asupan garam < 2g/hari (DASH Diet).',
         valueString: `${sys}/${dia} mmHg`,
         timestamp: latestReading.timestamp
       });

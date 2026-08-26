@@ -120,41 +120,6 @@ export class RealAuthService {
     }
   }
 
-  /**
-   * Real Google OAuth Login & MongoDB Atlas Cloud Sync
-   */
-  public async loginWithGoogleOAuth(googleProfile?: { name?: string; email?: string; picture?: string }): Promise<UserSession> {
-    try {
-      const res = await fetch(`${this.API_BASE_URL}/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ googleProfile })
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Gagal autentikasi Google OAuth.');
-      }
-
-      return data.user as UserSession;
-    } catch (err: any) {
-      console.warn('[RealAuthService] Google OAuth backend request failed, offline fallback:', err);
-      const email = googleProfile?.email || 'user.google@aortalink.health';
-      const name = googleProfile?.name || 'Google Health User';
-      const avatarUrl = googleProfile?.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`;
-
-      return {
-        id: 'usr-google-' + Date.now(),
-        name,
-        email,
-        avatarUrl,
-        authProvider: 'google',
-        subscriptionTier: 'pro_ehr',
-        token: 'jwt-aortalink-google-offline-' + Math.random().toString(36).substring(2, 10),
-        loginAt: new Date().toISOString()
-      };
-    }
-  }
 
   /**
    * Verify Session Token via /api/auth/me

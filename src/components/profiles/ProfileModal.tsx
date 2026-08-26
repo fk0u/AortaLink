@@ -8,6 +8,7 @@ import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, UserPlus, Edit3, Trash2, User, Users, Heart, Shield, Activity, Sparkles } from '../icons/AppIcons';
 import { ConfirmModal } from '../common/ConfirmModal';
+import { mongoDbAtlasService } from '../../services/db/mongodb-service';
 
 export const ProfileModal: React.FC = () => {
   const isOpen = useAppStore((state) => state.isProfileModalOpen);
@@ -56,27 +57,30 @@ export const ProfileModal: React.FC = () => {
     setTargetSystolic(120);
     setTargetDiastolic(80);
     setNotes('');
-    setIsAddingNew(false);
     setEditingProfile(null);
+    setIsAddingNew(false);
   };
 
-  const handleStartEdit = (p: Profile) => {
+  const handleStartEdit = (profile: Profile) => {
     playClickSound();
-    setEditingProfile(p);
-    setName(p.name);
-    setRelationship(p.relationship);
-    setAvatar(p.avatar || 'user');
-    setAge(p.age || '');
-    setGender(p.gender || 'male');
-    setTargetSystolic(p.targetSystolic);
-    setTargetDiastolic(p.targetDiastolic);
-    setNotes(p.notes || '');
+    setEditingProfile(profile);
+    setName(profile.name);
+    setRelationship(profile.relationship);
+    setAvatar(profile.avatar || 'user');
+    setAge(profile.age ?? 45);
+    setGender(profile.gender || 'male');
+    setTargetSystolic(profile.targetSystolic);
+    setTargetDiastolic(profile.targetDiastolic);
+    setNotes(profile.notes || '');
     setIsAddingNew(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      addToast({ type: 'warning', title: 'Data Kurang', message: 'Nama profil harus diisi.' });
+      return;
+    }
 
     try {
       if (editingProfile) {
@@ -110,6 +114,10 @@ export const ProfileModal: React.FC = () => {
         switchProfile(newId);
         addToast({ type: 'success', title: 'Profil Baru Ditambahkan', message: `Profil ${name} telah dibuat & diaktifkan.` });
       }
+
+      // Sync changes to MongoDB Atlas Cloud in background
+      mongoDbAtlasService.pushUserData().catch(() => {});
+
       resetForm();
     } catch (error) {
       addToast({ type: 'error', title: 'Gagal Menyimpan', message: 'Terjadi kesalahan saat menyimpan profil.' });
@@ -125,16 +133,41 @@ export const ProfileModal: React.FC = () => {
         return;
       }
 
-      await db.profiles.delete(deletingProfileId);
-      await db.readings.where('profileId').equals(deletingProfileId).delete();
+      const idToDelete = deletingProfileId;
 
-      if (activeProfile?.id === deletingProfileId) {
-        const remaining = profiles.filter((p) => p.id !== deletingProfileId);
+      // 1. Delete from local Dexie (Cascade all tables)
+      await Promise.all([
+        db.profiles.delete(idToDelete),
+        db.readings.where('profileId').equals(idToDelete).delete(),
+        db.medications.where('profileId').equals(idToDelete).delete(),
+        db.medicationLogs.where('profileId').equals(idToDelete).delete(),
+        db.labResults.where('profileId').equals(idToDelete).delete(),
+        db.habits.where('profileId').equals(idToDelete).delete(),
+        db.sodiumLogs.where('profileId').equals(idToDelete).delete(),
+        db.sleepLogs.where('profileId').equals(idToDelete).delete(),
+        db.reminders.where('profileId').equals(idToDelete).delete(),
+        db.fhirPatients.delete(idToDelete),
+        db.fhirObservations.where('profileId').equals(idToDelete).delete(),
+        db.fhirMedicationRequests.where('profileId').equals(idToDelete).delete(),
+        db.fhirMedicationStatements.where('profileId').equals(idToDelete).delete(),
+        db.ascvdProfiles.where('profileId').equals(idToDelete).delete(),
+        db.clinicalNotes.where('profileId').equals(idToDelete).delete()
+      ]);
+
+      // 2. Delete from MongoDB Atlas Cloud
+      await mongoDbAtlasService.deleteProfileCloud(idToDelete);
+
+      // 3. Switch to remaining active profile
+      if (activeProfile?.id === idToDelete) {
+        const remaining = profiles.filter((p) => p.id !== idToDelete);
         if (remaining.length > 0) switchProfile(remaining[0].id);
       }
 
+      // 4. Update cloud user settings
+      mongoDbAtlasService.pushUserData().catch(() => {});
+
       playSuccessChime();
-      addToast({ type: 'success', title: 'Profil Dihapus', message: 'Profil dan seluruh riwayatnya telah dihapus.' });
+      addToast({ type: 'success', title: 'Profil Dihapus', message: 'Profil dan seluruh riwayatnya berhasil dihapus permanen.' });
     } catch (error) {
       addToast({ type: 'error', title: 'Gagal Hapus', message: 'Tidak dapat menghapus profil.' });
     } finally {

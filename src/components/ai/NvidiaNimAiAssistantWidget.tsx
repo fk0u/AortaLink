@@ -1,9 +1,14 @@
-/* Hallmark & Minimalist UI · NVIDIA NIM AI Clinical Assistant Modal */
+/* Hallmark & Minimalist UI · Google Gemini AI Clinical Specialist Modal */
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BrainCircuit, X, Send, Sparkles, HeartPulse, RefreshCw } from '../icons/AppIcons';
-import { queryNvidiaNimAi } from '../../services/ai/nvidia-nim-service';
+import { queryGeminiAi } from '../../services/ai/gemini-ai-service';
 import { useAppStore } from '../../store/useAppStore';
+import { useProfiles } from '../../hooks/useProfiles';
+import { useReadings } from '../../hooks/useReadings';
+import { db } from '../../db';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { calculateNocturnalDipping } from '../../utils/advanced-analytics';
 import { playClickSound } from '../../utils/audio-fx';
 
 export const NvidiaNimAiAssistantWidget: React.FC = () => {
@@ -13,6 +18,27 @@ export const NvidiaNimAiAssistantWidget: React.FC = () => {
   const [responseOutput, setResponseOutput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const addToast = useAppStore((state) => state.addToast);
+
+  const { activeProfile } = useProfiles();
+  const { rawReadings, stats } = useReadings();
+
+  const userMeds = useLiveQuery(
+    async () => {
+      if (!activeProfile?.id) return [];
+      return await db.medications.where('profileId').equals(activeProfile.id).toArray();
+    },
+    [activeProfile?.id]
+  );
+
+  const userLabs = useLiveQuery(
+    async () => {
+      if (!activeProfile?.id) return [];
+      return await db.labResults.where('profileId').equals(activeProfile.id).sortBy('timestamp');
+    },
+    [activeProfile?.id]
+  );
+
+  const dippingReport = React.useMemo(() => calculateNocturnalDipping(rawReadings || []), [rawReadings]);
 
   const handleSendPrompt = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -24,10 +50,30 @@ export const NvidiaNimAiAssistantWidget: React.FC = () => {
     setResponseOutput('');
 
     try {
-      await queryNvidiaNimAi(
+      const readingsSummary = rawReadings && rawReadings.length > 0
+        ? `Total ${rawReadings.length} pengukuran. Rata-rata ${stats.avgSystolic}/${stats.avgDiastolic} mmHg (MAP ${stats.avgMAP} mmHg, Pulse Pressure ${stats.avgPulsePressure} mmHg). Tensi terbaru: ${stats.latestReading?.systolic}/${stats.latestReading?.diastolic} mmHg (Nadi ${stats.latestReading?.pulse} bpm).`
+        : 'Belum ada data pengukuran tekanan darah.';
+
+      const medsList = userMeds && userMeds.length > 0
+        ? userMeds.map((m) => `${m.name} ${m.dosage} (${m.drugClass}, jadwal ${m.schedule})`)
+        : [];
+
+      const latestLab = userLabs && userLabs.length > 0 ? userLabs[userLabs.length - 1] : null;
+      const labSummary = latestLab
+        ? `Asam Urat: ${latestLab.uricAcid} mg/dL, Kreatinin: ${latestLab.serumCreatinine} mg/dL, Ureum: ${latestLab.bloodUrea} mg/dL, Catatan: ${latestLab.notes || '-'}`
+        : 'Belum ada pemeriksaan laboratorium.';
+
+      await queryGeminiAi(
         {
-          patientName: 'Pasien AortaLink',
-          clinicalContextPrompt: 'Evaluasi Rekam Medis Elektronik (EHR) & Terapi Hipertensi/Asam Urat.',
+          patientName: activeProfile?.name || 'Pasien',
+          patientAge: activeProfile?.age || 45,
+          patientGender: activeProfile?.gender || 'male',
+          targetSystolic: activeProfile?.targetSystolic || 120,
+          targetDiastolic: activeProfile?.targetDiastolic || 80,
+          readingsSummary,
+          dippingPattern: `${dippingReport.label} (Penurunan Nokturnal: ${dippingReport.sysDippingPercent.toFixed(1)}%)`,
+          medicationsList: medsList,
+          labSummary,
           userQuestion: currentQuestion
         },
         (chunk) => {
@@ -38,7 +84,7 @@ export const NvidiaNimAiAssistantWidget: React.FC = () => {
       addToast({
         type: 'error',
         title: 'Koneksi AI Terganggu',
-        message: 'Gagal terhubung ke NVIDIA NIM API (z-ai/glm-5.2).'
+        message: 'Gagal terhubung ke Google AI Studio Gemini API.'
       });
     } finally {
       setIsLoading(false);
@@ -53,7 +99,7 @@ export const NvidiaNimAiAssistantWidget: React.FC = () => {
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
-            className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-t-[32px] sm:rounded-[32px] max-w-lg w-full shadow-2xl overflow-hidden flex flex-col h-[560px] max-h-[90vh] text-slate-900 dark:text-slate-100"
+            className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-t-[32px] sm:rounded-[32px] max-w-lg w-full shadow-2xl overflow-hidden flex flex-col h-[580px] max-h-[90vh] text-slate-900 dark:text-slate-100"
           >
             {/* Grabber Handle */}
             <div className="m3-bottom-sheet-grabber sm:hidden" />
@@ -66,11 +112,11 @@ export const NvidiaNimAiAssistantWidget: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5 uppercase tracking-tight">
-                    Asisten Medis AI Sp.PD
+                    Spesialis AI Penyakit Dalam (Sp.PD)
                     <Sparkles size={12} className="text-amber-500" />
                   </h3>
-                  <p className="text-[10px] text-teal-600 dark:text-teal-400 font-bold">
-                    NVIDIA NIM • Model z-ai/glm-5.2
+                  <p className="text-[10px] text-teal-600 dark:text-teal-400 font-bold font-mono">
+                    Google AI Studio • Gemini 3.1 Flash Lite
                   </p>
                 </div>
               </div>
@@ -93,15 +139,15 @@ export const NvidiaNimAiAssistantWidget: React.FC = () => {
               <div className="p-3 rounded-2xl bg-teal-50/80 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-900/50 text-xs space-y-1">
                 <div className="flex items-center gap-1.5 font-bold text-teal-900 dark:text-teal-200">
                   <HeartPulse size={14} className="text-teal-600" />
-                  <span>Halo! Ada yang bisa dibantu untuk rekam medis Anda?</span>
+                  <span>Halo {activeProfile?.name || 'Pasien'}! Asisten Medis AI siap menganalisis data riil Anda.</span>
                 </div>
                 <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                  Tanyakan dosis Amlodipine/Candesartan, panduan pola dipping nocturnal, atau hasil laboratorium asam urat Anda.
+                  Tanyakan analisis tensi berdasarkan usia ({activeProfile?.age || '-'} th), evaluasi pola nocturnal dipping, dosis obat, atau hasil lab asam urat/kreatinin Anda.
                 </p>
               </div>
 
               {responseOutput && (
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap font-sans">
                   {responseOutput}
                 </div>
               )}
@@ -109,7 +155,7 @@ export const NvidiaNimAiAssistantWidget: React.FC = () => {
               {isLoading && !responseOutput && (
                 <div className="flex items-center gap-2 p-3 text-xs text-slate-500">
                   <RefreshCw size={14} className="animate-spin text-teal-500" />
-                  <span>Menghubungi NVIDIA NIM AI Engine (z-ai/glm-5.2)...</span>
+                  <span>Menganalisis rekam medis dengan Gemini 3.1 Flash Lite...</span>
                 </div>
               )}
             </div>
@@ -118,7 +164,7 @@ export const NvidiaNimAiAssistantWidget: React.FC = () => {
             <form onSubmit={handleSendPrompt} className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 shrink-0 flex items-center gap-2">
               <input
                 type="text"
-                placeholder="Tanyakan ke Spesialis AI (contoh: aturan dosis Amlodipine)..."
+                placeholder="Tanyakan analisis tensi sesuai usia, obat, atau lab Anda..."
                 value={promptInput}
                 onChange={(e) => setPromptInput(e.target.value)}
                 disabled={isLoading}

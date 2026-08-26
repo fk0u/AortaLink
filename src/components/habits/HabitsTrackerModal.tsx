@@ -18,7 +18,7 @@ import { db } from '../../db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { HabitLog } from '../../types/blood-pressure';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
-import { format } from 'date-fns';
+import { timeService } from '../../services/time/time-service';
 
 interface HabitsTrackerModalProps {
   isOpen: boolean;
@@ -29,7 +29,7 @@ export const HabitsTrackerModal: React.FC<HabitsTrackerModalProps> = ({ isOpen, 
   const { activeProfileId, activeProfile } = useProfiles();
   const addToast = useAppStore((state) => state.addToast);
 
-  const [dateStr, setDateStr] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [dateStr, setDateStr] = useState(() => timeService.getLocalDateString());
   const [sleepTime, setSleepTime] = useState('22:30');
   const [wakeTime, setWakeTime] = useState('06:30');
   const [screenTimeHours, setScreenTimeHours] = useState(6);
@@ -97,7 +97,7 @@ export const HabitsTrackerModal: React.FC<HabitsTrackerModalProps> = ({ isOpen, 
         screenTimeHours: Number(screenTimeHours),
         outdoorMinutes: Number(outdoorMinutes),
         activityNotes,
-        timestamp: new Date().toISOString()
+        timestamp: timeService.getNow().toISOString()
       };
 
       await db.habits.add(newHabit);

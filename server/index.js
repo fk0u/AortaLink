@@ -269,61 +269,6 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-/**
- * POST /api/auth/google
- */
-app.post('/api/auth/google', async (req, res) => {
-  try {
-    const { googleProfile } = req.body;
-    const email = (googleProfile?.email || 'user.google@aortalink.health').trim().toLowerCase();
-    const name = googleProfile?.name || 'Google Health User';
-    const avatarUrl = googleProfile?.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`;
-
-    const activeDb = await getDatabase();
-    if (!activeDb) {
-      return res.status(500).json({ success: false, message: 'Database MongoDB Atlas belum terhubung.' });
-    }
-
-    const usersCollection = activeDb.collection('users');
-    let userDoc = await usersCollection.findOne({ email });
-
-    if (!userDoc) {
-      const userId = 'usr-google-' + Date.now();
-      userDoc = {
-        userId,
-        name,
-        email,
-        authProvider: 'google',
-        subscriptionTier: 'pro_ehr',
-        avatarUrl,
-        createdAt: new Date().toISOString()
-      };
-      await usersCollection.insertOne(userDoc);
-    }
-
-    const userSession = {
-      id: userDoc.userId || userDoc._id.toString(),
-      name: userDoc.name,
-      email: userDoc.email,
-      avatarUrl: userDoc.avatarUrl,
-      authProvider: 'google',
-      subscriptionTier: userDoc.subscriptionTier || 'pro_ehr',
-      loginAt: new Date().toISOString()
-    };
-
-    const token = jwt.sign(userSession, JWT_SECRET, { expiresIn: '60d' });
-
-    return res.json({
-      success: true,
-      message: 'Autentikasi Google OAuth Berhasil!',
-      token,
-      user: { ...userSession, token }
-    });
-  } catch (error) {
-    console.error('[AortaLink Auth] Google OAuth Error:', error);
-    return res.status(500).json({ success: false, message: error.message || 'Gagal memproses Google OAuth.' });
-  }
-});
 
 /**
  * GET /api/auth/me
@@ -535,37 +480,97 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
 });
 
 /**
- * POST /api/fhir/sync
- * Sync FHIR Bundle / Resource to MongoDB Atlas fhir_resources collection
+ * DELETE /api/profiles/:profileId
+ * Delete profile and all its associated EHR observations, medications, and labs from MongoDB Atlas
  */
-app.post('/api/fhir/sync', authenticateToken, async (req, res) => {
+app.delete('/api/profiles/:profileId', authenticateToken, async (req, res) => {
   try {
     const activeDb = await getDatabase();
     if (!activeDb) {
       return res.status(500).json({ success: false, message: 'Database MongoDB Atlas belum terhubung.' });
     }
 
-    const { resource, bundle, timestamp = new Date().toISOString() } = req.body;
     const userId = req.user.id;
+    const profileId = req.params.profileId;
 
-    const collection = activeDb.collection('fhir_resources');
-    const doc = {
-      userId,
-      resourceType: resource?.resourceType || bundle?.resourceType || 'Bundle',
-      payload: resource || bundle,
-      syncedAt: timestamp
-    };
+    if (!profileId) {
+      return res.status(400).json({ success: false, message: 'Profile ID harus disertakan.' });
+    }
 
-    await collection.insertOne(doc);
+    // Delete profile and cascade related records
+    await Promise.all([
+      activeDb.collection('profiles').deleteOne({ id: profileId, userId }),
+      activeDb.collection('observations').deleteMany({ profileId, userId }),
+      activeDb.collection('medications').deleteMany({ profileId, userId }),
+      activeDb.collection('medication_logs').deleteMany({ profileId, userId }),
+      activeDb.collection('lab_results').deleteMany({ profileId, userId }),
+      activeDb.collection('habits').deleteMany({ profileId, userId }),
+      activeDb.collection('sodium_logs').deleteMany({ profileId, userId }),
+      activeDb.collection('sleep_logs').deleteMany({ profileId, userId }),
+      activeDb.collection('reminders').deleteMany({ profileId, userId }),
+      activeDb.collection('fhir_patients').deleteOne({ id: profileId, userId }),
+      activeDb.collection('fhir_observations').deleteMany({ profileId, userId }),
+      activeDb.collection('fhir_medication_requests').deleteMany({ profileId, userId }),
+      activeDb.collection('fhir_medication_statements').deleteMany({ profileId, userId }),
+      activeDb.collection('ascvd_profiles').deleteMany({ profileId, userId }),
+      activeDb.collection('clinical_notes').deleteMany({ profileId, userId })
+    ]);
 
     return res.json({
       success: true,
-      message: 'FHIR Bundle R4 berhasil disimpan di MongoDB Atlas Cloud.',
-      syncedAt: timestamp
+      message: `Profil ${profileId} dan seluruh data rekam medisnya berhasil dihapus permanen dari cloud.`
     });
   } catch (error) {
-    console.error('[AortaLink FHIR] Sync Error:', error);
-    return res.status(500).json({ success: false, message: error.message || 'Gagal menyimpan FHIR bundle.' });
+    console.error('[AortaLink Delete Profile] Error:', error);
+    return res.status(500).json({ success: false, message: error.message || 'Gagal menghapus profil dari cloud.' });
+  }
+});
+
+/**
+ * POST /api/ai/gemini-consultation
+ * Google AI Studio Gemini 3.1 Flash Lite / 2.5 Flash Clinical Consultation
+ */
+app.post('/api/ai/gemini-consultation', async (req, res) => {
+  try {
+    const { systemInstruction, prompt, model = 'gemini-2.5-flash' } = req.body;
+    const apiKey = process.env.AI_API_KEY || process.env.GEMINI_API_KEY || '';
+
+    if (!apiKey) {
+      return res.status(500).json({ success: false, message: 'AI_API_KEY belum dikonfigurasi di file .env.' });
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const payload = {
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: `${systemInstruction || ''}\n\n${prompt || ''}` }]
+        }
+      ],
+      generationConfig: {
+        temperature: 0.3,
+        maxOutputTokens: 2048
+      }
+    };
+
+    const apiRes = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!apiRes.ok) {
+      const errText = await apiRes.text();
+      return res.status(apiRes.status).json({ success: false, error: errText });
+    }
+
+    const data = await apiRes.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    return res.json({ success: true, text, model });
+  } catch (error) {
+    console.error('[Gemini AI API] Error:', error);
+    return res.status(500).json({ success: false, message: error.message || 'Internal AI service error.' });
   }
 });
 

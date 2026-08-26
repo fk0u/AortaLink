@@ -9,6 +9,8 @@ import { classifyBP } from '../../utils/bp-classifier';
 import { useReadings } from '../../hooks/useReadings';
 import { useProfiles } from '../../hooks/useProfiles';
 
+import { timeService } from '../../services/time/time-service';
+
 interface MobileTopAppBarProps {
   onOpenSOS?: () => void;
 }
@@ -18,6 +20,15 @@ export const MobileTopAppBar: React.FC<MobileTopAppBarProps> = () => {
   const openMobileToolsSheet = useAppStore((state) => state.openMobileToolsSheet);
   const { stats } = useReadings();
   const { activeProfile } = useProfiles();
+
+  const [currentTimeStr, setCurrentTimeStr] = React.useState(() => timeService.formatTimeWithWITA());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTimeStr(timeService.formatTimeWithWITA());
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleSpeakLatestReading = () => {
     playClickSound();
@@ -50,8 +61,12 @@ export const MobileTopAppBar: React.FC<MobileTopAppBarProps> = () => {
         </div>
       </div>
 
-      {/* Right: Clean Action Buttons */}
-      <div className="flex items-center gap-1.5 shrink-0">
+      {/* Right: Clean Action Buttons & Time */}
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">
+          {currentTimeStr}
+        </span>
+
         {/* Voice Reader */}
         <button
           type="button"

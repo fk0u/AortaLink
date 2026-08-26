@@ -6,7 +6,7 @@
 const NVIDIA_NIM_API_KEY =
   (import.meta as any).env?.PUBLIC_NVIDIA_NIM_API_KEY ||
   (import.meta as any).env?.VITE_NVIDIA_NIM_API_KEY ||
-  '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';
+  '';
 
 const PROXY_ENDPOINT = '/api/nvidia/v1/chat/completions';
 const DIRECT_ENDPOINT =
@@ -119,29 +119,32 @@ export async function queryNvidiaNimAi(
 function generateClinicalFallbackResponse(request: NvidiaNimConsultationRequest): string {
   const q = (request.userQuestion || '').toLowerCase();
   
-  if (q.includes('amlodipine') || q.includes('candesartan') || q.includes('obat') || q.includes('tensi')) {
+  if (q.includes('obat') || q.includes('tensi') || q.includes('dosis') || q.includes('ccb') || q.includes('arb') || q.includes('amlodipine') || q.includes('candesartan') || q.includes('bisoprolol') || q.includes('captopril')) {
     return `### Rekomendasi Klinis AI (Spesialis Penyakit Dalam - Sp.PD)\n\n` +
-      `**1. Kombinasi Terapi Hipertensi (CCB + ARB):**\n` +
-      `- **Amlodipine 5mg (Pagi Hari):** Berfungsi meredakan lonjakan tekanan darah sistolik selama aktivitas siang hari.\n` +
-      `- **Candesartan 8mg (Malam Hari):** Melindungi target organ (ginjal & jantung) serta memelihara ritme sirkadian *nocturnal dipping* normal saat tidur.\n\n` +
-      `**2. Anjuran Gaya Hidup & Batasan Natrium:**\n` +
-      `- Batasi asupan garam dapur maksimal **2.000 mg natrium/hari** (setara 1 sendok teh garam).\n` +
-      `- Lakukan olahraga aerobik ringan 30 menit/hari secara konsisten.\n\n` +
-      `*Catatan: Selalu konsultasikan perubahan dosis obat langsung dengan dokter spesialis yang merawat Anda.*`;
+      `**1. Prinsip Terapi Antihipertensi:**\n` +
+      `- **Golongan CCB (Amlodipine/Nifedipine):** Efektif merelaksasi dinding pembuluh darah arteri dan meredakan lonjakan tensi saat beraktivitas.\n` +
+      `- **Golongan ARB/ACEi (Candesartan/Valsartan/Captopril):** Menghambat sistem RAAS, memberikan proteksi ginjal, dan menjaga ritme nocturnal dipping saat tidur.\n` +
+      `- **Golongan Beta Blocker (Bisoprolol/Atenolol):** Mengontrol laju denyut nadi (resting heart rate) dan menurunkan kerja beban jantung.\n` +
+      `- **Golongan Diuretik (HCTZ/Furosemide):** Mengurangi volume cairan berlebih tubuh.\n\n` +
+      `**2. Waktu Minum Obat (Kronoterapi):**\n` +
+      `- Konsumsi obat pada jam yang sama setiap hari. Dokter dapat menganjurkan dosis pagi atau malam bergantung pada pola lonjakan tensi Anda.\n` +
+      `- Batasi asupan garam maksimal **2.000 mg natrium/hari** (DASH Diet).\n\n` +
+      `*Catatan: Selalu diskusikan penyesuaian jenis atau dosis obat langsung dengan dokter yang merawat Anda.*`;
   }
 
-  if (q.includes('asam urat') || q.includes('uric') || q.includes('allopurinol')) {
+  if (q.includes('asam urat') || q.includes('uric') || q.includes('allopurinol') || q.includes('febuxostat')) {
     return `### Evaluasi Asam Urat & Proteksi Ginjal (AI CDSS)\n\n` +
       `**1. Target Kadar Asam Urat Darah:**\n` +
-      `- Target kadar asam urat pasien hipertensi adalah **< 6.0 mg/dL** untuk mencegah kristalisasi tofi dan nefropati asam urat.\n\n` +
-      `**2. Terapi Allopurinol:**\n` +
-      `- Konsumsi **Allopurinol 100mg** setelah makan pagi dan tingkatkan hidrasi harian (minimal 2.5 - 3 Liter air putih per hari).\n\n` +
-      `*Catatan: Hindari makanan tinggi purin seperti jeroan, emping, dan hidangan laut berlebih.*`;
+      `- Target kadar asam urat pasien hipertensi umumnya adalah **< 6.0 mg/dL** untuk mencegah kristalisasi tofi dan komplikasi batu ginjal.\n\n` +
+      `**2. Terapi & Gaya Hidup:**\n` +
+      `- Obat penurun asam urat (seperti Allopurinol atau Febuxostat) dikonsumsi rutin sesuai resep dokter.\n` +
+      `- Tingkatkan hidrasi harian (minimal 2.5 - 3 Liter air putih per hari) dan kurangi konsumsi makanan tinggi purin (jeroan, daging merah olahan, seafood berlebih).\n\n` +
+      `*Catatan: Selalu konsultasikan pemeriksaan laboratorium berkala dengan dokter spesialis.*`;
   }
 
   return `### Analisis Rekam Medis Elektronik AortaLink\n\n` +
     `Berdasarkan data vital signs yang terindeks:\n` +
-    `- **Status Tekanan Darah:** Terkontrol dengan baik dalam target panduan JNC-8 & AHA/ACC.\n` +
-    `- **Rekomendasi:** Lanjutkan jadwal pengukuran rutin (sebelum tidur dan bangun tidur) untuk mendeteksi variabilitas sirkadian.\n\n` +
-    `Ada pertanyaan spesifik mengenai obat atau riwayat lab yang ingin didiskusikan?`;
+    `- **Status Tekanan Darah:** Terkontrol dalam target panduan JNC-8 & AHA/ACC.\n` +
+    `- **Rekomendasi:** Lanjutkan jadwal pengukuran rutin (pagi bangun tidur dan malam sebelum tidur) untuk memantau variabilitas hemodinamik.\n\n` +
+    `Ada pertanyaan spesifik mengenai regimen obat, hasil laboratorium, atau tips nutrisi yang ingin didiskusikan?`;
 }

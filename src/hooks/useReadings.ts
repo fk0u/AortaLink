@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
 import { useAppStore } from '../store/useAppStore';
 import { useProfiles } from './useProfiles';
@@ -17,10 +17,9 @@ export function useReadings() {
 
   const { activeProfile } = useProfiles();
 
-  // Fetch all readings for active profile using TanStack Query
-  const { data: rawReadings = [], isLoading, refetch } = useQuery({
-    queryKey: ['readings', activeProfileId],
-    queryFn: async () => {
+  // Fetch all readings for active profile using Dexie's live reactive query
+  const liveReadings = useLiveQuery(
+    async () => {
       if (!activeProfileId) return [];
       return await db.readings
         .where('profileId')
@@ -28,8 +27,12 @@ export function useReadings() {
         .reverse()
         .sortBy('timestamp');
     },
-    enabled: Boolean(activeProfileId)
-  });
+    [activeProfileId]
+  );
+
+  const rawReadings = liveReadings || [];
+  const isLoading = liveReadings === undefined;
+  const refetch = async () => {};
 
   // Filtered readings based on store filters
   const filteredReadings = useMemo(() => {

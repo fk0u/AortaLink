@@ -156,6 +156,15 @@ export function App() {
     [activeProfile?.id]
   );
 
+  // Query medications for active profile
+  const userMeds = useLiveQuery(
+    async () => {
+      if (!activeProfile?.id) return [];
+      return await db.medications.where('profileId').equals(activeProfile.id).toArray();
+    },
+    [activeProfile?.id]
+  );
+
   const clinicalAlerts = evaluateClinicalAlerts(rawReadings || [], labResults || []);
   const dippingReport = useMemo(() => calculateNocturnalDipping(rawReadings || []), [rawReadings]);
 
@@ -391,25 +400,14 @@ export function App() {
                   onOpenFhir={() => setIsFhirModalOpen(true)}
                 />
 
-                {/* Subtle Sync Indicator */}
+                {/* Real-time Status Indicator */}
                 <div className="flex items-center justify-between px-1 text-xs">
-                  <div className="flex items-center gap-1.5 text-slate-400 font-medium min-w-0">
-                    <Clock className="w-3.5 h-3.5 text-teal-500" />
-                    <span className="truncate">
-                      {cacheTimestamp ? `Sinkron ${new Date(cacheTimestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}` : 'Siap'}
-                    </span>
+                  <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-mono text-[11px] min-w-0">
+                    <Clock className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                    <span>Real-time Live EHR (Dexie v4)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MongoAtlasSyncBadge />
-                    <button
-                      type="button"
-                      onClick={handleManualCacheRefresh}
-                      disabled={isDataRefreshing}
-                      className="inline-flex items-center gap-1.5 font-bold text-teal-600 dark:text-teal-400 active:scale-95 transition-all text-xs"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isDataRefreshing ? 'animate-spin' : ''}`} />
-                      <span>{isDataRefreshing ? 'Sync...' : 'Refresh'}</span>
-                    </button>
                   </div>
                 </div>
 
@@ -648,10 +646,12 @@ export function App() {
                       </div>
                       <div>
                         <h4 className="text-xs font-black text-slate-900 dark:text-slate-100">
-                          Resep Kombinasi Terapi Hipertensi
+                          Manajemen Regimen Terapi Obat ({userMeds?.length || 0} Terdaftar)
                         </h4>
                         <p className="text-[10px] text-slate-500">
-                          Amlodipine (CCB), Candesartan (ARB), Allopurinol
+                          {userMeds && userMeds.length > 0
+                            ? userMeds.map((m) => `${m.name} ${m.dosage}`).join(', ')
+                            : 'Kelola jadwal obat, dosis, dan pantau kepatuhan minum'}
                         </p>
                       </div>
                     </div>

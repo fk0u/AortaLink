@@ -34,8 +34,8 @@ export const M3BottomNavigation: React.FC<M3BottomNavigationProps> = ({ activeTa
       className="fixed bottom-0 left-0 right-0 z-30 px-3 pb-safe pt-1 pointer-events-none"
     >
       <div className="max-w-lg mx-auto relative pointer-events-auto">
-        {/* Floating Material 3 Container */}
-        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200/85 dark:border-slate-800/85 rounded-[32px] px-3 py-2 shadow-2xl shadow-slate-950/20 flex items-center justify-between gap-1 transition-all">
+        {/* Clean Modern Navigation Container */}
+        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200/85 dark:border-slate-800/85 rounded-2xl px-3 py-2 shadow-2xl shadow-slate-950/20 flex items-center justify-between gap-1 transition-all">
           
           {/* Left 2 Tabs: Ringkasan & Jurnal */}
           <div className="flex-1 grid grid-cols-2 gap-1">

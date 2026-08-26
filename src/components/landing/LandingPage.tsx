@@ -1,4 +1,4 @@
-/* Hallmark, GPT-Taste & GSAP Motion · Bulletproof Full-Width Glass Header & Widescreen Desktop Medical SaaS */
+/* Awwwards Non-AI Style · Editorial Clinical Laboratory & Widescreen Personal EHR SaaS */
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
@@ -23,11 +23,20 @@ import {
   ChevronDown,
   Check,
   ShieldCheck,
-  FileText
+  FileText,
+  Copy,
+  Cpu,
+  TrendingDown,
+  AlertTriangle,
+  Stethoscope,
+  Lock,
+  Download,
+  Users
 } from '../icons/AppIcons';
 import { AuthModal } from '../auth/AuthModal';
 import { useNavigate } from '@tanstack/react-router';
-import { playClickSound } from '../../utils/audio-fx';
+import { useAuthStore } from '../../store/useAuthStore';
+import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 
 // Register GSAP Plugins
 if (typeof window !== 'undefined') {
@@ -43,6 +52,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
   const heroCardRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
+  const continueAsGuest = useAuthStore((state) => state.continueAsGuest);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   
@@ -55,25 +65,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
   // JSON Copied indicator
   const [isJsonCopied, setIsJsonCopied] = useState(false);
 
-  // GSAP Smooth Scroll & Kinetic Motion Choreography
+  // GSAP Smooth Scroll & Precision Animation Choreography
   useGSAP(() => {
     // Hero Elements Staggered Entrance
     gsap.from('.gsap-hero-item', {
-      y: 25,
+      y: 20,
       opacity: 0,
-      duration: 0.8,
-      stagger: 0.08,
+      duration: 0.7,
+      stagger: 0.07,
       ease: 'power3.out'
     });
 
     // Hero Mockup Card Float Dynamics
     if (heroCardRef.current) {
       gsap.from(heroCardRef.current, {
-        y: 40,
+        y: 30,
         opacity: 0,
-        duration: 1.0,
-        delay: 0.2,
-        ease: 'power4.out'
+        duration: 0.9,
+        delay: 0.15,
+        ease: 'power3.out'
       });
     }
 
@@ -82,12 +92,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
       gsap.from(card, {
         scrollTrigger: {
           trigger: card,
-          start: 'top 90%',
+          start: 'top 92%',
           toggleActions: 'play none none none'
         },
-        y: 30,
+        y: 24,
         opacity: 0,
-        duration: 0.7,
+        duration: 0.6,
         ease: 'power2.out'
       });
     });
@@ -110,7 +120,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
       code: {
         coding: [{ system: "http://loinc.org", code: "85354-9", display: "Blood pressure panel with all children optional" }]
       },
-      subject: { reference: "Patient/ghani-01", display: "Ghani" },
+      subject: { reference: "Patient/aortalink-ehr-01", display: "Ibu Hendra (62 th)" },
       effectiveDateTime: new Date().toISOString(),
       component: [
         {
@@ -120,12 +130,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
         {
           code: { coding: [{ system: "http://loinc.org", code: "8462-4", display: "Diastolic blood pressure" }] },
           valueQuantity: { value: 78, unit: "mmHg", system: "http://unitsofmeasure.org", code: "mm[Hg]" }
+        },
+        {
+          code: { coding: [{ system: "http://loinc.org", code: "8867-4", display: "Heart rate" }] },
+          valueQuantity: { value: 68, unit: "beats/min", system: "http://unitsofmeasure.org", code: "/min" }
         }
       ]
     }, null, 2);
     
     navigator.clipboard.writeText(fhirSnippet);
     setIsJsonCopied(true);
+    playSuccessChime();
     setTimeout(() => setIsJsonCopied(false), 2500);
   };
 
@@ -133,51 +148,51 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
   const getCircadianReading = (hour: number) => {
     if (hour >= 22 || hour <= 5) {
       return {
-        phase: 'Nocturnal Dipping (Malam)',
+        phase: 'Nocturnal Dipping (Malam Hari)',
         systolic: 110 + (hour === 3 ? -4 : 0),
         diastolic: 68,
         pulse: 58,
         dippingPercent: '-14.5%',
-        status: 'Normal Dipper (Proteksi Jantung)',
+        status: 'Normal Dipper (Proteksi Kardiovaskular)',
         icon: Moon,
-        theme: 'bg-indigo-950 text-indigo-200 border-indigo-800',
-        note: 'Penurunan tekanan darah malam hari 10-20% secara fisiologis melindungi pembuluh darah otak dan aorta.'
+        themeBadge: 'bg-indigo-50 text-indigo-800 border-indigo-200',
+        note: 'Penurunan tekanan darah malam hari 10-20% secara fisiologis melindungi pembuluh darah otak, arteri koronaria, dan aorta dari beban hemodinamik.'
       };
     } else if (hour >= 6 && hour <= 9) {
       return {
-        phase: 'Morning Blood Pressure Surge (Pagi)',
+        phase: 'Morning Surge (Pagi Hari)',
         systolic: 136 + (hour === 7 ? 4 : 0),
         diastolic: 84,
         pulse: 76,
         dippingPercent: '+12.1%',
-        status: 'Morning Surge (Waktu Konsumsi CCB)',
+        status: 'Morning Surge (Jadwal Konsumsi CCB)',
         icon: Sun,
-        theme: 'bg-amber-950 text-amber-200 border-amber-800',
-        note: 'Lonjakan kortisol dan simpatis alami saat bangun tidur. Waktu optimal minum Amlodipine 5mg untuk kontrol 24 jam.'
+        themeBadge: 'bg-amber-50 text-amber-800 border-amber-200',
+        note: 'Lonjakan kortisol & tonus simpatis fisiologis saat bangun tidur. Waktu optimal pemberian Amlodipine 5mg untuk mengontrol tekanan darah 24 jam.'
       };
     } else if (hour >= 10 && hour <= 17) {
       return {
-        phase: 'Ambulatory Active State (Siang)',
+        phase: 'Ambulatory Baseline (Siang Hari)',
         systolic: 124,
         diastolic: 78,
         pulse: 72,
         dippingPercent: 'Baseline (0%)',
         status: 'Target Tekanan Darah Terkendali',
         icon: Activity,
-        theme: 'bg-teal-950 text-teal-200 border-teal-800',
-        note: 'Perfusi organ vital stabil dengan Mean Arterial Pressure (MAP) 93 mmHg dalam rentang normal.'
+        themeBadge: 'bg-teal-50 text-teal-800 border-teal-200',
+        note: 'Perfusi organ vital stabil dengan Mean Arterial Pressure (MAP) 93 mmHg dalam rentang rekomendasi konsensus AHA/ACC 2017 & JNC-8.'
       };
     } else {
       return {
-        phase: 'Evening Relaxation (Sore/Malam)',
+        phase: 'Evening Relaxation (Sore / Menjelang Tidur)',
         systolic: 118,
         diastolic: 74,
         pulse: 66,
         dippingPercent: '-6.2%',
-        status: 'Waktu Konsumsi ARB Candesartan',
+        status: 'Jadwal Konsumsi ARB Candesartan',
         icon: Clock,
-        theme: 'bg-purple-950 text-purple-200 border-purple-800',
-        note: 'Waktu pemberian Candesartan 8mg sebelum tidur untuk menekan RAAS malam hari dan mencegah nocturnal non-dipping.'
+        themeBadge: 'bg-purple-50 text-purple-800 border-purple-200',
+        note: 'Waktu pemberian Candesartan 8mg sebelum tidur untuk menekan RAAS nocturnal dan mencegah komplikasi non-dipping saat malam.'
       };
     }
   };
@@ -187,243 +202,219 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
 
   const faqs = [
     {
-      q: 'Apakah data medis saya aman dan terenkripsi?',
-      a: 'Sangat aman. AortaLink beroperasi dengan prinsip Offline-First menggunakan database Dexie.js di browser lokal Anda dengan opsi enkripsi AES-GCM 256-bit. Sinkronisasi ke MongoDB Atlas Cloud Cluster diisolasi menggunakan protokol JWT terenkripsi.'
+      q: 'Bagaimana AortaLink melindungi privasi dan keamanan data medis saya?',
+      a: 'AortaLink menganut filosofi Offline-First berbasis browser Dexie.js (IndexedDB). Seluruh data rekam medis Anda dapat disimpan 100% lokal di perangkat Anda tanpa perlu membuat akun. Jika Anda mendaftar akun cloud, data disinkronkan secara aman ke cluster MongoDB Atlas terenkripsi dengan protokol JWT dan password hashing bcrypt.'
     },
     {
-      q: 'Bagaimana AI NVIDIA NIM (z-ai/glm-5.2) membantu pasien hipertensi?',
-      a: 'AI kami dilatih secara khusus untuk mengevaluasi data vital signs berdasarkan panduan JNC-8 dan AHA/ACC, membedakan lonjakan tekanan darah sistolik pagi hari, mengevaluasi efektivitas terapi kombinasi (CCB Amlodipine & ARB Candesartan), serta memantau target kadar asam urat darah.'
+      q: 'Apa itu interoperabilitas HL7 FHIR R4 dan LOINC 85354-9?',
+      a: 'HL7 FHIR R4 (Fast Healthcare Interoperability Resources) adalah standar baku internasional untuk pertukaran data medis rumah sakit. Semua pengukuran tekanan darah di AortaLink otomatis diformat ke panel LOINC 85354-9, sehingga dapat diimpor langsung oleh SIMRS rumah sakit modern dan platform kesehatan nasional.'
     },
     {
-      q: 'Apa itu interoperabilitas HL7 FHIR R4?',
-      a: 'HL7 FHIR R4 (Fast Healthcare Interoperability Resources) adalah standar global pertukaran data medis rumah sakit. Semua pengukuran tekanan darah di AortaLink otomatis diformat ke LOINC 85354-9 sehingga dapat diimpor langsung oleh sistem SIMRS rumah sakit modern.'
+      q: 'Bagaimana peran AI NVIDIA NIM (z-ai/glm-5.2) dalam evaluasi klinis?',
+      a: 'Asisten AI klinis kami menggunakan model canggih z-ai/glm-5.2 yang diinstruksikan berdasarkan panduan spesialis penyakit dalam (Sp.PD), konsensus JNC-8, AHA/ACC 2017, dan PERHI. AI membantu menerjemahkan pola diurnal dipping, sinergi obat antihipertensi, serta batas aman kadar asam urat darah.'
     },
     {
-      q: 'Apakah aplikasi ini dapat digunakan di smartphone?',
-      a: 'Ya. AortaLink dirancang dengan standar Mobile-First Progressive Web App (PWA) dan mendukung instalasi langsung ke layar utama iOS & Android tanpa perlu unduh dari app store.'
+      q: 'Apakah AortaLink dapat digunakan di smartphone tanpa instalasi app store?',
+      a: 'Ya. AortaLink dibangun dengan standar Progressive Web App (PWA) modern. Anda dapat mengaksesnya via browser di iOS Safari atau Android Chrome dan menyematkannya ke layar utama (Add to Home Screen) untuk pengalaman aplikasi native tanpa unduhan besar.'
     }
   ];
 
   return (
-    <main ref={containerRef} className="overflow-x-hidden w-full max-w-full min-h-[100dvh] bg-[#FAF9F6] text-[#18181B] font-sans selection:bg-teal-600 selection:text-white flex flex-col relative">
+    <main ref={containerRef} className="overflow-x-hidden w-full max-w-full min-h-[100dvh] bg-[#FBFBFA] text-[#111827] font-sans selection:bg-teal-700 selection:text-white flex flex-col relative">
       
-      {/* Subtle Cinematic Grain Overlay */}
-      <div 
-        className="pointer-events-none fixed inset-0 z-50 opacity-[0.02] mix-blend-overlay"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
-        }}
-      />
-
-      {/* Ambient background light gradients */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[800px] bg-gradient-to-b from-teal-100/50 via-sky-50/20 to-transparent blur-3xl pointer-events-none -z-10" />
-
-      {/* Full-Width Bulletproof Glass Header (Never Clips Text) */}
-      <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-2xl border-b border-slate-200/80 px-4 sm:px-8 py-3.5 transition-all">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      {/* Studio Header (Strict Hairline Borders, Zero Pill Shape) */}
+      <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-xl border-b border-slate-200/90 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between gap-6">
           
-          {/* Left: Brand Identity */}
+          {/* Left: Brand Mark */}
           <div 
             onClick={() => {
               playClickSound();
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="flex items-center gap-3 cursor-pointer group select-none shrink-0"
+            className="flex items-center gap-3 cursor-pointer select-none shrink-0"
           >
-            <div className="w-9 h-9 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-md shadow-teal-600/25 group-hover:scale-105 transition-transform">
-              <Heart size={18} />
+            <div className="w-8 h-8 rounded-lg bg-teal-700 text-white flex items-center justify-center shadow-sm">
+              <Heart size={18} className="fill-white text-white" />
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-base font-black tracking-tight text-slate-900">
+              <span className="text-sm font-bold tracking-tight text-slate-900">
                 AortaLink
               </span>
-              <span className="px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 text-[10px] font-black border border-teal-200">
-                EHR
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200 tracking-wider">
+                EHR v2.4
               </span>
             </div>
           </div>
 
-          {/* Center: Desktop Navigation Links (Visible on Wide Screens) */}
-          <nav className="hidden xl:flex items-center gap-8 text-xs font-semibold text-slate-600 select-none">
-            <a href="#fitur" className="hover:text-teal-600 transition-colors whitespace-nowrap">Fitur Medis</a>
-            <a href="#sirkadian" className="hover:text-teal-600 transition-colors whitespace-nowrap">Sirkadian 24-Jam</a>
-            <a href="#terapi" className="hover:text-teal-600 transition-colors whitespace-nowrap">Sinergi Obat</a>
-            <a href="#arsitektur" className="hover:text-teal-600 transition-colors whitespace-nowrap">HL7 FHIR R4</a>
-            <a href="#harga" className="hover:text-teal-600 transition-colors whitespace-nowrap">Paket SaaS</a>
-            <a href="#faq" className="hover:text-teal-600 transition-colors whitespace-nowrap">FAQ</a>
+          {/* Center: Editorial Monospace Navigation */}
+          <nav className="hidden lg:flex items-center gap-7 text-[11px] font-mono uppercase tracking-wider text-slate-600 select-none">
+            <a href="#fitur" className="hover:text-teal-700 transition-colors">01. Fitur Klinis</a>
+            <a href="#sirkadian" className="hover:text-teal-700 transition-colors">02. Sirkadian 24H</a>
+            <a href="#terapi" className="hover:text-teal-700 transition-colors">03. Farmakologi</a>
+            <a href="#arsitektur" className="hover:text-teal-700 transition-colors">04. HL7 FHIR R4</a>
+            <a href="#faq" className="hover:text-teal-700 transition-colors">05. FAQ Medis</a>
           </nav>
 
-          {/* Right: Primary Action Button */}
-          <div className="flex items-center gap-3 shrink-0">
+          {/* Right: Sharp Action Buttons */}
+          <div className="flex items-center gap-2.5 shrink-0">
             <button
               type="button"
               onClick={() => {
                 playClickSound();
                 setIsAuthOpen(true);
               }}
-              className="px-5 py-2.5 rounded-full bg-slate-950 text-white hover:bg-slate-800 text-xs font-bold shadow-md active:scale-95 transition-all flex items-center gap-2 group whitespace-nowrap"
+              className="px-4 py-2 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold transition-all flex items-center gap-2 active:scale-95 shadow-sm"
             >
-              <span>Buka App / Masuk</span>
-              <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
-                <ArrowRight size={11} />
-              </div>
+              <span>Buka Rekam Medis</span>
+              <ArrowRight size={13} />
             </button>
           </div>
 
         </div>
       </header>
 
-      {/* Hero Section: Symmetrical 2-Column Split on Desktop, Gracefully Centered on Mobile */}
-      <section className="pt-10 pb-16 md:pt-16 md:pb-24 px-4 sm:px-8 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+      {/* Hero Section (Asymmetric Architectural Grid) */}
+      <section className="pt-12 pb-16 sm:pt-16 sm:pb-24 px-4 sm:px-8 max-w-7xl mx-auto w-full border-b border-slate-200/80">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
           
-          {/* Left Column: Editorial Content */}
-          <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+          {/* Left Column: Editorial Manifesto */}
+          <div className="lg:col-span-7 space-y-6 text-left">
             
-            {/* Eyebrow Tag */}
-            <div className="gsap-hero-item inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm text-slate-700 text-[11px] font-bold">
-              <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-              <span>HL7 FHIR R4 • NVIDIA NIM AI (z-ai/glm-5.2) • MongoDB Atlas</span>
+            {/* Technical Eyebrow */}
+            <div className="gsap-hero-item flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-teal-800 bg-teal-50/80 border border-teal-200/90 px-2.5 py-1 rounded w-fit">
+              <span className="w-1.5 h-1.5 rounded-sm bg-teal-600 animate-pulse" />
+              <span>LOINC 85354-9 // HL7 FHIR R4 CLINICAL ARCHITECTURE</span>
             </div>
 
             {/* Headline */}
-            <h1 className="gsap-hero-item text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-950 leading-[1.12]">
-              Presisi Rekam Medis &amp; Terapi Hipertensi.
+            <h1 className="gsap-hero-item text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-950 leading-[1.14]">
+              Presisi Klinis Hipertensi &amp; Rekam Medis Elektronik Terbuka.
             </h1>
 
-            {/* Subtitle */}
-            <p className="gsap-hero-item text-sm sm:text-base text-slate-600 font-medium leading-relaxed max-w-2xl mx-auto lg:mx-0">
-              Platform Personal EHR modern yang menjembatani data tensi harian dengan evaluasi ritme sirkadian (*nocturnal dipping*), kombinasi obat antihipertensi (CCB + ARB), serta kecerdasan klinis spesialis penyakit dalam.
+            {/* Body */}
+            <p className="gsap-hero-item text-sm sm:text-base text-slate-600 font-normal leading-relaxed max-w-2xl">
+              Platform Personal EHR yang menghubungkan data vital harian dengan evaluasi ritme sirkadian (<em>nocturnal dipping</em>), protokol kombinasi terapi CCB + ARB, serta asisten klinis spesialis penyakit dalam berstandar rumah sakit.
             </p>
 
-            {/* CTA Buttons */}
-            <div className="gsap-hero-item flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
+            {/* Actions */}
+            <div className="gsap-hero-item flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => {
                   playClickSound();
                   setIsAuthOpen(true);
                 }}
-                className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-teal-600 hover:bg-teal-700 text-white font-black text-sm shadow-xl shadow-teal-600/25 active:scale-95 transition-all flex items-center justify-center gap-3 group"
+                className="px-6 py-3 rounded-lg bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2.5 group"
               >
-                <span>Buka Rekam Medis (EHR)</span>
-                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-1 transition-transform">
-                  <ArrowRight size={13} />
-                </div>
+                <span>Masuk ke Dashboard EHR</span>
+                <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
 
               <button
                 type="button"
                 onClick={() => {
                   playClickSound();
-                  setIsAuthOpen(true);
+                  continueAsGuest();
+                  onLaunchApp();
                 }}
-                className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white hover:bg-slate-50 text-slate-800 font-bold text-sm border border-slate-200 shadow-sm active:scale-95 transition-all"
+                className="px-5 py-3 rounded-lg bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs border border-slate-300 shadow-sm active:scale-95 transition-all text-center"
               >
-                Masuk Akun SaaS / Google SSO
+                Coba Mode Tamu (Offline-First)
               </button>
             </div>
 
-            {/* Trust Metrics Pill Row */}
-            <div className="gsap-hero-item pt-2 flex items-center justify-center lg:justify-start gap-6 text-xs text-slate-500 font-semibold flex-wrap">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={15} className="text-teal-600" />
-                100% Offline-First (Dexie.js)
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={15} className="text-teal-600" />
-                Standar Rumah Sakit FHIR R4
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={15} className="text-teal-600" />
-                Bebas Iklan &amp; Open-Source
-              </span>
+            {/* Clinical Trust Grid */}
+            <div className="gsap-hero-item pt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs text-slate-600 font-medium border-t border-slate-200/90">
+              <div className="space-y-0.5">
+                <span className="font-mono text-[10px] text-slate-400 block uppercase">[STORAGE]</span>
+                <span className="font-bold text-slate-900">100% Offline Dexie v4</span>
+              </div>
+              <div className="space-y-0.5">
+                <span className="font-mono text-[10px] text-slate-400 block uppercase">[INTEROP]</span>
+                <span className="font-bold text-slate-900">HL7 FHIR R4 Panel</span>
+              </div>
+              <div className="space-y-0.5 col-span-2 sm:col-span-1">
+                <span className="font-mono text-[10px] text-slate-400 block uppercase">[SECURITY]</span>
+                <span className="font-bold text-slate-900">Bcrypt &amp; Cloud Sync</span>
+              </div>
             </div>
 
           </div>
 
-          {/* Right Column: Sleek Horizontal Live Vitals Bento Terminal */}
-          <div className="lg:col-span-5">
+          {/* Right Column: High-Density Live Clinical Telemetry Console */}
+          <div className="lg:col-span-5 w-full">
             <div
               ref={heroCardRef}
-              className="p-2 sm:p-2.5 rounded-[2.5rem] bg-black/5 ring-1 ring-black/5 shadow-2xl"
+              className="bg-white border border-slate-300/90 rounded-xl shadow-sm overflow-hidden"
             >
-              {/* Inner Core */}
-              <div className="rounded-[2rem] bg-white border border-slate-200/80 p-5 sm:p-6 text-left space-y-4 shadow-inner">
-                
-                {/* Header Bar */}
-                <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                      IH
-                    </div>
-                    <div>
-                      <h3 className="text-xs font-black text-slate-900">
-                        Ibu Hendra (62 Tahun)
-                      </h3>
-                      <p className="text-[10px] text-slate-400 font-semibold">
-                        Profil Pasien • Terapi Kombinasi
-                      </p>
-                    </div>
-                  </div>
-
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Target Optimal
+              {/* Header Bar */}
+              <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-sm bg-teal-600" />
+                  <span className="font-mono text-xs font-bold text-slate-800">
+                    EHR-TELEMETRY-OBSERVATION
                   </span>
                 </div>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  LIVE STATUS
+                </span>
+              </div>
 
-                {/* BP Big Metrics */}
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
-                    Tekanan Darah Terkini (Protokol Duduk 5 Menit)
+              {/* Console Body */}
+              <div className="p-5 space-y-4 text-left">
+                
+                {/* Patient Tag */}
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Subjek Pasien</span>
+                    <span className="text-xs font-bold text-slate-900">Ibu Hendra (62 Tahun)</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Regimen</span>
+                    <span className="text-xs font-bold text-purple-700">CCB Pagi + ARB Malam</span>
+                  </div>
+                </div>
+
+                {/* Primary Vitals Telemetry */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
+                    Tekanan Darah (Protokol Duduk 5 Menit)
                   </span>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-slate-900">
+                    <span className="text-4xl font-extrabold font-mono tracking-tight text-slate-950 tabular-nums">
                       122 / 78
                     </span>
-                    <span className="text-xs font-black uppercase text-slate-400">
+                    <span className="text-xs font-mono font-bold text-slate-400">
                       mmHg
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-1 flex-wrap">
-                    <span className="text-[11px] font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200 inline-flex items-center gap-1">
-                      <Heart size={12} className="text-rose-500 fill-rose-500 animate-pulse" />
-                      68 BPM
-                    </span>
-                    <span className="text-[11px] font-semibold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200">
-                      MAP: 92 mmHg
-                    </span>
-                    <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200">
-                      Rumah (Rutin)
-                    </span>
+                  <div className="grid grid-cols-3 gap-2 pt-2 text-center">
+                    <div className="p-2 rounded bg-slate-50 border border-slate-200">
+                      <span className="text-[9px] font-mono text-slate-400 block uppercase">Nadi</span>
+                      <span className="text-xs font-bold font-mono text-rose-600 tabular-nums">68 BPM</span>
+                    </div>
+                    <div className="p-2 rounded bg-slate-50 border border-slate-200">
+                      <span className="text-[9px] font-mono text-slate-400 block uppercase">MAP</span>
+                      <span className="text-xs font-bold font-mono text-slate-800 tabular-nums">92 mmHg</span>
+                    </div>
+                    <div className="p-2 rounded bg-slate-50 border border-slate-200">
+                      <span className="text-[9px] font-mono text-slate-400 block uppercase">Dipping</span>
+                      <span className="text-xs font-bold font-mono text-emerald-700 tabular-nums">-14.2%</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Dipping & Regimen Split Bento Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-700">
-                      <span>Nocturnal Dipping</span>
-                      <span className="text-emerald-600 font-black">-14.2%</span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full bg-slate-200 overflow-hidden">
-                      <div className="h-full rounded-full bg-emerald-500 w-[65%]" />
-                    </div>
-                    <p className="text-[9px] text-slate-500 leading-tight">
-                      Normal Dipper (Proteksi Jantung)
-                    </p>
+                {/* Clinical Flags */}
+                <div className="p-3 rounded bg-teal-50/70 border border-teal-200/80 text-xs space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-teal-900">
+                    <ShieldCheck size={14} className="text-teal-700" />
+                    <span>Evaluasi CDSS Terkontrol Baik</span>
                   </div>
-
-                  <div className="p-3 rounded-2xl bg-slate-50/80 border border-slate-200/60 space-y-1">
-                    <span className="text-[10px] font-bold text-slate-700 block truncate">
-                      CCB Pagi + ARB Malam
-                    </span>
-                    <span className="text-[9px] font-mono text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded inline-block font-bold">
-                      HL7 FHIR R4
-                    </span>
-                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed font-normal">
+                    Target hemodinamik optimal tercapai. Ritme sirkadian nocturnal normal dipper aktif.
+                  </p>
                 </div>
 
               </div>
@@ -433,151 +424,147 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
         </div>
       </section>
 
-      {/* Infinite Medical Standards Marquee */}
-      <section className="py-5 border-y border-slate-200/80 bg-white/60 backdrop-blur-sm overflow-hidden select-none">
-        <div className="flex items-center gap-10 animate-marquee whitespace-nowrap text-xs font-bold text-slate-500 uppercase tracking-wider">
-          <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-teal-500" /> HL7 FHIR R4 Standardized</span>
-          <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-sky-500" /> LOINC 85354-9 Panel</span>
-          <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-purple-500" /> NVIDIA NIM AI (z-ai/glm-5.2)</span>
-          <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> MongoDB Atlas Multi-Region</span>
-          <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> AHA/ACC 2017 &amp; JNC-8 Guidelines</span>
-          <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Dexie.js Offline-First Security</span>
-          <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500" /> ESH/ESC 2023 Hypertension</span>
-          <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-teal-500" /> PERHI Indonesia Protocol</span>
+      {/* Technical Standards Tape */}
+      <section className="py-3.5 border-b border-slate-200 bg-white select-none overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-slate-500 overflow-x-auto no-scrollbar gap-8">
+          <span className="shrink-0 flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-teal-600 rounded-none" /> HL7 FHIR R4</span>
+          <span className="shrink-0 flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-slate-400 rounded-none" /> LOINC 85354-9</span>
+          <span className="shrink-0 flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-purple-600 rounded-none" /> NVIDIA NIM AI (z-ai/glm-5.2)</span>
+          <span className="shrink-0 flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-emerald-600 rounded-none" /> MongoDB Atlas Cloud</span>
+          <span className="shrink-0 flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-blue-600 rounded-none" /> ACC/AHA 2017 &amp; JNC-8</span>
+          <span className="shrink-0 flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-amber-600 rounded-none" /> Dexie.js Offline v4</span>
         </div>
       </section>
 
-      {/* Interactive 24-Hour Diurnal Dipping Scrubbing Simulator Section */}
-      <section id="sirkadian" className="py-16 md:py-24 px-4 sm:px-8 max-w-7xl mx-auto space-y-10">
+      {/* Section 01: Interactive 24-Hour Diurnal Dipping Console */}
+      <section id="sirkadian" className="py-16 sm:py-24 px-4 sm:px-8 max-w-7xl mx-auto w-full border-b border-slate-200/80 space-y-10">
         
-        <div className="text-center space-y-3 max-w-3xl mx-auto">
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-teal-600">
-            Simulasi Sirkadian Interaktif
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
-            Bagaimana Ritme Sirkadian Menjaga Tubuh Anda Sepanjang 24 Jam?
-          </h2>
-          <p className="text-sm text-slate-600">
-            Geser slider waktu di bawah untuk melihat variasi fisiologis tekanan darah harian, lonjakan pagi (*morning surge*), dan waktu pemberian obat yang optimal.
-          </p>
-        </div>
-
-        {/* Interactive Scrubbing Console */}
-        <div className="gsap-bento-card p-2.5 sm:p-3.5 rounded-[2.5rem] bg-black/5 ring-1 ring-black/5 shadow-2xl max-w-4xl mx-auto">
-          <div className="rounded-[2rem] bg-white border border-slate-200/80 p-6 sm:p-8 space-y-6">
-            
-            {/* Time Slider Control */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-600">
-                <span className="flex items-center gap-1.5">
-                  <Clock size={15} className="text-teal-600" />
-                  Waktu Simulasi: <span className="font-mono text-base font-black text-slate-900">{String(simulatedHour).padStart(2, '0')}:00 WIB</span>
-                </span>
-                <span className="text-teal-600 font-extrabold uppercase text-[10px]">
-                  {currentSim.phase}
-                </span>
-              </div>
-
-              <input
-                type="range"
-                min={0}
-                max={23}
-                value={simulatedHour}
-                onChange={(e) => setSimulatedHour(Number(e.target.value))}
-                className="w-full h-2.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-teal-600"
-              />
-
-              <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                <span>00:00 (Malam)</span>
-                <span>06:00 (Bangun)</span>
-                <span>12:00 (Siang)</span>
-                <span>18:00 (Sore)</span>
-                <span>23:00 (Tidur)</span>
-              </div>
-            </div>
-
-            {/* Dynamic Telemetry Box */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                  Estimasi Tensi Diurnal
-                </span>
-                <div className="text-3xl font-black font-mono text-slate-900">
-                  {currentSim.systolic}/{currentSim.diastolic} <span className="text-xs text-slate-400 font-sans">mmHg</span>
-                </div>
-                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md inline-block">
-                  Dipping: {currentSim.dippingPercent}
-                </span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                  Denyut Nadi Istirahat
-                </span>
-                <div className="text-3xl font-black font-mono text-rose-500">
-                  {currentSim.pulse} <span className="text-xs text-slate-400 font-sans">BPM</span>
-                </div>
-                <span className="text-[10px] font-semibold text-slate-500 truncate block">
-                  Aktivitas Simpatis/Vagal
-                </span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                  Status Fisiologis
-                </span>
-                <div className="text-sm font-black text-slate-800 line-clamp-2">
-                  {currentSim.status}
-                </div>
-                <span className="text-[10px] font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md inline-block">
-                  JNC-8 Protocol
-                </span>
-              </div>
-            </div>
-
-            {/* Dynamic Note */}
-            <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-200/80 flex items-start gap-3 text-xs text-teal-950">
-              <CurrentSimIcon size={18} className="text-teal-600 shrink-0 mt-0.5" />
-              <p className="leading-relaxed font-medium">
-                {currentSim.note}
-              </p>
-            </div>
-
+        <div className="space-y-2 text-left max-w-3xl">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-teal-800">
+            [SECTION 01 // SIRKADIAN 24-JAM]
           </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            Simulasi Sirkadian &amp; Pencegahan Lonjakan Pagi (Morning Surge).
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            Tekanan darah manusia berfluktuasi secara ritmis sepanjang 24 jam. Geser pengendali waktu di bawah untuk melihat estimasi hemodinamik dan waktu optimal pemberian obat antihipertensi.
+          </p>
+        </div>
+
+        {/* Precision Simulator Console */}
+        <div className="gsap-bento-card bg-white border border-slate-300 rounded-xl p-6 sm:p-8 space-y-6 shadow-sm">
+          
+          {/* Time Slider */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-xs font-mono font-bold text-slate-700">
+              <span className="flex items-center gap-2">
+                <Clock size={15} className="text-teal-700" />
+                WAKTU SIMULASI: <span className="text-base text-slate-950 font-extrabold">{String(simulatedHour).padStart(2, '0')}:00 WIB</span>
+              </span>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${currentSim.themeBadge}`}>
+                {currentSim.phase}
+              </span>
+            </div>
+
+            <input
+              type="range"
+              min={0}
+              max={23}
+              value={simulatedHour}
+              onChange={(e) => setSimulatedHour(Number(e.target.value))}
+              className="w-full h-2 bg-slate-200 rounded-none appearance-none cursor-pointer accent-teal-700"
+            />
+
+            <div className="flex justify-between text-[9px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+              <span>00:00 (Malam)</span>
+              <span>06:00 (Bangun Pagi)</span>
+              <span>12:00 (Siang)</span>
+              <span>18:00 (Sore)</span>
+              <span>23:00 (Tidur)</span>
+            </div>
+          </div>
+
+          {/* Telemetry Output Metrics */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
+                Estimasi Tensi Diurnal
+              </span>
+              <div className="text-2xl font-mono font-extrabold text-slate-900 tabular-nums">
+                {currentSim.systolic}/{currentSim.diastolic} <span className="text-xs font-mono text-slate-400 font-normal">mmHg</span>
+              </div>
+              <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded inline-block">
+                Dipping: {currentSim.dippingPercent}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
+                Denyut Nadi Istirahat
+              </span>
+              <div className="text-2xl font-mono font-extrabold text-rose-600 tabular-nums">
+                {currentSim.pulse} <span className="text-xs font-mono text-slate-400 font-normal">BPM</span>
+              </div>
+              <span className="text-[10px] font-mono text-slate-500 block truncate">
+                Tonus Simpatis / Vagal
+              </span>
+            </div>
+
+            <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
+                Status Fisiologis
+              </span>
+              <div className="text-xs font-bold text-slate-900 line-clamp-2">
+                {currentSim.status}
+              </div>
+              <span className="text-[10px] font-mono font-bold text-teal-800 bg-teal-50 px-1.5 py-0.5 rounded inline-block">
+                JNC-8 Recommendation
+              </span>
+            </div>
+          </div>
+
+          {/* Clinical Rationale Note */}
+          <div className="p-4 rounded-lg bg-teal-50/80 border border-teal-200 flex items-start gap-3 text-xs text-teal-950">
+            <CurrentSimIcon size={16} className="text-teal-700 shrink-0 mt-0.5" />
+            <p className="leading-relaxed font-medium">
+              {currentSim.note}
+            </p>
+          </div>
+
         </div>
 
       </section>
 
-      {/* Interactive Combination Therapy Synergy Showcase */}
-      <section id="terapi" className="py-16 md:py-24 px-4 sm:px-8 max-w-7xl mx-auto space-y-10">
+      {/* Section 02: Pharmacological Synergy Matrix (CCB + ARB + Allopurinol) */}
+      <section id="terapi" className="py-16 sm:py-24 px-4 sm:px-8 max-w-7xl mx-auto w-full border-b border-slate-200/80 space-y-10">
         
-        <div className="text-center space-y-3 max-w-3xl mx-auto">
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-teal-600">
-            Sinergi Farmakologi Klinis
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
-            Kombinasi Terapi CCB &amp; ARB yang Terbukti Efektif.
+        <div className="space-y-2 text-left max-w-3xl">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-teal-800">
+            [SECTION 02 // FARMAKOLOGI KLINIS]
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            Sinergi Kombinasi Terapi CCB &amp; ARB + Kontrol Asam Urat.
           </h2>
-          <p className="text-sm text-slate-600">
-            Pelajari bagaimana perpaduan Amlodipine pagi, Candesartan malam, dan Allopurinol bekerja saling melengkapi untuk proteksi organ target.
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            Kombinasi Calcium Channel Blocker di pagi hari dan Angiotensin Receptor Blocker di malam hari bekerja saling menetralkan efek samping sekaligus memaksimalkan proteksi target organ.
           </p>
         </div>
 
-        {/* Tab Buttons */}
-        <div className="flex items-center justify-center gap-2 p-1 bg-slate-100 rounded-full max-w-md mx-auto">
+        {/* Tab Controls (Architectural Clean Tabs) */}
+        <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => {
               playClickSound();
               setActiveDrugTab('ccb');
             }}
-            className={`flex-1 py-2.5 px-4 rounded-full text-xs font-bold transition-all ${
+            className={`px-4 py-2 text-xs font-mono font-bold uppercase transition-all rounded-md ${
               activeDrugTab === 'ccb'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-slate-900 text-white'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
             }`}
           >
-            Amlodipine (CCB)
+            01. Amlodipine 5mg (CCB)
           </button>
           <button
             type="button"
@@ -585,13 +572,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
               playClickSound();
               setActiveDrugTab('arb');
             }}
-            className={`flex-1 py-2.5 px-4 rounded-full text-xs font-bold transition-all ${
+            className={`px-4 py-2 text-xs font-mono font-bold uppercase transition-all rounded-md ${
               activeDrugTab === 'arb'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-slate-900 text-white'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
             }`}
           >
-            Candesartan (ARB)
+            02. Candesartan 8mg (ARB)
           </button>
           <button
             type="button"
@@ -599,291 +586,214 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
               playClickSound();
               setActiveDrugTab('gout');
             }}
-            className={`flex-1 py-2.5 px-4 rounded-full text-xs font-bold transition-all ${
+            className={`px-4 py-2 text-xs font-mono font-bold uppercase transition-all rounded-md ${
               activeDrugTab === 'gout'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-slate-900 text-white'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
             }`}
           >
-            Allopurinol (Gout)
+            03. Allopurinol 100mg (Gout)
           </button>
         </div>
 
-        {/* Tab Content Display */}
-        <div className="gsap-bento-card p-2 sm:p-3 rounded-[2rem] bg-black/5 ring-1 ring-black/5 max-w-3xl mx-auto">
-          <div className="rounded-[calc(2rem-0.375rem)] bg-white border border-slate-200/80 p-6 sm:p-8 space-y-4">
-            
-            {activeDrugTab === 'ccb' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center">
-                      <Sun size={22} />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-black text-slate-900">
-                        Amlodipine 5mg (Calcium Channel Blocker)
-                      </h3>
-                      <p className="text-xs text-slate-500 font-semibold">
-                        Jadwal: Pagi Hari (07:00 - 08:00 WIB)
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-black uppercase bg-amber-50 text-amber-800 px-3 py-1 rounded-full border border-amber-200">
-                    Vasodilatasi Arteri
-                  </span>
+        {/* Active Tab Spec Card */}
+        <div className="gsap-bento-card bg-white border border-slate-300 rounded-xl p-6 sm:p-8 space-y-4 shadow-sm">
+          {activeDrugTab === 'ccb' && (
+            <div className="space-y-4 text-left">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Amlodipine 5mg (Calcium Channel Blocker)
+                  </h3>
+                  <span className="font-mono text-xs text-slate-500">Jadwal: Pagi Hari (07:00 - 08:00 WIB)</span>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Menghambat masuknya ion kalsium ke otot polos pembuluh darah arteri, menurunkan resistensi perifer secara signifikan, dan mencegah lonjakan sistolik pagi hari.
-                </p>
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-semibold text-slate-700 flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-teal-600 shrink-0" />
-                  <span>Sinergi: Candesartan di malam hari menetralkan risiko edema pergelangan kaki dari Amlodipine.</span>
-                </div>
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200 w-fit">
+                  VASODILATASI ARTERIOLER
+                </span>
               </div>
-            )}
-
-            {activeDrugTab === 'arb' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center">
-                      <Moon size={22} />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-black text-slate-900">
-                        Candesartan 8mg (Angiotensin Receptor Blocker)
-                      </h3>
-                      <p className="text-xs text-slate-500 font-semibold">
-                        Jadwal: Malam Hari (20:00 - 21:00 WIB)
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-black uppercase bg-indigo-50 text-indigo-800 px-3 py-1 rounded-full border border-indigo-200">
-                    Proteksi Ginjal &amp; Jantung
-                  </span>
-                </div>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Memblokade reseptor AT1 dari Angiotensin II, menurunkan tekanan darah nocturnal, melindungi fungsi filtrasi glomerulus ginjal, dan memperbaiki pola *nocturnal dipping*.
-                </p>
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-semibold text-slate-700 flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-teal-600 shrink-0" />
-                  <span>Sinergi: Menjaga proteksi endotel sepanjang malam saat pasien sedang tertidur lelap.</span>
-                </div>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+                Menghambat influks ion kalsium transmembran ke otot polos vaskular arteri, menurunkan resistensi perifer total secara konsisten selama 24 jam, dan secara efektif menekan lonjakan tekanan darah sistolik pagi hari.
+              </p>
+              <div className="p-3.5 rounded bg-slate-50 border border-slate-200 text-xs text-slate-700 flex items-start gap-2">
+                <CheckCircle2 size={16} className="text-teal-700 shrink-0 mt-0.5" />
+                <span><strong>Sinergi Farmakologis:</strong> Pemberian Candesartan di malam hari memfasilitasi dilatasi pasca-kapiler sehingga mencegah risiko edema pergelangan kaki yang sering dipicu oleh monoterapi CCB dosis tinggi.</span>
               </div>
-            )}
+            </div>
+          )}
 
-            {activeDrugTab === 'gout' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-purple-50 text-purple-600 border border-purple-200 flex items-center justify-center">
-                      <FlaskConical size={22} />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-black text-slate-900">
-                        Allopurinol 100mg (Xanthine Oxidase Inhibitor)
-                      </h3>
-                      <p className="text-xs text-slate-500 font-semibold">
-                        Jadwal: Sesudah Makan Siang
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-black uppercase bg-purple-50 text-purple-800 px-3 py-1 rounded-full border border-purple-200">
-                    Target Asam Urat &lt; 6.0 mg/dL
-                  </span>
+          {activeDrugTab === 'arb' && (
+            <div className="space-y-4 text-left">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Candesartan 8mg (Angiotensin II Receptor Blocker)
+                  </h3>
+                  <span className="font-mono text-xs text-slate-500">Jadwal: Malam Hari (20:00 - 21:00 WIB)</span>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Menghambat sintesis asam urat darah untuk mencegah mikrotrombus dan peradangan pembuluh darah ginjal yang kerap memperparah hipertensi resisten.
-                </p>
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-semibold text-slate-700 flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-teal-600 shrink-0" />
-                  <span>Sinergi: Mengurangi risiko hiperurisemia yang dapat memicu vasokonstriksi arteri renalis.</span>
-                </div>
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-indigo-50 text-indigo-800 border border-indigo-200 w-fit">
+                  PROTEKSI GINJAL &amp; NOCTURNAL
+                </span>
               </div>
-            )}
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+                Memblokade selektif reseptor AT1 dari Angiotensin II, menurunkan tekanan intraglomerular ginjal, meredakan proteinuria mikroalbuminuria, serta mengembalikan pola <em>nocturnal dipping</em> fisiologis saat tidur.
+              </p>
+              <div className="p-3.5 rounded bg-slate-50 border border-slate-200 text-xs text-slate-700 flex items-start gap-2">
+                <CheckCircle2 size={16} className="text-teal-700 shrink-0 mt-0.5" />
+                <span><strong>Sinergi Farmakologis:</strong> Menurunkan tonus vasokonstriksi nocturnal dan melindungi endotel vaskular saat istirahat malam.</span>
+              </div>
+            </div>
+          )}
 
-          </div>
+          {activeDrugTab === 'gout' && (
+            <div className="space-y-4 text-left">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Allopurinol 100mg (Xanthine Oxidase Inhibitor)
+                  </h3>
+                  <span className="font-mono text-xs text-slate-500">Jadwal: Siang Hari (Sesudah Makan)</span>
+                </div>
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-purple-50 text-purple-800 border border-purple-200 w-fit">
+                  TARGET ASAM URAT &lt; 6.0 mg/dL
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+                Menghambat biosintesis asam urat darah dari purin. Kadar asam urat &gt; 7.0 mg/dL secara klinis terbukti memicu mikrotrombus ginjal dan disfungsi endotel yang memperberat hipertensi resisten.
+              </p>
+              <div className="p-3.5 rounded bg-slate-50 border border-slate-200 text-xs text-slate-700 flex items-start gap-2">
+                <CheckCircle2 size={16} className="text-teal-700 shrink-0 mt-0.5" />
+                <span><strong>Sinergi Farmakologis:</strong> Menjaga filtrasi ginjal (eGFR) tetap stabil dan mencegah peradangan vaskular sistemik.</span>
+              </div>
+            </div>
+          )}
         </div>
 
       </section>
 
-      {/* Feature Bento Matrix Section */}
-      <section id="fitur" className="py-16 md:py-24 px-4 sm:px-8 max-w-7xl mx-auto space-y-12">
+      {/* Section 03: Feature Bento Matrix */}
+      <section id="fitur" className="py-16 sm:py-24 px-4 sm:px-8 max-w-7xl mx-auto w-full border-b border-slate-200/80 space-y-10">
         
-        <div className="text-center space-y-3 max-w-3xl mx-auto">
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-teal-600">
-            Arsitektur Klinis Unggulan
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
-            Bukan Sekadar Buku Catatan Tensi. Ini Personal EHR Lengkap.
+        <div className="space-y-2 text-left max-w-3xl">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-teal-800">
+            [SECTION 03 // MODUL PLATFORM]
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            Arsitektur Fitur Lengkap Personal Electronic Health Record.
           </h2>
-          <p className="text-sm text-slate-600">
-            Didesain khusus untuk pasien hipertensi, lansia, dokter penyakit dalam, dan keluarga caregiver.
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            Didesain tanpa gimmick untuk kebutuhan klinis nyata: pasien hipertensi, keluarga caregiver, dan dokter spesialis.
           </p>
         </div>
 
-        {/* Bento Grid (Widescreen 12-Column Layout) */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
           
           {/* Card 1: Nocturnal Dipping (Col 8) */}
-          <div className="gsap-bento-card md:col-span-8 p-2 rounded-[2rem] bg-black/5 ring-1 ring-black/5">
-            <div className="rounded-[calc(2rem-0.375rem)] bg-white border border-slate-200/80 p-6 sm:p-8 space-y-4 h-full flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center shadow-sm">
-                  <Moon size={22} />
-                </div>
-                <h3 className="text-xl font-black text-slate-900">
-                  Analisis Pola Sirkadian &amp; Nocturnal Dipping
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Secara otomatis memisahkan data tensi siang hari (06:00-21:59) dan malam hari (22:00-05:59) untuk mendeteksi status <em>Dipper, Non-Dipper, Riser,</em> atau <em>Extreme Dipper</em> demi mencegah risiko stroke nocturnal.
-                </p>
+          <div className="gsap-bento-card md:col-span-8 bg-white border border-slate-300 rounded-xl p-6 sm:p-7 space-y-4 text-left flex flex-col justify-between">
+            <div className="space-y-2.5">
+              <span className="font-mono text-[10px] text-indigo-700 uppercase font-bold">[MODUL 01 // SIRKADIAN]</span>
+              <h3 className="text-lg font-bold text-slate-900">
+                Kalkulator Nocturnal Dipping Otomatis
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Secara otomatis memisahkan telemetri tensi siang (06:00-21:59) dan malam (22:00-05:59) untuk mengklasifikasikan pola <em>Normal Dipper, Non-Dipper, Riser,</em> atau <em>Extreme Dipper</em> guna mencegah risiko stroke nocturnal.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="p-3 rounded bg-amber-50/70 border border-amber-200">
+                <span className="text-[9px] font-mono uppercase text-amber-800 block">Rata-Rata Siang</span>
+                <span className="text-lg font-mono font-bold text-slate-900 tabular-nums">128/82 mmHg</span>
               </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-3">
-                <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 flex items-center gap-1">
-                    <Sun size={13} /> Rata-Rata Siang
-                  </span>
-                  <div className="text-2xl font-black font-mono text-slate-900">
-                    128/82 <span className="text-xs text-slate-400 font-sans">mmHg</span>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-indigo-800 flex items-center gap-1">
-                    <Moon size={13} /> Rata-Rata Malam
-                  </span>
-                  <div className="text-2xl font-black font-mono text-slate-900">
-                    110/70 <span className="text-xs text-slate-400 font-sans">mmHg</span>
-                  </div>
-                </div>
+              <div className="p-3 rounded bg-indigo-50/70 border border-indigo-200">
+                <span className="text-[9px] font-mono uppercase text-indigo-800 block">Rata-Rata Malam</span>
+                <span className="text-lg font-mono font-bold text-slate-900 tabular-nums">110/70 mmHg</span>
               </div>
             </div>
           </div>
 
-          {/* Card 2: AI Clinical Assistant (Col 4) */}
-          <div className="gsap-bento-card md:col-span-4 p-2 rounded-[2rem] bg-black/5 ring-1 ring-black/5">
-            <div className="rounded-[calc(2rem-0.375rem)] bg-white border border-slate-200/80 p-6 sm:p-7 space-y-4 h-full flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="w-11 h-11 rounded-2xl bg-teal-50 text-teal-600 border border-teal-200 flex items-center justify-center shadow-sm">
-                  <BrainCircuit size={22} />
-                </div>
-                <h3 className="text-lg font-black text-slate-900">
-                  NVIDIA NIM AI Sp.PD
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Konsultasi klinis interaktif dengan model <code>z-ai/glm-5.2</code> untuk rekomendasi gaya hidup, evaluasi lab asam urat, dan panduan dosis obat.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-teal-50 border border-teal-200/80 text-xs font-semibold text-teal-800 flex items-center gap-2">
-                <Sparkles size={16} className="text-teal-600 shrink-0" />
-                <span>Rekomendasi Terapi CCB + ARB Otomatis</span>
-              </div>
+          {/* Card 2: AI Assistant (Col 4) */}
+          <div className="gsap-bento-card md:col-span-4 bg-white border border-slate-300 rounded-xl p-6 sm:p-7 space-y-4 text-left flex flex-col justify-between">
+            <div className="space-y-2.5">
+              <span className="font-mono text-[10px] text-teal-700 uppercase font-bold">[MODUL 02 // AI CDSS]</span>
+              <h3 className="text-lg font-bold text-slate-900">
+                NVIDIA NIM AI Sp.PD
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Konsultasi klinis interaktif model <code>z-ai/glm-5.2</code> untuk telaah interaksi obat, diet DASH natrium, dan hasil lab ginjal.
+              </p>
+            </div>
+            <div className="p-3 rounded bg-teal-50 border border-teal-200 text-xs font-mono font-bold text-teal-800">
+              Model: z-ai/glm-5.2 Streaming
             </div>
           </div>
 
-          {/* Card 3: HL7 FHIR R4 (Col 4) */}
-          <div className="gsap-bento-card md:col-span-4 p-2 rounded-[2rem] bg-black/5 ring-1 ring-black/5">
-            <div className="rounded-[calc(2rem-0.375rem)] bg-white border border-slate-200/80 p-6 space-y-3 h-full flex flex-col justify-between">
-              <div className="space-y-2.5">
-                <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 border border-sky-200 flex items-center justify-center">
-                  <Layers size={20} />
-                </div>
-                <h4 className="text-base font-black text-slate-900">
-                  Standar HL7 FHIR R4
-                </h4>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Format rekam medis internasional yang siap diintegrasikan langsung ke sistem rumah sakit dan BPJS SatuSehat.
-                </p>
-              </div>
-              <span className="text-[10px] font-mono bg-slate-100 px-2.5 py-1.5 rounded-lg text-slate-700 block truncate">
-                LOINC 85354-9 Blood Pressure
-              </span>
-            </div>
+          {/* Card 3: HL7 FHIR (Col 4) */}
+          <div className="gsap-bento-card md:col-span-4 bg-white border border-slate-300 rounded-xl p-6 space-y-3 text-left">
+            <span className="font-mono text-[10px] text-sky-700 uppercase font-bold">[MODUL 03 // INTEROP]</span>
+            <h4 className="text-base font-bold text-slate-900">HL7 FHIR R4 Bundle</h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Format standar LOINC 85354-9 siap ekspor untuk integrasi SIMRS rumah sakit &amp; rekam medis digital.
+            </p>
           </div>
 
-          {/* Card 4: Combination Therapy (Col 4) */}
-          <div className="gsap-bento-card md:col-span-4 p-2 rounded-[2rem] bg-black/5 ring-1 ring-black/5">
-            <div className="rounded-[calc(2rem-0.375rem)] bg-white border border-slate-200/80 p-6 space-y-3 h-full flex flex-col justify-between">
-              <div className="space-y-2.5">
-                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 border border-purple-200 flex items-center justify-center">
-                  <Pill size={20} />
-                </div>
-                <h4 className="text-base font-black text-slate-900">
-                  Pelacak Terapi Obat &amp; Lab
-                </h4>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Pengingat obat pagi/malam terjadwal, pelacakan kepatuhan minum obat, dan pencatatan lab asam urat/eGFR ginjal.
-                </p>
-              </div>
-              <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2.5 py-1.5 rounded-lg block">
-                CCB Pagi • ARB Malam • Allopurinol
-              </span>
-            </div>
+          {/* Card 4: ASCVD Calculator (Col 4) */}
+          <div className="gsap-bento-card md:col-span-4 bg-white border border-slate-300 rounded-xl p-6 space-y-3 text-left">
+            <span className="font-mono text-[10px] text-rose-700 uppercase font-bold">[MODUL 04 // RISIKO]</span>
+            <h4 className="text-base font-bold text-slate-900">Kalkulator ASCVD 10-Tahun</h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Formula Pooled Cohort Equations (ACC/AHA) untuk memprediksi risiko penyakit kardiovaskular aterosklerotik.
+            </p>
           </div>
 
-          {/* Card 5: MongoDB Atlas Cloud (Col 4) */}
-          <div className="gsap-bento-card md:col-span-4 p-2 rounded-[2rem] bg-black/5 ring-1 ring-black/5">
-            <div className="rounded-[calc(2rem-0.375rem)] bg-white border border-slate-200/80 p-6 space-y-3 h-full flex flex-col justify-between">
-              <div className="space-y-2.5">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center">
-                  <Database size={20} />
-                </div>
-                <h4 className="text-base font-black text-slate-900">
-                  Sinkronisasi MongoDB Atlas
-                </h4>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Sinkronisasi awan multi-perangkat real-time dengan proteksi backup JSON lokal dan enkripsi password bcrypt.
-                </p>
-              </div>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg block">
-                Cluster Live Sync • Multi-Device
-              </span>
-            </div>
+          {/* Card 5: Multi-Profile & Cloud (Col 4) */}
+          <div className="gsap-bento-card md:col-span-4 bg-white border border-slate-300 rounded-xl p-6 space-y-3 text-left">
+            <span className="font-mono text-[10px] text-emerald-700 uppercase font-bold">[MODUL 05 // DATABASE]</span>
+            <h4 className="text-base font-bold text-slate-900">MongoDB Atlas &amp; Multi-Profil</h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Manajemen profil seluruh anggota keluarga dengan sinkronisasi awan terenkripsi dan backup JSON lokal.
+            </p>
           </div>
 
         </div>
 
       </section>
 
-      {/* Live HL7 FHIR R4 JSON Telemetry Inspector Section */}
-      <section id="arsitektur" className="py-16 md:py-24 px-4 sm:px-8 max-w-5xl mx-auto space-y-8">
-        <div className="text-center space-y-2">
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-teal-600">
-            Interoperabilitas Tingkat Rumah Sakit
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
-            Struktur Data HL7 FHIR R4 &amp; Standar LOINC
+      {/* Section 04: HL7 FHIR R4 Live Spec Inspector */}
+      <section id="arsitektur" className="py-16 sm:py-24 px-4 sm:px-8 max-w-5xl mx-auto w-full border-b border-slate-200/80 space-y-8">
+        
+        <div className="space-y-2 text-left">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-teal-800">
+            [SECTION 04 // DATA INTEROPERABILITY]
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            Struktur Data Medis HL7 FHIR R4 &amp; LOINC 85354-9.
           </h2>
-          <p className="text-xs text-slate-500">
-            Format Observation vital signs siap pakai untuk pertukaran data medis SIMRS.
+          <p className="text-xs text-slate-600">
+            Dokumen Observation vital signs standar rumah sakit yang dihasilkan secara real-time dari database AortaLink.
           </p>
         </div>
 
-        <div className="gsap-bento-card p-2.5 rounded-[2rem] bg-black/5 ring-1 ring-black/5">
-          <div className="rounded-[calc(2rem-0.375rem)] bg-slate-950 text-slate-200 p-6 sm:p-8 font-mono text-xs space-y-4 relative overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-                <div className="w-3 h-3 rounded-full bg-rose-500/80" />
-                <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                <span className="ml-2 font-sans font-bold text-slate-300">fhir-observation-bp.json</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={copyFhirJson}
-                className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-400 font-sans text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
-              >
-                {isJsonCopied ? <Check size={14} className="text-emerald-400" /> : <FileText size={14} />}
-                <span>{isJsonCopied ? 'Tersalin!' : 'Salin JSON'}</span>
-              </button>
+        {/* Code Terminal */}
+        <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 sm:p-6 text-left space-y-4 font-mono text-xs text-slate-300 shadow-xl">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-teal-400 font-bold uppercase">JSON SPECIFICATION</span>
+              <span className="text-slate-500">|</span>
+              <span className="text-slate-400 text-[11px]">fhir-observation-bp.json</span>
             </div>
 
-            <pre className="overflow-x-auto text-[11px] leading-relaxed text-slate-300 max-h-80 select-all">
+            <button
+              type="button"
+              onClick={copyFhirJson}
+              className="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-teal-400 text-xs font-mono font-bold transition-all flex items-center gap-1.5 active:scale-95"
+            >
+              {isJsonCopied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+              <span>{isJsonCopied ? 'TERSALIN' : 'SALIN JSON'}</span>
+            </button>
+          </div>
+
+          <pre className="overflow-x-auto text-[11px] leading-relaxed text-slate-300 max-h-72 select-all font-mono">
 {`{
   "resourceType": "Observation",
   "id": "aortalink-bp-reading-01",
@@ -891,7 +801,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
   "category": [{
     "coding": [{
       "system": "http://terminology.hl7.org/CodeSystem/observation-category",
-      "code": "vital-signs"
+      "code": "vital-signs",
+      "display": "Vital Signs"
     }]
   }],
   "code": {
@@ -901,203 +812,103 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
       "display": "Blood pressure panel with all children optional"
     }]
   },
+  "subject": { "reference": "Patient/aortalink-ehr-01", "display": "Ibu Hendra (62 th)" },
   "component": [
     {
       "code": { "coding": [{ "system": "http://loinc.org", "code": "8480-6", "display": "Systolic BP" }] },
-      "valueQuantity": { "value": 122, "unit": "mmHg" }
+      "valueQuantity": { "value": 122, "unit": "mmHg", "code": "mm[Hg]" }
     },
     {
       "code": { "coding": [{ "system": "http://loinc.org", "code": "8462-4", "display": "Diastolic BP" }] },
-      "valueQuantity": { "value": 78, "unit": "mmHg" }
+      "valueQuantity": { "value": 78, "unit": "mmHg", "code": "mm[Hg]" }
     }
   ]
 }`}
-            </pre>
-          </div>
+          </pre>
         </div>
+
       </section>
 
-      {/* Pricing / Access Plans Section */}
-      <section id="harga" className="py-16 md:py-24 px-4 sm:px-8 max-w-7xl mx-auto space-y-10">
-        <div className="text-center space-y-2">
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-teal-600">
-            Pilihan Akses Platform
-          </span>
-          <h2 className="text-3xl font-black text-slate-900">
-            Transparan, Terbuka, dan Bebas Biaya Tersembunyi.
-          </h2>
-          <p className="text-xs text-slate-500">
-            Platform kami bersifat open-source dan didedikasikan untuk kesehatan masyarakat.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* Plan 1: Personal */}
-          <div className="gsap-bento-card p-2 rounded-[2rem] bg-black/5 ring-1 ring-black/5 flex flex-col">
-            <div className="rounded-[calc(2rem-0.375rem)] bg-white border border-slate-200/80 p-7 space-y-5 flex-1 flex flex-col justify-between">
-              <div className="space-y-3">
-                <span className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                  Penggunaan Pribadi
-                </span>
-                <h3 className="text-xl font-black text-slate-900">
-                  Personal EHR
-                </h3>
-                <div className="text-2xl font-black text-teal-600">
-                  Gratis <span className="text-xs text-slate-400 font-medium">/ Selamanya</span>
-                </div>
-                <ul className="space-y-2.5 text-xs text-slate-600 pt-2">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-teal-600 shrink-0" />
-                    <span>Catatan tensi tanpa batas</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-teal-600 shrink-0" />
-                    <span>Analisis nocturnal dipping</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-teal-600 shrink-0" />
-                    <span>Ekspor resume dokter PDF</span>
-                  </li>
-                </ul>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  playClickSound();
-                  setIsAuthOpen(true);
-                }}
-                className="w-full py-3.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs active:scale-95 transition-all"
-              >
-                Gunakan Gratis
-              </button>
-            </div>
+      {/* Section 05: Clinical Spec Comparison Table */}
+      <section className="py-16 sm:py-24 px-4 sm:px-8 max-w-7xl mx-auto w-full border-b border-slate-200/80 space-y-8">
+        
+        <div className="space-y-2 text-left max-w-3xl">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-teal-800">
+            [SECTION 05 // MATRIKS KOMPARASI]
           </div>
-
-          {/* Plan 2: Pro & AI Cloud (Featured) */}
-          <div className="gsap-bento-card p-2 rounded-[2rem] bg-teal-600 ring-2 ring-teal-600 flex flex-col shadow-xl">
-            <div className="rounded-[calc(2rem-0.375rem)] bg-white p-7 space-y-5 flex-1 flex flex-col justify-between relative overflow-hidden">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-teal-600 uppercase tracking-wider">
-                    Paling Populer
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 text-[10px] font-black">
-                    FULL ACCESS
-                  </span>
-                </div>
-                <h3 className="text-xl font-black text-slate-900">
-                  Cloud Sync &amp; AI CDSS
-                </h3>
-                <div className="text-2xl font-black text-teal-600">
-                  Gratis <span className="text-xs text-slate-400 font-medium">/ Open-Source</span>
-                </div>
-                <ul className="space-y-2.5 text-xs text-slate-600 pt-2">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-teal-600 shrink-0" />
-                    <span>Semua fitur Personal EHR</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-teal-600 shrink-0" />
-                    <span>NVIDIA NIM AI Sp.PD Streaming</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-teal-600 shrink-0" />
-                    <span>MongoDB Atlas Cloud Live Sync</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-teal-600 shrink-0" />
-                    <span>Multi-Profil Pasien &amp; Keluarga</span>
-                  </li>
-                </ul>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  playClickSound();
-                  setIsAuthOpen(true);
-                }}
-                className="w-full py-3.5 rounded-full bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/30 active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                <span>Daftar / Masuk Akun</span>
-                <ArrowRight size={13} />
-              </button>
-            </div>
-          </div>
-
-          {/* Plan 3: Clinic & Hospital */}
-          <div className="gsap-bento-card p-2 rounded-[2rem] bg-black/5 ring-1 ring-black/5 flex flex-col">
-            <div className="rounded-[calc(2rem-0.375rem)] bg-white border border-slate-200/80 p-7 space-y-5 flex-1 flex flex-col justify-between">
-              <div className="space-y-3">
-                <span className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                  Institusi Medis
-                </span>
-                <h3 className="text-xl font-black text-slate-900">
-                  Klinik &amp; Rumah Sakit
-                </h3>
-                <div className="text-2xl font-black text-sky-600">
-                  Self-Hosted <span className="text-xs text-slate-400 font-medium">/ FHIR R4</span>
-                </div>
-                <ul className="space-y-2.5 text-xs text-slate-600 pt-2">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-sky-600 shrink-0" />
-                    <span>Integrasi HL7 FHIR R4 SIMRS</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-sky-600 shrink-0" />
-                    <span>Dukungan LOINC 85354-9</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-sky-600 shrink-0" />
-                    <span>Dedicated MongoDB Cluster</span>
-                  </li>
-                </ul>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  playClickSound();
-                  setIsAuthOpen(true);
-                }}
-                className="w-full py-3.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs active:scale-95 transition-all"
-              >
-                Akses Enterprise
-              </button>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Interactive FAQ Section */}
-      <section id="faq" className="py-16 md:py-24 px-4 sm:px-8 max-w-4xl mx-auto space-y-8">
-        <div className="text-center space-y-2">
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-teal-600">
-            Pertanyaan Umum
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
-            FAQ &amp; Informasi Medis
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            Perbandingan Antara Aplikasi Tensi Biasa vs AortaLink EHR.
           </h2>
         </div>
 
-        <div className="divide-y divide-slate-200">
+        <div className="overflow-x-auto border border-slate-300 rounded-xl bg-white shadow-sm">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="bg-slate-100/80 border-b border-slate-200 font-mono text-[11px] uppercase text-slate-700">
+                <th className="p-3.5">Parameter Klinis</th>
+                <th className="p-3.5 text-slate-500">Aplikasi Tracker Biasa</th>
+                <th className="p-3.5 text-teal-800 font-bold bg-teal-50/50">AortaLink EHR Platform</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              <tr>
+                <td className="p-3.5 font-bold text-slate-900">Pola Nocturnal Dipping</td>
+                <td className="p-3.5 text-slate-500">Tidak ada (Hanya rata-rata kasar)</td>
+                <td className="p-3.5 text-teal-800 font-bold bg-teal-50/30">Otomatis dihitung (Normal/Non-Dipper/Riser)</td>
+              </tr>
+              <tr>
+                <td className="p-3.5 font-bold text-slate-900">Kombinasi Obat CCB + ARB</td>
+                <td className="p-3.5 text-slate-500">Pengingat teks biasa tanpa konteks</td>
+                <td className="p-3.5 text-teal-800 font-bold bg-teal-50/30">Terintegrasi farmakologi pagi &amp; malam</td>
+              </tr>
+              <tr>
+                <td className="p-3.5 font-bold text-slate-900">Parameter Lab Sekunder</td>
+                <td className="p-3.5 text-slate-500">Tidak didukung</td>
+                <td className="p-3.5 text-teal-800 font-bold bg-teal-50/30">Asam Urat, Ureum, Kreatinin, eGFR Ginjal</td>
+              </tr>
+              <tr>
+                <td className="p-3.5 font-bold text-slate-900">Standar Rumah Sakit</td>
+                <td className="p-3.5 text-slate-500">Format proprietary terkunci</td>
+                <td className="p-3.5 text-teal-800 font-bold bg-teal-50/30">HL7 FHIR R4 &amp; LOINC 85354-9 Terbuka</td>
+              </tr>
+              <tr>
+                <td className="p-3.5 font-bold text-slate-900">Privasi &amp; Data Security</td>
+                <td className="p-3.5 text-slate-500">Bergantung server pihak ketiga</td>
+                <td className="p-3.5 text-teal-800 font-bold bg-teal-50/30">100% Offline Dexie v4 + Opsi MongoDB Atlas</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+
+      {/* Section 06: Interactive FAQ */}
+      <section id="faq" className="py-16 sm:py-24 px-4 sm:px-8 max-w-4xl mx-auto w-full border-b border-slate-200/80 space-y-8">
+        
+        <div className="space-y-2 text-left">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-teal-800">
+            [SECTION 06 // TANYA JAWAB KLINIS]
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            Pertanyaan Umum &amp; Keamanan Data.
+          </h2>
+        </div>
+
+        <div className="divide-y divide-slate-200 border-y border-slate-200">
           {faqs.map((faq, idx) => {
             const isOpen = activeFaq === idx;
             return (
-              <div key={idx} className="py-4 space-y-2">
+              <div key={idx} className="py-4 space-y-2 text-left">
                 <button
                   type="button"
                   onClick={() => toggleFaq(idx)}
-                  className="w-full flex items-center justify-between text-left font-bold text-sm text-slate-900 hover:text-teal-600 transition-colors gap-4"
+                  className="w-full flex items-center justify-between text-left font-bold text-sm text-slate-900 hover:text-teal-700 transition-colors gap-4"
                 >
                   <span>{faq.q}</span>
                   <ChevronDown
                     size={16}
                     className={`text-slate-400 shrink-0 transition-transform duration-200 ${
-                      isOpen ? 'rotate-180 text-teal-600' : ''
+                      isOpen ? 'rotate-180 text-teal-700' : ''
                     }`}
                   />
                 </button>
@@ -1120,73 +931,68 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
             );
           })}
         </div>
+
       </section>
 
-      {/* Final Call to Action Strip */}
-      <section className="py-16 px-4 sm:px-8 max-w-5xl mx-auto">
-        <div className="p-8 sm:p-14 rounded-[2.5rem] bg-gradient-to-tr from-teal-900 to-slate-900 text-white text-center space-y-6 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
-          
-          <div className="space-y-3 relative z-10 max-w-2xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-              Mulai Kendalikan Tekanan Darah Anda Hari Ini.
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-300 font-medium">
-              Gratis, tanpa iklan, dan sepenuhnya berorientasi pada kesehatan Anda.
-            </p>
-          </div>
+      {/* Final Action Section */}
+      <section className="py-16 sm:py-20 px-4 sm:px-8 max-w-5xl mx-auto w-full text-center space-y-6">
+        <div className="space-y-3 max-w-xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            Mulai Pantau Rekam Medis Tensi Anda Secara Presisi.
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600">
+            Gratis, bebas iklan, dan beroperasi penuh secara lokal di perangkat Anda.
+          </p>
+        </div>
 
-          <div className="pt-2 relative z-10">
-            <button
-              type="button"
-              onClick={() => {
-                playClickSound();
-                setIsAuthOpen(true);
-              }}
-              className="px-9 py-4 rounded-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-black text-sm shadow-xl shadow-teal-500/30 active:scale-95 transition-all inline-flex items-center gap-3 group"
-            >
-              <span>Buka Dashboard Rekam Medis</span>
-              <div className="w-6 h-6 rounded-full bg-slate-950/20 flex items-center justify-center group-hover:translate-x-1 transition-transform">
-                <ArrowRight size={13} />
-              </div>
-            </button>
-          </div>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              playClickSound();
+              setIsAuthOpen(true);
+            }}
+            className="px-6 py-3 rounded-lg bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs shadow-sm active:scale-95 transition-all flex items-center gap-2"
+          >
+            <span>Buka Dashboard Sekarang</span>
+            <ArrowRight size={14} />
+          </button>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="mt-auto border-t border-slate-200/80 bg-white py-10 text-xs text-slate-500">
+      {/* Architectural Studio Footer */}
+      <footer className="mt-auto border-t border-slate-200 bg-white py-8 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-full bg-teal-600 text-white flex items-center justify-center text-[10px]">
-              <Heart size={12} />
+            <div className="w-5 h-5 rounded-md bg-teal-700 text-white flex items-center justify-center text-[10px]">
+              <Heart size={12} className="fill-white" />
             </div>
             <span className="font-bold text-slate-800">
-              © 2026 AortaLink EHR SaaS Platform
+              © 2026 AortaLink — Personal Electronic Health Record (EHR)
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-slate-600 font-semibold">
+          <div className="flex items-center gap-4 text-slate-600 font-mono text-[11px]">
             <button
               type="button"
               onClick={() => {
                 playClickSound();
                 navigate({ to: '/privacy' });
               }}
-              className="hover:text-teal-600 transition-colors"
+              className="hover:text-teal-700 transition-colors"
             >
               Kebijakan Privasi
             </button>
-            <span>•</span>
+            <span>/</span>
             <button
               type="button"
               onClick={() => {
                 playClickSound();
                 navigate({ to: '/terms' });
               }}
-              className="hover:text-teal-600 transition-colors"
+              className="hover:text-teal-700 transition-colors"
             >
-              Syarat &amp; Ketentuan
+              Syarat Ketentuan
             </button>
           </div>
         </div>

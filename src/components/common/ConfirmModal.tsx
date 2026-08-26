@@ -23,17 +23,16 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   onCancel
 }) => {
-  if (!isOpen) return null;
-
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:pb-4 bg-slate-950/60 backdrop-blur-sm overflow-y-auto">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4"
-        >
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.92, y: 10 }}
+            className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 my-auto relative z-10"
+          >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`p-2.5 rounded-xl ${isDangerous ? 'bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400' : 'bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400'}`}>
@@ -72,9 +71,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             >
               {confirmText}
             </button>
-          </div>
-        </motion.div>
-      </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </AnimatePresence>
   );
 };

@@ -9,6 +9,8 @@ import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { format, isSameDay } from 'date-fns';
 import { MedicationItem, MedicationSchedule, DrugClass } from '../../types/blood-pressure';
 
+import { timeService } from '../../services/time/time-service';
+
 interface MedicationTrackerModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -41,7 +43,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
     async () => {
       if (!activeProfileId) return [];
       const logs = await db.medicationLogs.where('profileId').equals(activeProfileId).toArray();
-      const today = new Date();
+      const today = timeService.getNow();
       return logs.filter((log) => (log.takenAt ? isSameDay(new Date(log.takenAt), today) : false));
     },
     [activeProfileId]
@@ -68,7 +70,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
         }
       } else {
         // Add new log with exact takenAt timestamp
-        const nowIso = new Date().toISOString();
+        const nowIso = timeService.getNow().toISOString();
         await db.medicationLogs.add({
           profileId: activeProfileId,
           medicationId: med.id,
@@ -176,9 +178,11 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
                     Kepatuhan Terapi Obat: {takenCount} / {totalMeds} Diminum Hari Ini
                   </span>
                   <span className="text-[11px] text-slate-500">
-                    {takenCount === totalMeds && totalMeds > 0
+                    {totalMeds === 0
+                      ? 'Belum ada obat yang didaftarkan ke profil ini.'
+                      : takenCount === totalMeds
                       ? '100% Regimen obat hari ini telah dipenuhi!'
-                      : 'Kombinasi terapi (CCB Pagi + ARB Malam) meredam lonjakan tensi nocturnal.'}
+                      : 'Pastikan minum obat sesuai jadwal anjuran dokter Anda.'}
                   </span>
                 </div>
               </div>
@@ -187,12 +191,43 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
             {/* List of Default & Custom Medications */}
             <div className="space-y-2">
               <label className="font-extrabold uppercase text-[11px] tracking-wider text-slate-700 dark:text-slate-300 block">
-                Regimen Medis Utama Pengguna:
+                Regimen Medis Pengguna:
               </label>
               
               {(!medications || medications.length === 0) ? (
-                <div className="p-4 text-center text-slate-400 border border-dashed rounded-xl">
-                  Belum ada obat dalam regimen.
+                <div className="p-4 text-center text-slate-400 border border-dashed rounded-xl space-y-2">
+                  <p>Belum ada obat dalam regimen Anda.</p>
+                  <p className="text-[10px] text-slate-400">Pilih template cepat atau tambahkan obat Anda sendiri di bawah:</p>
+                  <div className="flex flex-wrap gap-1.5 justify-center pt-1">
+                    {[
+                      { name: 'Amlodipine', dosage: '5mg', drugClass: 'Golongan CCB', schedule: 'pagi', purpose: 'Kontrol tekanan darah' },
+                      { name: 'Candesartan', dosage: '8mg', drugClass: 'Golongan ARB', schedule: 'malam', purpose: 'Proteksi organ target' },
+                      { name: 'Bisoprolol', dosage: '2.5mg', drugClass: 'Golongan Beta Blocker', schedule: 'pagi', purpose: 'Kontrol denyut nadi & tensi' },
+                      { name: 'Captopril', dosage: '25mg', drugClass: 'Golongan ACE Inhibitor', schedule: 'pagi', purpose: 'Antihipertensi ACEi' },
+                      { name: 'Allopurinol', dosage: '100mg', drugClass: 'Penurun Asam Urat', schedule: 'pagi', purpose: 'Penurun asam urat' }
+                    ].map((tpl) => (
+                      <button
+                        key={tpl.name}
+                        type="button"
+                        onClick={async () => {
+                          if (!activeProfileId) return;
+                          await db.medications.add({
+                            profileId: activeProfileId,
+                            name: tpl.name,
+                            dosage: tpl.dosage,
+                            drugClass: tpl.drugClass as DrugClass,
+                            schedule: tpl.schedule as MedicationSchedule,
+                            purpose: tpl.purpose,
+                            createdAt: timeService.getNow().toISOString()
+                          });
+                          addToast({ type: 'success', title: 'Obat Ditambahkan', message: `${tpl.name} ${tpl.dosage} masuk ke regimen.` });
+                        }}
+                        className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-slate-700 dark:text-slate-300 hover:text-teal-600 text-[10px] font-bold border border-slate-200 dark:border-slate-700"
+                      >
+                        + {tpl.name} {tpl.dosage}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-2.5">
@@ -223,9 +258,11 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
                                 {m.schedule}
                               </span>
                             </div>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-tight">
-                              {m.purpose}
-                            </p>
+                            {m.purpose && (
+                              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-tight">
+                                {m.purpose}
+                              </p>
+                            )}
                           </div>
                         </div>
 
@@ -266,7 +303,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <input
                   type="text"
-                  placeholder="Nama Obat (e.g. Bisoprolol)"
+                  placeholder="Nama Obat (misal: Bisoprolol)"
                   value={newMedName}
                   onChange={(e) => setNewMedName(e.target.value)}
                   className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
@@ -274,7 +311,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
                 />
                 <input
                   type="text"
-                  placeholder="Dosis (e.g. 2.5 mg)"
+                  placeholder="Dosis (misal: 2.5 mg)"
                   value={newMedDosage}
                   onChange={(e) => setNewMedDosage(e.target.value)}
                   className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
@@ -287,10 +324,17 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
                   onChange={(e) => setNewMedClass(e.target.value as DrugClass)}
                   className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
                 >
-                  <option value="Golongan CCB">Golongan CCB</option>
-                  <option value="Golongan ARB">Golongan ARB</option>
-                  <option value="Penurun Asam Urat">Penurun Asam Urat</option>
-                  <option value="Lainnya">Lainnya</option>
+                  <option value="Golongan CCB">Golongan CCB (Amlodipine, Nifedipine, Diltiazem)</option>
+                  <option value="Golongan ARB">Golongan ARB (Candesartan, Valsartan, Losartan)</option>
+                  <option value="Golongan ACE Inhibitor">Golongan ACEi (Captopril, Ramipril, Lisinopril)</option>
+                  <option value="Golongan Beta Blocker">Golongan Beta Blocker (Bisoprolol, Atenolol)</option>
+                  <option value="Golongan Diuretik">Golongan Diuretik (HCTZ, Furosemide, Spironolactone)</option>
+                  <option value="Golongan ARNI">Golongan ARNI (Sacubitril/Valsartan)</option>
+                  <option value="Penurun Asam Urat">Penurun Asam Urat (Allopurinol, Febuxostat)</option>
+                  <option value="Statin / Lipid">Statin / Dislipidemia (Atorvastatin, Simvastatin)</option>
+                  <option value="Antidiabetes">Antidiabetes (Metformin, Glimepiride, Insulin)</option>
+                  <option value="Antiplatelet">Antiplatelet (Aspirin, Clopidogrel)</option>
+                  <option value="Lainnya">Lainnya / Suplemen</option>
                 </select>
 
                 <select
@@ -299,14 +343,17 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
                   className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
                 >
                   <option value="pagi">Jadwal Pagi</option>
+                  <option value="siang">Jadwal Siang</option>
+                  <option value="sore">Jadwal Sore</option>
                   <option value="malam">Jadwal Malam</option>
                   <option value="pagi_malam">Pagi &amp; Malam</option>
+                  <option value="sesuai_kebutuhan">Sesuai Kebutuhan (PRN)</option>
                 </select>
               </div>
 
               <input
                 type="text"
-                placeholder="Tujuan Klinis / Penggunaan (Opsional)..."
+                placeholder="Tujuan Klinis / Petunjuk Minum (Opsional)..."
                 value={newMedPurpose}
                 onChange={(e) => setNewMedPurpose(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"

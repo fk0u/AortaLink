@@ -6,24 +6,53 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, FlaskConical, Plus, Trash2, Calendar, ShieldAlert, CheckCircle2 } from '../icons/AppIcons';
-import { format } from 'date-fns';
+import { timeService } from '../../services/time/time-service';
 
 interface LabResultsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+// Helper eGFR (CKD-EPI 2021 formula)
+function calculateEGFR(creatinine: number, age: number = 45, gender: string = 'male'): number {
+  if (!creatinine || creatinine <= 0) return 90;
+  const isFemale = gender === 'female';
+  const kappa = isFemale ? 0.7 : 0.9;
+  const alpha = isFemale ? -0.241 : -0.302;
+  const minRatio = Math.min(creatinine / kappa, 1);
+  const maxRatio = Math.max(creatinine / kappa, 1);
+  const genderMultiplier = isFemale ? 1.012 : 1;
+  const egfr = 142 * Math.pow(minRatio, alpha) * Math.pow(maxRatio, -1.200) * Math.pow(0.9938, age) * genderMultiplier;
+  return Math.round(egfr * 10) / 10;
+}
+
 export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClose }) => {
-  const { activeProfileId } = useProfiles();
+  const { activeProfileId, activeProfile } = useProfiles();
   const addToast = useAppStore((state) => state.addToast);
 
-  // Form states
+  // Form states - Renal & Gout
   const [uricAcid, setUricAcid] = useState<number>(6.2);
   const [bloodUrea, setBloodUrea] = useState<number>(28);
   const [serumCreatinine, setSerumCreatinine] = useState<number>(0.9);
-  const [dateStr, setDateStr] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  
+  // Hospital Extended Parameters
+  const [showExtended, setShowExtended] = useState<boolean>(false);
+  const [totalCholesterol, setTotalCholesterol] = useState<number>(190);
+  const [ldlCholesterol, setLdlCholesterol] = useState<number>(115);
+  const [hdlCholesterol, setHdlCholesterol] = useState<number>(52);
+  const [triglycerides, setTriglycerides] = useState<number>(140);
+  const [fastingBloodSugar, setFastingBloodSugar] = useState<number>(95);
+  const [hba1c, setHba1c] = useState<number>(5.6);
+  const [potassium, setPotassium] = useState<number>(4.2);
+  const [sodium, setSodium] = useState<number>(140);
+  const [proteinuria, setProteinuria] = useState<'negatif' | 'trace' | '+1' | '+2' | '+3'>('negatif');
+
+  const [dateStr, setDateStr] = useState<string>(() => timeService.getLocalDateString());
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Auto eGFR calculation
+  const calculatedEGFR = calculateEGFR(serumCreatinine, activeProfile?.age || 45, activeProfile?.gender || 'male');
 
   // Query lab results for active profile
   const labResults = useLiveQuery(
@@ -51,14 +80,24 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
         uricAcid: Number(uricAcid),
         bloodUrea: Number(bloodUrea),
         serumCreatinine: Number(serumCreatinine),
+        eGfr: calculatedEGFR,
+        totalCholesterol: showExtended ? Number(totalCholesterol) : undefined,
+        ldlCholesterol: showExtended ? Number(ldlCholesterol) : undefined,
+        hdlCholesterol: showExtended ? Number(hdlCholesterol) : undefined,
+        triglycerides: showExtended ? Number(triglycerides) : undefined,
+        fastingBloodSugar: showExtended ? Number(fastingBloodSugar) : undefined,
+        hba1c: showExtended ? Number(hba1c) : undefined,
+        potassium: showExtended ? Number(potassium) : undefined,
+        sodium: showExtended ? Number(sodium) : undefined,
+        proteinuria: showExtended ? proteinuria : undefined,
         notes
       });
 
       playSuccessChime();
       addToast({
         type: 'success',
-        title: 'Hasil Lab Tersimpan',
-        message: `Asam Urat: ${uricAcid} mg/dL, Ureum: ${bloodUrea} mg/dL, Kreatinin: ${serumCreatinine} mg/dL.`
+        title: 'Hasil Lab Standar Rumah Sakit Tersimpan',
+        message: `Asam Urat: ${uricAcid} mg/dL, Kreatinin: ${serumCreatinine} mg/dL (eGFR ${calculatedEGFR} mL/min).`
       });
 
       // Reset form
@@ -193,10 +232,157 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
                 </div>
               </div>
 
+              {/* Real-time eGFR CKD-EPI Badge */}
+              <div className="p-3 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-900 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-teal-900 dark:text-teal-300 block">
+                    Kalkulasi Otomatis Laju Filtrasi Glomerulus (eGFR CKD-EPI 2021)
+                  </span>
+                  <span className="text-xs font-black text-teal-700 dark:text-teal-400">
+                    {calculatedEGFR} mL/min/1.73m² • {calculatedEGFR >= 90 ? 'Stadium 1 (Fungsi Ginjal Normal/Optimal)' : calculatedEGFR >= 60 ? 'Stadium 2 (Penurunan Ringan)' : calculatedEGFR >= 45 ? 'Stadium 3a (Penurunan Sedang)' : 'Evaluasi Nefrologi'}
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-teal-200 dark:bg-teal-900 text-teal-900 dark:text-teal-200">
+                  {activeProfile?.age || 45} Th • {activeProfile?.gender === 'female' ? 'Wanita' : 'Pria'}
+                </span>
+              </div>
+
+              {/* Toggle Extended Hospital Parameters */}
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowExtended(!showExtended)}
+                  className="text-[11px] font-extrabold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                >
+                  <span>{showExtended ? '− Sembunyikan Parameter Tambahan' : '+ Parameter Lab Lanjutan (Lipid, Gula Darah, Elektrolit & Urin)'}</span>
+                </button>
+              </div>
+
+              {/* Extended Hospital Form Fields */}
+              {showExtended && (
+                <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                    Profil Lipid &amp; Kardiovaskular (AHA/ACC)
+                  </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <label className="text-[9px] font-bold text-slate-500 block">Total Kolesterol</label>
+                      <input
+                        type="number"
+                        value={totalCholesterol}
+                        onChange={(e) => setTotalCholesterol(Number(e.target.value))}
+                        className="w-full text-xs font-black bg-transparent focus:outline-none"
+                      />
+                      <span className="text-[8px] text-slate-400">&lt;200 mg/dL</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <label className="text-[9px] font-bold text-slate-500 block">LDL-C (Jahat)</label>
+                      <input
+                        type="number"
+                        value={ldlCholesterol}
+                        onChange={(e) => setLdlCholesterol(Number(e.target.value))}
+                        className="w-full text-xs font-black bg-transparent focus:outline-none"
+                      />
+                      <span className="text-[8px] text-slate-400">&lt;100 mg/dL</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <label className="text-[9px] font-bold text-slate-500 block">HDL-C (Baik)</label>
+                      <input
+                        type="number"
+                        value={hdlCholesterol}
+                        onChange={(e) => setHdlCholesterol(Number(e.target.value))}
+                        className="w-full text-xs font-black bg-transparent focus:outline-none"
+                      />
+                      <span className="text-[8px] text-slate-400">&gt;40 mg/dL</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <label className="text-[9px] font-bold text-slate-500 block">Trigliserida</label>
+                      <input
+                        type="number"
+                        value={triglycerides}
+                        onChange={(e) => setTriglycerides(Number(e.target.value))}
+                        className="w-full text-xs font-black bg-transparent focus:outline-none"
+                      />
+                      <span className="text-[8px] text-slate-400">&lt;150 mg/dL</span>
+                    </div>
+                  </div>
+
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block pt-1">
+                    Metabolik, Elektrolit &amp; Urin
+                  </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <label className="text-[9px] font-bold text-slate-500 block">Gula Darah Puasa</label>
+                      <input
+                        type="number"
+                        value={fastingBloodSugar}
+                        onChange={(e) => setFastingBloodSugar(Number(e.target.value))}
+                        className="w-full text-xs font-black bg-transparent focus:outline-none"
+                      />
+                      <span className="text-[8px] text-slate-400">&lt;100 mg/dL</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <label className="text-[9px] font-bold text-slate-500 block">HbA1c (%)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={hba1c}
+                        onChange={(e) => setHba1c(Number(e.target.value))}
+                        className="w-full text-xs font-black bg-transparent focus:outline-none"
+                      />
+                      <span className="text-[8px] text-slate-400">&lt;5.7%</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <label className="text-[9px] font-bold text-slate-500 block">Kalium (K+)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={potassium}
+                        onChange={(e) => setPotassium(Number(e.target.value))}
+                        className="w-full text-xs font-black bg-transparent focus:outline-none"
+                      />
+                      <span className="text-[8px] text-slate-400">3.5–5.0 mEq</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <label className="text-[9px] font-bold text-slate-500 block">Natrium (Na+)</label>
+                      <input
+                        type="number"
+                        value={sodium}
+                        onChange={(e) => setSodium(Number(e.target.value))}
+                        className="w-full text-xs font-black bg-transparent focus:outline-none"
+                      />
+                      <span className="text-[8px] text-slate-400">135–145 mEq</span>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <label className="text-[9px] font-bold text-slate-500 block">Proteinuria</label>
+                      <select
+                        value={proteinuria}
+                        onChange={(e) => setProteinuria(e.target.value as any)}
+                        className="w-full text-xs font-black bg-transparent focus:outline-none"
+                      >
+                        <option value="negatif">Negatif</option>
+                        <option value="trace">Trace</option>
+                        <option value="+1">+1 (30mg)</option>
+                        <option value="+2">+2 (100mg)</option>
+                        <option value="+3">+3 (300mg)</option>
+                      </select>
+                      <span className="text-[8px] text-slate-400">Urin Lengkap</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <input
                   type="text"
-                  placeholder="Catatan tambahan (Contoh: Puasa 8 jam sebelum cek darah)..."
+                  placeholder="Catatan laboratorium tambahan..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-700/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
@@ -208,7 +394,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
                 disabled={isSubmitting}
                 className="hallmark-button-primary w-full py-2.5 text-xs"
               >
-                {isSubmitting ? 'Menyimpan...' : 'Simpan Hasil Lab'}
+                {isSubmitting ? 'Menyimpan...' : 'Simpan Rekam Lab Rumah Sakit'}
               </button>
             </form>
 

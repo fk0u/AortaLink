@@ -210,6 +210,8 @@ export function calculateAscvdRisk(input: AscvdInput): AscvdResult {
   };
 }
 
+import { timeService } from '../services/time/time-service';
+
 /**
  * Build AscvdProfile record to persist into Dexie/MongoDB
  */
@@ -220,7 +222,7 @@ export function buildAscvdRecord(
 ): Omit<AscvdProfile, 'id'> {
   return {
     profileId,
-    timestamp: new Date().toISOString(),
+    timestamp: timeService.getNow().toISOString(),
     age: input.age,
     gender: input.gender,
     race: input.race,

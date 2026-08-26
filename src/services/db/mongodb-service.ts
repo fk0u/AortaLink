@@ -277,6 +277,35 @@ export class MongoDbAtlasService {
     }
   }
 
+  /**
+   * Delete a profile and all its associated data from MongoDB Atlas Cloud Cluster
+   */
+  public async deleteProfileCloud(profileId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const token = this.getAuthToken();
+      if (!token) {
+        return { success: true, message: 'Data lokal telah dihapus (Mode Offline).' };
+      }
+
+      const res = await fetch(`/api/profiles/${encodeURIComponent(profileId)}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        return { success: true, message: 'Profil berhasil dihapus permanen dari Cloud MongoDB Atlas.' };
+      }
+
+      return { success: false, message: data.message || 'Gagal menghapus profil dari cloud.' };
+    } catch (err: any) {
+      console.error('[AortaLink] Delete Profile Cloud Error:', err);
+      return { success: false, message: err.message || 'Kesalahan jaringan saat menghapus profil.' };
+    }
+  }
+
   public getLastSyncTime(): string | null {
     return localStorage.getItem('aortalink_mongodb_atlas_last_sync');
   }

@@ -34,6 +34,8 @@ export function formatTimeOnly(dateString: string): string {
   }
 }
 
+import { timeService } from '../services/time/time-service';
+
 export function getRelationshipLabel(rel: string): string {
   switch (rel) {
     case 'self': return 'Saya';
@@ -42,4 +44,27 @@ export function getRelationshipLabel(rel: string): string {
     case 'child': return 'Anak';
     default: return 'Keluarga / Lainnya';
   }
+}
+
+/**
+ * Format a Date object or ISO string into a local 'YYYY-MM-DDTHH:mm' string
+ * for <input type="datetime-local" /> in WITA / GMT+8.
+ */
+export function getLocalDateTimeForInput(d?: Date | string): string {
+  return timeService.getLocalDateTimeString(d);
+}
+
+/**
+ * Format a Date object or ISO string into a local 'YYYY-MM-DD' string
+ * for <input type="date" /> in WITA / GMT+8.
+ */
+export function getLocalDateForInput(d?: Date | string): string {
+  return timeService.getLocalDateString(d);
+}
+
+/**
+ * Parses a 'YYYY-MM-DDTHH:mm' input value into a valid ISO string with timezone.
+ */
+export function parseLocalDateTimeInput(val: string): string {
+  return timeService.parseLocalInputToIso(val);
 }

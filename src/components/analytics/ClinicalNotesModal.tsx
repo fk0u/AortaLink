@@ -10,6 +10,8 @@ import { X, FileText, Save, Plus, Tag, Clock, Stethoscope, Trash2 } from '../ico
 import { format, parseISO } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 
+import { timeService } from '../../services/time/time-service';
+
 interface ClinicalNotesModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -69,7 +71,7 @@ export const ClinicalNotesModal: React.FC<ClinicalNotesModalProps> = ({ isOpen, 
     try {
       const note: Omit<ClinicalNote, 'id'> = {
         profileId: activeProfile.id,
-        timestamp: new Date().toISOString(),
+        timestamp: timeService.getNow().toISOString(),
         doctorName: doctorName.trim() || undefined,
         chiefComplaint: chiefComplaint.trim(),
         assessment: assessment.trim(),

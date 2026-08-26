@@ -1,58 +1,62 @@
-/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · Clean Minimalist MongoDB Atlas Sync Badge */
-import React, { useState } from 'react';
-import { Database, RefreshCw, CheckCircle2 } from '../icons/AppIcons';
+/* Minimalist Real-Time Auto-Sync Status Indicator (Zero MongoDB Atlas Technical Jargon) */
+import React, { useState, useEffect } from 'react';
+import { RefreshCw, CheckCircle2 } from '../icons/AppIcons';
 import { mongoDbAtlasService } from '../../services/db/mongodb-service';
-import { useAppStore } from '../../store/useAppStore';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export const MongoAtlasSyncBadge: React.FC = () => {
-  const addToast = useAppStore((state) => state.addToast);
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const syncCloudData = useAuthStore((state) => state.syncCloudData);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSync, setLastSync] = useState<string | null>(mongoDbAtlasService.getLastSyncTime());
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(() => mongoDbAtlasService.getLastSyncTime());
 
-  const handleSyncNow = async () => {
-    setIsSyncing(true);
-    try {
-      const res = await mongoDbAtlasService.syncFhirRecord({
-        source: 'AortaLink SaaS Web',
-        timestamp: new Date().toISOString()
-      });
+  // Realtime periodic background sync for authenticated non-guest users
+  useEffect(() => {
+    if (!isAuthenticated || user?.authProvider === 'guest') return;
 
-      if (res.success) {
-        setLastSync(mongoDbAtlasService.getLastSyncTime());
-        addToast({
-          type: 'success',
-          title: 'MongoDB Atlas Cluster Synced!',
-          message: res.message
-        });
+    const interval = setInterval(async () => {
+      try {
+        setIsSyncing(true);
+        await syncCloudData();
+        setLastSyncTime(new Date().toISOString());
+      } catch {
+        // quiet background sync
+      } finally {
+        setIsSyncing(false);
       }
-    } catch {
-      addToast({ type: 'error', title: 'Sync Error', message: 'Gagal menyinkronkan dengan MongoDB Atlas Cluster.' });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
+    }, 30000); // sync every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, user?.authProvider, syncCloudData]);
+
+  // Window focus listener for instant real-time sync across devices
+  useEffect(() => {
+    if (!isAuthenticated || user?.authProvider === 'guest') return;
+
+    const handleFocus = async () => {
+      try {
+        setIsSyncing(true);
+        await syncCloudData();
+        setLastSyncTime(new Date().toISOString());
+      } catch {
+        // quiet
+      } finally {
+        setIsSyncing(false);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [isAuthenticated, user?.authProvider, syncCloudData]);
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-emerald-950 dark:text-emerald-100 text-xs font-bold shadow-sm">
-      <Database className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-      
-      <div className="flex items-center gap-1.5 min-w-0">
-        <span className="font-extrabold truncate">MongoDB Atlas</span>
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-        <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-extrabold hidden sm:inline">
-          Cloud Active
-        </span>
-      </div>
-
-      <button
-        type="button"
-        onClick={handleSyncNow}
-        disabled={isSyncing}
-        className="p-1 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900 text-emerald-700 dark:text-emerald-300 transition-colors ml-1"
-        title="Sync Sekarang ke MongoDB Atlas Cluster"
-      >
-        <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-      </button>
+    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200/70 dark:border-teal-900/40 text-teal-900 dark:text-teal-200 text-[11px] font-mono">
+      <span className={`w-1.5 h-1.5 rounded-full ${isSyncing ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
+      <span className="font-medium">
+        {isSyncing ? 'Menyinkronkan...' : 'Realtime Sync'}
+      </span>
+      {isSyncing && <RefreshCw size={11} className="animate-spin text-teal-600 dark:text-teal-400 ml-0.5" />}
     </div>
   );
 };

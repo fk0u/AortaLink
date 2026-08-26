@@ -116,16 +116,44 @@ export const HeartSyncDatabase = AortaLinkDatabase;
 export const db = new AortaLinkDatabase();
 
 /**
+ * Completely clears all 16 local tables in Dexie.js to prevent data leakage between accounts
+ */
+export async function clearLocalEhrDatabase() {
+  try {
+    await Promise.all([
+      db.profiles.clear(),
+      db.readings.clear(),
+      db.reminders.clear(),
+      db.habits.clear(),
+      db.gamification.clear(),
+      db.sodiumLogs.clear(),
+      db.sleepLogs.clear(),
+      db.medicationLogs.clear(),
+      db.medications.clear(),
+      db.labResults.clear(),
+      db.fhirPatients.clear(),
+      db.fhirObservations.clear(),
+      db.fhirMedicationRequests.clear(),
+      db.fhirMedicationStatements.clear(),
+      db.ascvdProfiles.clear(),
+      db.clinicalNotes.clear()
+    ]);
+  } catch (err) {
+    console.warn('[AortaLink DB] Clear Database Warning:', err);
+  }
+}
+
+/**
  * Initialize fresh database with default profile, clinical medication regimen, and FHIR R4 seeds.
  */
-export async function seedInitialData() {
+export async function seedInitialData(customName?: string) {
   const defaultProfileId = 'profile-self-default';
   const profileCount = await db.profiles.count();
   
   if (profileCount === 0) {
     const initialProfile: Profile = {
       id: defaultProfileId,
-      name: 'Saya',
+      name: customName || 'Saya',
       relationship: 'self',
       avatar: 'user',
       targetSystolic: 120,
@@ -150,41 +178,7 @@ export async function seedInitialData() {
     });
   }
 
-  // Inject default clinical medication regimen if empty
-  const medicationCount = await db.medications.count();
-  if (medicationCount === 0) {
-    const defaultMedications: Omit<MedicationItem, 'id'>[] = [
-      {
-        profileId: defaultProfileId,
-        name: 'Amlodipine',
-        dosage: '5mg',
-        drugClass: 'Golongan CCB',
-        schedule: 'pagi',
-        purpose: 'Meredam lonjakan tensi saat aktivitas (Jadwal Pagi)',
-        createdAt: new Date().toISOString()
-      },
-      {
-        profileId: defaultProfileId,
-        name: 'Candesartan',
-        dosage: '8mg',
-        drugClass: 'Golongan ARB',
-        schedule: 'malam',
-        purpose: 'Proteksi organ & mengatur ritme dipping saat tidur (Jadwal Malam)',
-        createdAt: new Date().toISOString()
-      },
-      {
-        profileId: defaultProfileId,
-        name: 'Allopurinol',
-        dosage: '100mg',
-        drugClass: 'Penurun Asam Urat',
-        schedule: 'pagi',
-        purpose: 'Penurun kadar asam urat darah (Renal & Gout Protection)',
-        createdAt: new Date().toISOString()
-      }
-    ];
-
-    await db.medications.bulkAdd(defaultMedications as MedicationItem[]);
-  }
+  // Note: Medications start empty so each user enters their own real medical regimen.
 
   // Inject default FHIR Patient Resource
   const fhirPatientCount = await db.fhirPatients.count();
@@ -199,7 +193,7 @@ export async function seedInitialData() {
       active: true,
       name: [{
         use: 'official',
-        text: 'Saya',
+        text: customName || 'Saya',
         family: 'Pengguna',
         given: ['AortaLink']
       }]

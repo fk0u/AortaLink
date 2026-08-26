@@ -3,9 +3,10 @@ import { useAppStore } from '../../store/useAppStore';
 import { useProfiles } from '../../hooks/useProfiles';
 import { db } from '../../db';
 import { BodyPosition, ArmUsed, MeasurementContext, BPReading } from '../../types/blood-pressure';
-import { classifyBP } from '../../utils/bp-classifier';
+import { classifyBP, classifyAgeAdjustedBP } from '../../utils/bp-classifier';
 import { playClickSound, playSuccessChime, playAlertSound } from '../../utils/audio-fx';
 import { sanitizeText } from '../../security/sanitizer';
+import { getLocalDateTimeForInput, parseLocalDateTimeInput } from '../../utils/formatters';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
@@ -20,7 +21,10 @@ import {
   Mic, 
   MicOff, 
   Sparkles, 
-  Activity 
+  Activity,
+  Calculator,
+  ShieldCheck,
+  AlertTriangle
 } from '../icons/AppIcons';
 
 export const ReadingFormModal: React.FC = () => {
@@ -34,13 +38,36 @@ export const ReadingFormModal: React.FC = () => {
   const [systolic, setSystolic] = useState<number>(120);
   const [diastolic, setDiastolic] = useState<number>(80);
   const [pulse, setPulse] = useState<number>(72);
-  const [timestamp, setTimestamp] = useState<string>(new Date().toISOString().slice(0, 16));
+  const [timestamp, setTimestamp] = useState<string>(() => getLocalDateTimeForInput());
   const [position, setPosition] = useState<BodyPosition>('duduk');
   const [arm, setArm] = useState<ArmUsed>('kiri');
   const [measurementContext, setMeasurementContext] = useState<MeasurementContext>('Home');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Triple Measurement Mode (ESH / AHA Gold Standard Protocol)
+  const [showTripleMode, setShowTripleMode] = useState(false);
+  const [t1Sys, setT1Sys] = useState(122);
+  const [t1Dia, setT1Dia] = useState(82);
+  const [t2Sys, setT2Sys] = useState(119);
+  const [t2Dia, setT2Dia] = useState(79);
+  const [t3Sys, setT3Sys] = useState(118);
+  const [t3Dia, setT3Dia] = useState(78);
+
+  const applyTripleAverage = () => {
+    playSuccessChime();
+    const avgSys = Math.round((t1Sys + t2Sys + t3Sys) / 3);
+    const avgDia = Math.round((t1Dia + t2Dia + t3Dia) / 3);
+    setSystolic(avgSys);
+    setDiastolic(avgDia);
+    setShowTripleMode(false);
+    addToast({
+      type: 'success',
+      title: 'Protokol ESH Berhasil',
+      message: `Rata-rata 3x pengukuran (${avgSys}/${avgDia} mmHg) diterapkan.`
+    });
+  };
 
   // Web Speech API Voice Dictation State
   const [isListening, setIsListening] = useState(false);
@@ -61,7 +88,7 @@ export const ReadingFormModal: React.FC = () => {
       setSystolic(editingReading.systolic);
       setDiastolic(editingReading.diastolic);
       setPulse(editingReading.pulse);
-      setTimestamp(new Date(editingReading.timestamp).toISOString().slice(0, 16));
+      setTimestamp(getLocalDateTimeForInput(editingReading.timestamp));
       setPosition(editingReading.position || 'duduk');
       setArm(editingReading.arm || 'kiri');
       setMeasurementContext(editingReading.measurement_context || 'Home');
@@ -71,7 +98,7 @@ export const ReadingFormModal: React.FC = () => {
       setSystolic(120);
       setDiastolic(80);
       setPulse(72);
-      setTimestamp(new Date().toISOString().slice(0, 16));
+      setTimestamp(getLocalDateTimeForInput());
       setPosition('duduk');
       setArm('kiri');
       setMeasurementContext('Home');
@@ -182,12 +209,14 @@ export const ReadingFormModal: React.FC = () => {
     try {
       const sanitized = sanitizeText(notes);
 
+      const finalIsoTimestamp = parseLocalDateTimeInput(timestamp);
+
       if (editingReading && editingReading.id) {
         await db.readings.update(editingReading.id, {
           systolic,
           diastolic,
           pulse,
-          timestamp: new Date(timestamp).toISOString(),
+          timestamp: finalIsoTimestamp,
           position,
           arm,
           measurement_context: measurementContext,
@@ -202,7 +231,7 @@ export const ReadingFormModal: React.FC = () => {
           systolic,
           diastolic,
           pulse,
-          timestamp: new Date(timestamp).toISOString(),
+          timestamp: finalIsoTimestamp,
           position,
           arm,
           measurement_context: measurementContext,
@@ -293,20 +322,158 @@ export const ReadingFormModal: React.FC = () => {
             {/* Scrollable Form Body */}
             <form onSubmit={handleSave} className="overflow-y-auto px-5 py-4 space-y-4 flex-1">
               
-              {/* Category Live Preview Badge */}
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700">
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
-                    Kategori Klinis AHA
-                  </span>
-                  <span className="text-xs font-black text-slate-800 dark:text-slate-200">
-                    {currentCategory.label}
-                  </span>
-                </div>
-                <span className={`px-2.5 py-1 rounded-full text-xs font-black border ${currentCategory.badgeClass}`}>
-                  {systolic}/{diastolic} mmHg
-                </span>
+              {/* Age-Stratified Clinical Assessment & Hemodynamics Banner */}
+              {(() => {
+                const ageEval = classifyAgeAdjustedBP(systolic, diastolic, activeProfile?.age || 45, pulse);
+                return (
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 space-y-2.5">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-2 h-2 rounded-full ${ageEval.isNormalForAge ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            {ageEval.ageStratum} • Target {ageEval.ageTargetText}
+                          </span>
+                        </div>
+                        <h4 className="text-xs font-black text-slate-900 dark:text-slate-100 mt-0.5">
+                          {currentCategory.label} {ageEval.isIsolatedSystolicHypertension ? '• ISH' : ''}
+                        </h4>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-xl text-xs font-black font-mono border ${currentCategory.badgeClass}`}>
+                        {systolic}/{diastolic} mmHg
+                      </span>
+                    </div>
+
+                    {/* Hemodynamic Telemetry Row: Pulse Pressure (PP), MAP, RPP */}
+                    <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200/60 dark:border-slate-700/60 text-center">
+                      <div className="p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                        <span className="text-[9px] font-extrabold text-slate-400 block">Pulse Pressure</span>
+                        <span className={`text-xs font-black font-mono ${ageEval.pulsePressureStatus === 'wide' ? 'text-rose-500' : 'text-teal-600 dark:text-teal-400'}`}>
+                          {ageEval.pulsePressure} mmHg
+                        </span>
+                        <span className="text-[8px] text-slate-400 block leading-tight">
+                          {ageEval.pulsePressureStatus === 'wide' ? 'Kekakuan Arteri' : 'Normal'}
+                        </span>
+                      </div>
+
+                      <div className="p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                        <span className="text-[9px] font-extrabold text-slate-400 block">MAP (Perfusi)</span>
+                        <span className="text-xs font-black font-mono text-sky-600 dark:text-sky-400">
+                          {ageEval.map} mmHg
+                        </span>
+                        <span className="text-[8px] text-slate-400 block leading-tight">Normal 70–105</span>
+                      </div>
+
+                      <div className="p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                        <span className="text-[9px] font-extrabold text-slate-400 block">Beban Jantung (RPP)</span>
+                        <span className="text-xs font-black font-mono text-purple-600 dark:text-purple-400">
+                          {ageEval.rpp ? ageEval.rpp.toLocaleString() : '-'}
+                        </span>
+                        <span className="text-[8px] text-slate-400 block leading-tight">
+                          {ageEval.rppStatus === 'high' ? 'Beban Tinggi' : 'Optimal'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                      {ageEval.ageClinicalAdvice}
+                    </p>
+                  </div>
+                );
+              })()}
+
+              {/* Triple Measurement Protocol Toggle Button */}
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setShowTripleMode(!showTripleMode)}
+                  className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-teal-600 dark:text-teal-400 hover:underline"
+                >
+                  <Calculator size={13} />
+                  <span>{showTripleMode ? 'Tutup Protokol 3x Pengukuran' : 'Gunakan Protokol ESH (Rata-rata 3x Pengukuran)'}</span>
+                </button>
               </div>
+
+              {/* Triple Measurement Mode Card */}
+              {showTripleMode && (
+                <div className="p-3.5 rounded-2xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/60 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black text-teal-900 dark:text-teal-200">
+                      Standar ESH 2023 (3x Pengukuran Interval 1 Menit)
+                    </span>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-teal-200 dark:bg-teal-900 text-teal-900 dark:text-teal-200">
+                      Akurasi Emas
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 text-center border border-teal-100 dark:border-teal-900 space-y-1">
+                      <span className="text-[9px] font-black text-slate-400 block">Ukur 1</span>
+                      <div className="flex items-center justify-center gap-1">
+                        <input
+                          type="number"
+                          value={t1Sys}
+                          onChange={(e) => setT1Sys(Number(e.target.value))}
+                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 rounded p-1"
+                        />
+                        <span className="text-slate-400">/</span>
+                        <input
+                          type="number"
+                          value={t1Dia}
+                          onChange={(e) => setT1Dia(Number(e.target.value))}
+                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 rounded p-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 text-center border border-teal-100 dark:border-teal-900 space-y-1">
+                      <span className="text-[9px] font-black text-slate-400 block">Ukur 2</span>
+                      <div className="flex items-center justify-center gap-1">
+                        <input
+                          type="number"
+                          value={t2Sys}
+                          onChange={(e) => setT2Sys(Number(e.target.value))}
+                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 rounded p-1"
+                        />
+                        <span className="text-slate-400">/</span>
+                        <input
+                          type="number"
+                          value={t2Dia}
+                          onChange={(e) => setT2Dia(Number(e.target.value))}
+                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 rounded p-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 text-center border border-teal-100 dark:border-teal-900 space-y-1">
+                      <span className="text-[9px] font-black text-slate-400 block">Ukur 3</span>
+                      <div className="flex items-center justify-center gap-1">
+                        <input
+                          type="number"
+                          value={t3Sys}
+                          onChange={(e) => setT3Sys(Number(e.target.value))}
+                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 rounded p-1"
+                        />
+                        <span className="text-slate-400">/</span>
+                        <input
+                          type="number"
+                          value={t3Dia}
+                          onChange={(e) => setT3Dia(Number(e.target.value))}
+                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 rounded p-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={applyTripleAverage}
+                    className="w-full py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs shadow-sm transition-all"
+                  >
+                    Hitung &amp; Terapkan Rata-Rata ({Math.round((t1Sys + t2Sys + t3Sys)/3)}/{Math.round((t1Dia + t2Dia + t3Dia)/3)} mmHg)
+                  </button>
+                </div>
+              )}
 
               {/* Big Stepper Inputs: Systolic, Diastolic, Pulse */}
               <div className="grid grid-cols-3 gap-2.5">

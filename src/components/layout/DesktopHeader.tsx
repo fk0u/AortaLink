@@ -3,7 +3,8 @@ import { useRouterState, useNavigate } from '@tanstack/react-router';
 import { CustomProfileSelector } from '../profiles/CustomProfileSelector';
 import { NavTab } from './Navigation';
 import { playClickSound } from '../../utils/audio-fx';
-import { Heart, LayoutDashboard, History, FileText, Bell, Plus, Settings, UserRound, LogOut, SunMedium, MoonStar } from '../icons/AppIcons';
+import { timeService } from '../../services/time/time-service';
+import { Heart, LayoutDashboard, History, FileText, Bell, Plus, Settings, UserRound, LogOut, SunMedium, MoonStar, Clock } from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -15,6 +16,15 @@ export const DesktopHeader: React.FC = () => {
   const setTheme = useAppStore((state) => state.setTheme);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+
+  const [currentTimeStr, setCurrentTimeStr] = React.useState(() => timeService.formatTimeWithWITA());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTimeStr(timeService.formatTimeWithWITA());
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   const activeTab: NavTab =
     routerState.location.pathname === '/dashboard' ? 'dashboard' :
@@ -69,7 +79,7 @@ export const DesktopHeader: React.FC = () => {
         </div>
 
         {/* Center: Desktop Navigation Tabs */}
-        <nav className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-full border border-slate-200/80 dark:border-slate-700/80">
+        <nav className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
             const Icon = item.icon;
@@ -78,13 +88,13 @@ export const DesktopHeader: React.FC = () => {
                 key={item.id}
                 type="button"
                 onClick={() => handleTabClick(item.id)}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
                   isActive
-                    ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-md shadow-slate-900/5'
+                    ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
-                <Icon size={16} />
+                <Icon size={15} />
                 <span>{item.label}</span>
               </button>
             );
@@ -93,11 +103,17 @@ export const DesktopHeader: React.FC = () => {
 
         {/* Right: Actions, Theme Switcher & Custom Profile Selector */}
         <div className="flex items-center gap-2.5 shrink-0">
+          {/* Live Timezone Clock */}
+          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300 select-none">
+            <Clock size={13} className="text-teal-600 dark:text-teal-400" />
+            <span>{currentTimeStr}</span>
+          </div>
+
           {/* Quick Theme Toggle */}
           <button
             type="button"
             onClick={toggleTheme}
-            className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 transition-all active:scale-95"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 transition-all active:scale-95"
             title={theme === 'dark' ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
           >
             {theme === 'dark' ? <SunMedium size={16} className="text-amber-400" /> : <MoonStar size={16} className="text-slate-600" />}
@@ -109,10 +125,10 @@ export const DesktopHeader: React.FC = () => {
               playClickSound();
               navigate({ to: '/profile' });
             }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 font-extrabold text-xs transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 font-extrabold text-xs transition-all active:scale-95"
           >
-            <UserRound size={16} />
-            Profil
+            <UserRound size={15} />
+            <span>Profil</span>
           </button>
 
           <button
@@ -121,10 +137,10 @@ export const DesktopHeader: React.FC = () => {
               playClickSound();
               navigate({ to: '/settings' });
             }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 font-extrabold text-xs transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 font-extrabold text-xs transition-all active:scale-95"
           >
-            <Settings size={16} />
-            Pengaturan
+            <Settings size={15} />
+            <span>Pengaturan</span>
           </button>
 
           <button
@@ -133,10 +149,10 @@ export const DesktopHeader: React.FC = () => {
               playClickSound();
               openReadingModal();
             }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-teal-500 to-sky-500 hover:from-teal-600 hover:to-sky-600 text-white font-extrabold text-xs shadow-md shadow-teal-500/20 active:scale-95 transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-sm active:scale-95 transition-all"
           >
-            <Plus size={16} strokeWidth={3} />
-            Catat Tensi
+            <Plus size={15} strokeWidth={2.5} />
+            <span>Catat Tensi</span>
           </button>
 
           <CustomProfileSelector />
@@ -146,7 +162,7 @@ export const DesktopHeader: React.FC = () => {
             <button
               type="button"
               onClick={handleLogout}
-              className="p-2 rounded-full text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 transition-colors"
+              className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 transition-colors"
               title={`Keluar (${user.name})`}
             >
               <LogOut size={16} />
