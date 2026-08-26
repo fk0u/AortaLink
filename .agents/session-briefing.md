@@ -69,4 +69,8 @@
   - **Endpoint Backend `DELETE /api/profiles/:profileId` di `server/index.js`**: Menghapus profil beserta seluruh observasi, obat, hasil lab, dan histori terkait secara kaskade di MongoDB Atlas Cluster.
   - **Sinkronisasi Otomatis di `ProfileModal.tsx` & `mongodb-service.ts`**: Penambahan method `deleteProfileCloud(id)` dan pemicu `pushUserData()` saat profil dibuat, diedit, atau dihapus permanen.
   - **Perbaikan Dialog `ConfirmModal.tsx`**: Z-index dinaikkan ke `z-[100]` dengan backdrop blur independen untuk memastikan modal konfirmasi selalu responsif dan tampil di atas seluruh layer modal.
-- [x] Verified full production build (`npm run build` — 0 errors dalam 2.25s).
+- [x] **Phase 19: GitHub Secret Scanning Push Protection Resolution & Remote URL Realignment**:
+  - **Penyebab Push Rejected**: GitHub Push Protection mendeteksi fallback string literal Google API key (`AQ.Ab8RN...`) pada commit lokal di `server/index.js` dan `src/services/ai/gemini-ai-service.ts`.
+  - **Sanitasi Kredensial**: Menghapus seluruh hardcoded secret fallbacks di `gemini-ai-service.ts`, `server/index.js`, dan `nvidia-nim-service.ts`, mengalihkannya 100% ke environment variables (`.env` yang aman di-ignore oleh `.gitignore`).
+  - **Amandemen Commit Bersih**: Melakukan `git commit --amend` sehingga commit HEAD bebas dari secret, memperbarui remote URL ke `https://github.com/fk0u/AortaLink.git`.
+- [x] Verified full production build (`npm run build` — 0 errors dalam 3.17s).
