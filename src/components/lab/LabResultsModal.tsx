@@ -7,6 +7,7 @@ import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, FlaskConical, Plus, Trash2, Calendar, ShieldAlert, CheckCircle2 } from '../icons/AppIcons';
 import { timeService } from '../../services/time/time-service';
+import { format } from 'date-fns';
 
 interface LabResultsModalProps {
   isOpen: boolean;

@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { WeeklyReport } from './weekly-report';
 import { Profile, BPReading, BPSummaryStats, MedicationItem, LabResult } from '../types/blood-pressure';
-import { classifyBP, classifyAgeAdjustedBP } from './bp-classifier';
+import { classifyBP, classifyAgeAdjustedBP, calculateMAP } from './bp-classifier';
 import { getRelationshipLabel } from './formatters';
 import { calculateNocturnalDipping } from './advanced-analytics';
 import { format, subDays } from 'date-fns';
@@ -369,19 +369,59 @@ export async function generateWeeklyReportPDF(profile: Profile, report: WeeklyRe
   return generateClinicalReportPDF({
     profile,
     readings: report.readings,
-    stats: {
-      totalReadings: report.count,
-      avgSystolic: report.avgSystolic,
-      avgDiastolic: report.avgDiastolic,
-      avgPulse: report.avgPulse || 72,
-      minSystolic: report.minSystolic,
-      maxSystolic: report.maxSystolic,
-      minDiastolic: report.avgDiastolic - 10,
-      maxDiastolic: report.avgDiastolic + 10,
-      avgPulsePressure: report.avgSystolic - report.avgDiastolic,
-      targetComplianceRate: report.adherence,
-      latestReading: report.readings[0]
-    },
+    stats: buildWeeklyStats(report),
     version: 'weekly'
   });
+}
+
+/**
+ * Derives a complete, honest BPSummaryStats from the weekly report's real
+ * readings. Every number is computed from the data — no fabricated defaults.
+ */
+function buildWeeklyStats(report: WeeklyReport): BPSummaryStats {
+  const readings = report.readings;
+  const sorted = [...readings].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+
+  if (readings.length === 0) {
+    return {
+      totalReadings: 0,
+      avgSystolic: 0,
+      avgDiastolic: 0,
+      avgPulse: 0,
+      avgMAP: 0,
+      avgPulsePressure: 0,
+      targetComplianceRate: report.adherence,
+      maxSystolic: 0,
+      minSystolic: 0,
+      maxDiastolic: 0,
+      minDiastolic: 0,
+      categoryCounts: report.categories,
+      mostFrequentCategory: 'normal'
+    };
+  }
+
+  const avg = (values: number[]) => values.reduce((sum, v) => sum + v, 0) / values.length;
+  const avgSystolic = avg(readings.map((r) => r.systolic));
+  const avgDiastolic = avg(readings.map((r) => r.diastolic));
+
+  const categoryCounts = { ...report.categories };
+  const mostFrequentCategory = (Object.entries(categoryCounts) as Array<[keyof typeof categoryCounts, number]>)
+    .sort((a, b) => b[1] - a[1])[0]?.[0] || 'normal';
+
+  return {
+    totalReadings: readings.length,
+    avgSystolic: Math.round(avgSystolic),
+    avgDiastolic: Math.round(avgDiastolic),
+    avgPulse: Math.round(avg(readings.map((r) => r.pulse))),
+    avgMAP: Math.round(avg(readings.map((r) => calculateMAP(r.systolic, r.diastolic)))),
+    avgPulsePressure: Math.round(avgSystolic - avgDiastolic),
+    targetComplianceRate: report.adherence,
+    maxSystolic: report.maxSystolic,
+    minSystolic: report.minSystolic,
+    maxDiastolic: Math.max(...readings.map((r) => r.diastolic)),
+    minDiastolic: Math.min(...readings.map((r) => r.diastolic)),
+    latestReading: sorted[0],
+    categoryCounts,
+    mostFrequentCategory
+  };
 }

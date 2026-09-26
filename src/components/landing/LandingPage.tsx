@@ -25,7 +25,6 @@ import {
   ShieldCheck,
   FileText,
   Copy,
-  Cpu,
   TrendingDown,
   AlertTriangle,
   Stethoscope,
