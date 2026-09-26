@@ -245,7 +245,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {/* Footer Note */}
           <div className="p-3 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 text-center text-[10px] text-slate-400 font-medium shrink-0">
-            SHA-256 Hash Protection • MongoDB Atlas Cloud Sync • HL7 FHIR R4
+            Password ter-hash bcrypt • MongoDB Atlas Cloud Sync • HL7 FHIR R4
           </div>
         </motion.div>
       </div>

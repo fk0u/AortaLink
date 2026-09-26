@@ -3,29 +3,14 @@ import { useAppStore } from '../../store/useAppStore';
 
 export interface MongoAtlasConfig {
   connectionString: string;
-  publicKey: string;
-  privateKey: string;
   clusterName: string;
   databaseName: string;
-  endpoint?: string;
 }
 
 export const MONGODB_ATLAS_DEFAULT_CONFIG: MongoAtlasConfig = {
-  connectionString:
-    (import.meta as any).env?.PUBLIC_MONGODB_URI ||
-    (import.meta as any).env?.VITE_MONGODB_URI ||
-    '',
-  publicKey:
-    (import.meta as any).env?.PUBLIC_MONGODB_ATLAS_PUBLIC_KEY ||
-    (import.meta as any).env?.VITE_MONGODB_ATLAS_PUBLIC_KEY ||
-    '',
-  privateKey:
-    (import.meta as any).env?.PUBLIC_MONGODB_ATLAS_PRIVATE_KEY ||
-    (import.meta as any).env?.VITE_MONGODB_ATLAS_PRIVATE_KEY ||
-    '',
-  clusterName: (import.meta as any).env?.PUBLIC_MONGODB_ATLAS_CLUSTER || 'Cluster0',
-  databaseName: (import.meta as any).env?.PUBLIC_MONGODB_ATLAS_DB || 'aortalink_ehr_db',
-  endpoint: 'https://cloud.mongodb.com/api/atlas/v1.0'
+  connectionString: '',
+  clusterName: 'Cluster0',
+  databaseName: 'aortalink_ehr_db'
 };
 
 export class MongoDbAtlasService {
@@ -46,58 +31,6 @@ export class MongoDbAtlasService {
       // ignore
     }
     return null;
-  }
-
-  /**
-   * Syncs local FHIR Bundle or Patient observations with MongoDB Atlas Cloud Cluster via Express backend
-   */
-  public async syncFhirRecord(payload: unknown): Promise<{ success: boolean; syncedCount: number; message: string }> {
-    try {
-      const token = this.getAuthToken();
-      const timestamp = new Date().toISOString();
-      const itemsCount = Array.isArray((payload as any)?.entry)
-        ? (payload as any).entry.length
-        : Array.isArray((payload as any)?.readings)
-        ? (payload as any).readings.length
-        : 1;
-
-      if (token) {
-        const res = await fetch('/api/fhir/sync', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ resource: payload, timestamp })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          localStorage.setItem('aortalink_mongodb_atlas_last_sync', timestamp);
-          localStorage.setItem('aortalink_mongodb_atlas_synced_count', String(itemsCount));
-          return {
-            success: true,
-            syncedCount: itemsCount,
-            message: `Terhubung ke MongoDB Atlas Cluster (${this.config.clusterName}). Data HL7 FHIR berhasil disinkronkan ke Cloud!`
-          };
-        }
-      }
-
-      // Offline fallback
-      localStorage.setItem('aortalink_mongodb_atlas_last_sync', timestamp);
-      localStorage.setItem('aortalink_mongodb_atlas_synced_count', String(itemsCount));
-      return {
-        success: true,
-        syncedCount: itemsCount,
-        message: `Tersimpan di cache offline. Akan disinkronkan ke MongoDB Atlas saat online.`
-      };
-    } catch (error) {
-      console.error('[AortaLink] MongoDB Atlas Sync Error:', error);
-      return {
-        success: false,
-        syncedCount: 0,
-        message: 'Gagal menyinkronkan data ke MongoDB Atlas Cluster.'
-      };
-    }
   }
 
   /**

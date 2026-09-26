@@ -133,32 +133,6 @@ export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{
       }));
     }
 
-    // Auto-Upgrade v1.x payload: Generate default medication items if missing
-    if (medications.length === 0) {
-      medications = [
-        {
-          id: 1,
-          profileId: profiles[0]?.id || 'profile-self-default',
-          name: 'Amlodipine',
-          dosage: '5mg',
-          drugClass: 'Golongan CCB',
-          schedule: 'pagi',
-          purpose: 'Diimbangi aktivitas pagi',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 2,
-          profileId: profiles[0]?.id || 'profile-self-default',
-          name: 'Candesartan',
-          dosage: '8mg',
-          drugClass: 'Golongan ARB',
-          schedule: 'malam',
-          purpose: 'Sebelum tidur untuk proteksi dipping nocturnal',
-          createdAt: new Date().toISOString()
-        }
-      ];
-    }
-
     await db.transaction(
       'rw',
       [

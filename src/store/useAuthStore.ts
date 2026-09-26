@@ -4,7 +4,7 @@ import { mongoDbAtlasService } from '../services/db/mongodb-service';
 import { clearLocalEhrDatabase, seedInitialData } from '../db';
 import { useAppStore } from './useAppStore';
 
-export type SubscriptionTier = 'free_trial' | 'pro_ehr' | 'clinic_tenant';
+export type SubscriptionTier = 'free' | 'free_trial' | 'pro_ehr' | 'clinic_tenant';
 
 export interface UserSession {
   id: string;
@@ -64,7 +64,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       name: 'Tamu Lokal',
       email: 'tamu@aortalink.local',
       authProvider: 'guest',
-      subscriptionTier: 'pro_ehr',
+      subscriptionTier: 'free',
       token: 'jwt-aortalink-guest',
       loginAt: new Date().toISOString()
     };
@@ -73,15 +73,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   syncCloudData: async () => {
-    try {
-      if (get().user?.authProvider === 'guest') return;
-      // 1. Pull data from cloud (MongoDB Atlas) to local Dexie.js
-      await mongoDbAtlasService.pullAndRestoreUserData();
-      // 2. Push any local records to MongoDB Atlas
-      await mongoDbAtlasService.pushUserData();
-    } catch (err) {
-      console.warn('[useAuthStore] Cloud sync warning:', err);
-    }
+    if (get().user?.authProvider === 'guest') return;
+    // Errors intentionally propagate so the sync badge can show real failures.
+    // 1. Pull data from cloud (MongoDB Atlas) to local Dexie.js
+    await mongoDbAtlasService.pullAndRestoreUserData();
+    // 2. Push any local records to MongoDB Atlas
+    await mongoDbAtlasService.pushUserData();
   },
 
   loginWithEmail: async (email, password) => {

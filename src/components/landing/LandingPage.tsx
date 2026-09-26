@@ -119,7 +119,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
       code: {
         coding: [{ system: "http://loinc.org", code: "85354-9", display: "Blood pressure panel with all children optional" }]
       },
-      subject: { reference: "Patient/aortalink-ehr-01", display: "Ibu Hendra (62 th)" },
+      subject: { reference: "Patient/aortalink-ehr-01", display: "Contoh Pengguna (62 th)" },
       effectiveDateTime: new Date().toISOString(),
       component: [
         {
@@ -355,8 +355,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
                     EHR-TELEMETRY-OBSERVATION
                   </span>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  LIVE STATUS
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                  CONTOH ILUSTRASI
                 </span>
               </div>
 
@@ -367,7 +367,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div>
                     <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Subjek Pasien</span>
-                    <span className="text-xs font-bold text-slate-900">Ibu Hendra (62 Tahun)</span>
+                    <span className="text-xs font-bold text-slate-900">Contoh Pengguna (62 Tahun)</span>
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Regimen</span>
@@ -701,11 +701,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
 
             <div className="grid grid-cols-2 gap-3 pt-2">
               <div className="p-3 rounded bg-amber-50/70 border border-amber-200">
-                <span className="text-[9px] font-mono uppercase text-amber-800 block">Rata-Rata Siang</span>
+                <span className="text-[9px] font-mono uppercase text-amber-800 block">Contoh Rata-Rata Siang</span>
                 <span className="text-lg font-mono font-bold text-slate-900 tabular-nums">128/82 mmHg</span>
               </div>
               <div className="p-3 rounded bg-indigo-50/70 border border-indigo-200">
-                <span className="text-[9px] font-mono uppercase text-indigo-800 block">Rata-Rata Malam</span>
+                <span className="text-[9px] font-mono uppercase text-indigo-800 block">Contoh Rata-Rata Malam</span>
                 <span className="text-lg font-mono font-bold text-slate-900 tabular-nums">110/70 mmHg</span>
               </div>
             </div>
@@ -714,16 +714,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
           {/* Card 2: AI Assistant (Col 4) */}
           <div className="gsap-bento-card md:col-span-4 bg-white border border-slate-300 rounded-xl p-6 sm:p-7 space-y-4 text-left flex flex-col justify-between">
             <div className="space-y-2.5">
-              <span className="font-mono text-[10px] text-teal-700 uppercase font-bold">[MODUL 02 // AI CDSS]</span>
+              <span className="font-mono text-[10px] text-teal-700 uppercase font-bold">[MODUL 02 // ANALISIS ML]</span>
               <h3 className="text-lg font-bold text-slate-900">
-                NVIDIA NIM AI Sp.PD
+                Asisten Analisis ML On-Device
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Konsultasi klinis interaktif model <code>z-ai/glm-5.2</code> untuk telaah interaksi obat, diet DASH natrium, dan hasil lab ginjal.
+                Mesin statistik yang belajar langsung dari data Anda — tren, pola white-coat, lonjakan pagi, dan keterkaitan kepatuhan obat — tanpa mengirim data ke server AI mana pun.
               </p>
             </div>
             <div className="p-3 rounded bg-teal-50 border border-teal-200 text-xs font-mono font-bold text-teal-800">
-              Model: z-ai/glm-5.2 Streaming
+              100% on-device • tanpa API eksternal
             </div>
           </div>
 
@@ -769,7 +769,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
             Struktur Data Medis HL7 FHIR R4 &amp; LOINC 85354-9.
           </h2>
           <p className="text-xs text-slate-600">
-            Dokumen Observation vital signs standar rumah sakit yang dihasilkan secara real-time dari database AortaLink.
+            Ilustrasi struktur dokumen Observation standar rumah sakit. Di dalam aplikasi, dokumen seperti ini dihasilkan secara real-time dari pengukuran asli Anda sendiri.
           </p>
         </div>
 
@@ -811,7 +811,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
       "display": "Blood pressure panel with all children optional"
     }]
   },
-  "subject": { "reference": "Patient/aortalink-ehr-01", "display": "Ibu Hendra (62 th)" },
+  "subject": { "reference": "Patient/aortalink-ehr-01", "display": "Contoh Pengguna (62 th)" },
   "component": [
     {
       "code": { "coding": [{ "system": "http://loinc.org", "code": "8480-6", "display": "Systolic BP" }] },

@@ -301,7 +301,7 @@ export const ReminderModal: React.FC = () => {
                       onClick={() => {
                         playClickSound();
                         setType('medication');
-                        setTitle('Minum Obat Amlodipine');
+                        setTitle('');
                       }}
                       className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
                         type === 'medication'
