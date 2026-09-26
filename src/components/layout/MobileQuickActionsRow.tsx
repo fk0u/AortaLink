@@ -53,8 +53,8 @@ export const MobileQuickActionsRow: React.FC<MobileQuickActionsRowProps> = ({
     },
     {
       id: 'ai-consult',
-      label: 'AI Sp.PD',
-      sublabel: 'Konsultasi NIM',
+      label: 'Analisis ML',
+      sublabel: 'Mesin Lokal',
       icon: BrainCircuit,
       color: 'bg-teal-800 dark:bg-teal-700 text-white',
       onClick: () => openAiModal(),

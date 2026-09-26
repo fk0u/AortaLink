@@ -135,7 +135,7 @@ export const MobileToolsSheet: React.FC = () => {
               {/* AI & Intelligence */}
               <div className="space-y-2">
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-2">
-                  Kecerdasan Buatan (AI CDSS)
+                  Analitik Kesehatan (ML On-Device)
                 </span>
                 <div className="grid grid-cols-1 gap-2.5">
                   <button
@@ -152,10 +152,10 @@ export const MobileToolsSheet: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                        <span>Konsultasi AI Spesialis Penyakit Dalam</span>
+                        <span>Asisten Analisis Klinis (ML Lokal)</span>
                         <Sparkles size={12} className="text-amber-500" />
                       </p>
-                      <p className="text-[10px] text-teal-700 dark:text-teal-400 font-semibold">NVIDIA NIM • Model z-ai/glm-5.2</p>
+                      <p className="text-[10px] text-teal-700 dark:text-teal-400 font-semibold">Mesin statistik on-device • tanpa server eksternal</p>
                     </div>
                   </button>
                 </div>

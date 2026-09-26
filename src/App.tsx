@@ -57,7 +57,7 @@ import { LandingPage } from './components/landing/LandingPage';
 import { AuthModal } from './components/auth/AuthModal';
 import { JsonImportExportModal } from './components/backup/JsonImportExportModal';
 import { MongoAtlasSyncBadge } from './components/dashboard/MongoAtlasSyncBadge';
-import { NvidiaNimAiAssistantWidget } from './components/ai/NvidiaNimAiAssistantWidget';
+import { LocalMlAssistantWidget } from './components/ai/LocalMlAssistantWidget';
 import { useAuthStore } from './store/useAuthStore';
 import { MobileToolsSheet } from './components/layout/MobileToolsSheet';
 
@@ -817,7 +817,7 @@ export function App() {
         isOpen={isClinicalNotesModalOpen}
         onClose={() => setIsClinicalNotesModalOpen(false)}
       />
-      <NvidiaNimAiAssistantWidget />
+      <LocalMlAssistantWidget />
 
       {/* Delete Reading Confirmation Modal */}
       <ConfirmModal

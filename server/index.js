@@ -526,54 +526,6 @@ app.delete('/api/profiles/:profileId', authenticateToken, async (req, res) => {
   }
 });
 
-/**
- * POST /api/ai/gemini-consultation
- * Google AI Studio Gemini 3.1 Flash Lite / 2.5 Flash Clinical Consultation
- */
-app.post('/api/ai/gemini-consultation', async (req, res) => {
-  try {
-    const { systemInstruction, prompt, model = 'gemini-2.5-flash' } = req.body;
-    const apiKey = process.env.AI_API_KEY || process.env.GEMINI_API_KEY || '';
-
-    if (!apiKey) {
-      return res.status(500).json({ success: false, message: 'AI_API_KEY belum dikonfigurasi di file .env.' });
-    }
-
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    const payload = {
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: `${systemInstruction || ''}\n\n${prompt || ''}` }]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 2048
-      }
-    };
-
-    const apiRes = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!apiRes.ok) {
-      const errText = await apiRes.text();
-      return res.status(apiRes.status).json({ success: false, error: errText });
-    }
-
-    const data = await apiRes.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    return res.json({ success: true, text, model });
-  } catch (error) {
-    console.error('[Gemini AI API] Error:', error);
-    return res.status(500).json({ success: false, message: error.message || 'Internal AI service error.' });
-  }
-});
-
 // Start Server (Standalone local mode)
 if (!process.env.VERCEL) {
   app.listen(PORT, '0.0.0.0', () => {
