@@ -92,10 +92,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden my-auto flex flex-col text-slate-900 dark:text-slate-100 max-h-[92vh]"
+          className="bg-white dark:bg-[#1c1c1e] border border-slate-200/90 dark:border-white/10 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden my-auto flex flex-col text-slate-900 dark:text-slate-100 max-h-[92vh]"
         >
           {/* Header */}
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
+          <div className="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/5 shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-teal-600 flex items-center justify-center shadow-md shadow-teal-600/25 text-white">
                 <Heart size={20} className="fill-white" />
@@ -121,7 +121,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           <div className="p-6 space-y-4 overflow-y-auto">
             {/* Tab Switcher */}
-            <div className="p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl flex items-center">
+            <div className="p-1 bg-slate-100 dark:bg-white/10 rounded-2xl flex items-center">
               <button
                 type="button"
                 onClick={() => setTab('login')}
@@ -161,7 +161,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder="Contoh: dr. Budi Santoso / Budi"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   />
                 </div>
               )}
@@ -177,7 +177,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder="nama@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   />
                   <Mail size={15} className="absolute left-3 top-3 text-slate-400" />
                 </div>
@@ -194,7 +194,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder="Minimal 6 karakter"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   />
                   <Lock size={15} className="absolute left-3 top-3 text-slate-400" />
                 </div>
@@ -220,7 +220,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </form>
 
             {/* Skip Login Section with Medical Disclaimer */}
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+            <div className="pt-3 border-t border-slate-100 dark:border-white/10 space-y-2.5">
               <div className="p-3 rounded-2xl bg-teal-50/80 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-900/50 space-y-1.5 text-left">
                 <div className="flex items-center gap-1.5 text-teal-900 dark:text-teal-200 font-bold text-xs">
                   <Info size={14} className="text-teal-600 shrink-0" />
@@ -234,7 +234,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button
                 type="button"
                 onClick={handleSkipLogin}
-                className="w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs active:scale-95 transition-all flex items-center justify-center gap-2 group"
+                className="w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-[#2c2c2e] dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs active:scale-95 transition-all flex items-center justify-center gap-2 group"
               >
                 <span>Lanjutkan Mode Offline (Tanpa Login)</span>
                 <ArrowRight size={13} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
@@ -244,7 +244,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
 
           {/* Footer Note */}
-          <div className="p-3 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 text-center text-[10px] text-slate-400 font-medium shrink-0">
+          <div className="p-3 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-white/10 text-center text-[10px] text-slate-400 font-medium shrink-0">
             Password ter-hash bcrypt • MongoDB Atlas Cloud Sync • HL7 FHIR R4
           </div>
         </motion.div>

@@ -103,7 +103,7 @@ export const StatCards: React.FC<StatCardsProps> = ({
                     playClickSound();
                     setIsGuideOpen(true);
                   }}
-                  className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-[11px] font-bold inline-flex items-center gap-1.5 active:scale-95 transition-all"
+                  className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10 text-[11px] font-bold inline-flex items-center gap-1.5 active:scale-95 transition-all"
                   title="Panduan Medis Cara Ukur Tensi"
                 >
                   <BookOpen size={14} className="text-teal-500" />
@@ -137,7 +137,7 @@ export const StatCards: React.FC<StatCardsProps> = ({
 
                       {/* Position & Arm */}
                       {latest.position && (
-                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg capitalize">
+                        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-[#2c2c2e] px-2 py-0.5 rounded-lg capitalize">
                           {latest.position} • {latest.arm || 'kiri'}
                         </span>
                       )}
@@ -164,7 +164,7 @@ export const StatCards: React.FC<StatCardsProps> = ({
                 </div>
 
                 {/* Split Visual Meter Bar: Systolic & Diastolic */}
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/10 space-y-2">
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     {/* Systolic Gauge */}
                     <div className="space-y-1">
@@ -174,7 +174,7 @@ export const StatCards: React.FC<StatCardsProps> = ({
                           Target &le; 120
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-[#2c2c2e] overflow-hidden">
                         <div 
                           className={`h-full rounded-full transition-all duration-500 ${
                             latest.systolic <= 120 ? 'bg-emerald-500' :
@@ -194,7 +194,7 @@ export const StatCards: React.FC<StatCardsProps> = ({
                           Target &le; 80
                         </span>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-[#2c2c2e] overflow-hidden">
                         <div 
                           className={`h-full rounded-full transition-all duration-500 ${
                             latest.diastolic <= 80 ? 'bg-emerald-500' :
@@ -216,7 +216,7 @@ export const StatCards: React.FC<StatCardsProps> = ({
                     )}
 
                     {pulsePressure && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-[#2c2c2e] text-slate-700 dark:text-slate-300 font-bold">
                         Tekanan Nadi: {pulsePressure} mmHg (Normal 30-50)
                       </span>
                     )}
@@ -258,7 +258,7 @@ export const StatCards: React.FC<StatCardsProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
           
           {/* Card: Rata-Rata Sistolik/Diastolik */}
-          <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-1">
+          <div className="p-3.5 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-slate-200/80 dark:border-white/10 shadow-sm space-y-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
               Rata-Rata 7 Hari
             </span>
@@ -274,7 +274,7 @@ export const StatCards: React.FC<StatCardsProps> = ({
           </div>
 
           {/* Card: Rata-Rata Nadi / Heart Rate */}
-          <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-1">
+          <div className="p-3.5 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-slate-200/80 dark:border-white/10 shadow-sm space-y-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
               Rata-Rata Nadi
             </span>
@@ -290,7 +290,7 @@ export const StatCards: React.FC<StatCardsProps> = ({
           </div>
 
           {/* Card: Rentang Min - Max Tensi */}
-          <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-1 col-span-2 sm:col-span-1">
+          <div className="p-3.5 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-slate-200/80 dark:border-white/10 shadow-sm space-y-1 col-span-2 sm:col-span-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
               Rentang Min &mdash; Max
             </span>

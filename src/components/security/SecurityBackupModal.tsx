@@ -198,10 +198,10 @@ export const SecurityBackupModal: React.FC<SecurityBackupModalProps> = ({ isOpen
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[90vh] flex flex-col"
+          className="bg-white dark:bg-[#1c1c1e] rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden my-auto max-h-[90vh] flex flex-col"
         >
           {/* Header */}
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <div className="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/10">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
                 <ShieldCheck className="w-5 h-5" />
@@ -227,7 +227,7 @@ export const SecurityBackupModal: React.FC<SecurityBackupModalProps> = ({ isOpen
           </div>
 
           {/* Subtabs Selector */}
-          <div className="flex border-b border-slate-100 dark:border-slate-800 px-5 pt-3 gap-4 text-xs font-bold">
+          <div className="flex border-b border-slate-100 dark:border-white/10 px-5 pt-3 gap-4 text-xs font-bold">
             <button
               onClick={() => setActiveSubTab('export')}
               className={`pb-2.5 border-b-2 transition-colors flex items-center gap-1.5 ${
@@ -269,7 +269,7 @@ export const SecurityBackupModal: React.FC<SecurityBackupModalProps> = ({ isOpen
                 </div>
 
                 {/* Encryption Toggle */}
-                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
                   <div>
                     <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
                       Aktifkan Enkripsi Password
@@ -300,7 +300,7 @@ export const SecurityBackupModal: React.FC<SecurityBackupModalProps> = ({ isOpen
                         value={exportPassword}
                         onChange={(e) => setExportPassword(e.target.value)}
                         placeholder="Masukkan password atau PIN rahasia..."
-                        className="w-full pl-3 pr-10 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="w-full pl-3 pr-10 py-2.5 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
                       />
                       <button
                         type="button"
@@ -327,7 +327,7 @@ export const SecurityBackupModal: React.FC<SecurityBackupModalProps> = ({ isOpen
             {/* SUBTAB 2: IMPORT RESTORE */}
             {activeSubTab === 'import' && (
               <div className="space-y-5">
-                <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-center space-y-3 bg-slate-50/50 dark:bg-slate-800/30">
+                <div className="border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl p-6 text-center space-y-3 bg-slate-50/50 dark:bg-white/5">
                   <Upload className="w-8 h-8 text-slate-400 mx-auto" />
                   <div>
                     <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -354,7 +354,7 @@ export const SecurityBackupModal: React.FC<SecurityBackupModalProps> = ({ isOpen
 
                 {/* Selected File Details & Password Prompt */}
                 {importFilePayload && (
-                  <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3">
+                  <div className="p-4 rounded-2xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 space-y-3">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                         <FileText className="w-4 h-4 text-teal-500" />

@@ -16,7 +16,7 @@ export const MobileHeader: React.FC = () => {
   };
 
   return (
-    <header className="md:hidden sticky top-0 z-40 bg-white/96 dark:bg-slate-900/96 backdrop-blur-2xl border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-3 transition-colors">
+    <header className="md:hidden sticky top-0 z-40 bg-white/96 dark:bg-slate-900/96 backdrop-blur-2xl border-b border-slate-200/80 dark:border-white/10 px-4 py-3 transition-colors">
       <div className="flex items-center justify-between gap-2 min-w-0">
         
         {/* App Logo */}
@@ -45,7 +45,7 @@ export const MobileHeader: React.FC = () => {
           <button
             type="button"
             onClick={toggleTheme}
-            className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 transition-all active:scale-95"
+            className="p-2 rounded-full bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200 transition-all active:scale-95"
             title={theme === 'dark' ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
           >
             {theme === 'dark' ? <SunMedium size={16} className="text-amber-400" /> : <MoonStar size={16} className="text-slate-600" />}

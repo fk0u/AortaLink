@@ -273,13 +273,13 @@ export const ReadingFormModal: React.FC = () => {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-[32px] border border-slate-200/90 dark:border-slate-800 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col z-10"
+            className="relative w-full max-w-lg bg-white dark:bg-[#1c1c1e] rounded-t-[32px] sm:rounded-[32px] border border-slate-200/90 dark:border-white/10 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col z-10"
           >
             {/* Grabber Handle */}
             <div className="m3-bottom-sheet-grabber sm:hidden" />
 
             {/* Header */}
-            <div className="px-5 pt-3 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="px-5 pt-3 pb-3 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-teal-500 text-white flex items-center justify-center font-bold">
                   <Activity size={18} />
@@ -312,7 +312,7 @@ export const ReadingFormModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  className="w-9 h-9 rounded-full bg-slate-100 dark:bg-[#2c2c2e] text-slate-500 dark:text-slate-400 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                   aria-label="Tutup modal"
                 >
                   <X size={18} />
@@ -327,7 +327,7 @@ export const ReadingFormModal: React.FC = () => {
               {(() => {
                 const ageEval = classifyAgeAdjustedBP(systolic, diastolic, activeProfile?.age || 45, pulse);
                 return (
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 space-y-2.5">
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/80 dark:border-white/10 space-y-2.5">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div>
                         <div className="flex items-center gap-1.5">
@@ -346,8 +346,8 @@ export const ReadingFormModal: React.FC = () => {
                     </div>
 
                     {/* Hemodynamic Telemetry Row: Pulse Pressure (PP), MAP, RPP */}
-                    <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200/60 dark:border-slate-700/60 text-center">
-                      <div className="p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                    <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200/60 dark:border-white/10 text-center">
+                      <div className="p-1.5 rounded-xl bg-white dark:bg-[#1c1c1e] border border-slate-200/60 dark:border-white/10">
                         <span className="text-[9px] font-extrabold text-slate-400 block">Pulse Pressure</span>
                         <span className={`text-xs font-black font-mono ${ageEval.pulsePressureStatus === 'wide' ? 'text-rose-500' : 'text-teal-600 dark:text-teal-400'}`}>
                           {ageEval.pulsePressure} mmHg
@@ -357,7 +357,7 @@ export const ReadingFormModal: React.FC = () => {
                         </span>
                       </div>
 
-                      <div className="p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                      <div className="p-1.5 rounded-xl bg-white dark:bg-[#1c1c1e] border border-slate-200/60 dark:border-white/10">
                         <span className="text-[9px] font-extrabold text-slate-400 block">MAP (Perfusi)</span>
                         <span className="text-xs font-black font-mono text-sky-600 dark:text-sky-400">
                           {ageEval.map} mmHg
@@ -365,7 +365,7 @@ export const ReadingFormModal: React.FC = () => {
                         <span className="text-[8px] text-slate-400 block leading-tight">Normal 70–105</span>
                       </div>
 
-                      <div className="p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                      <div className="p-1.5 rounded-xl bg-white dark:bg-[#1c1c1e] border border-slate-200/60 dark:border-white/10">
                         <span className="text-[9px] font-extrabold text-slate-400 block">Beban Jantung (RPP)</span>
                         <span className="text-xs font-black font-mono text-purple-600 dark:text-purple-400">
                           {ageEval.rpp ? ageEval.rpp.toLocaleString() : '-'}
@@ -408,59 +408,59 @@ export const ReadingFormModal: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 text-center border border-teal-100 dark:border-teal-900 space-y-1">
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#1c1c1e] text-center border border-teal-100 dark:border-teal-900 space-y-1">
                       <span className="text-[9px] font-black text-slate-400 block">Ukur 1</span>
                       <div className="flex items-center justify-center gap-1">
                         <input
                           type="number"
                           value={t1Sys}
                           onChange={(e) => setT1Sys(Number(e.target.value))}
-                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 rounded p-1"
+                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-[#2c2c2e] rounded p-1"
                         />
                         <span className="text-slate-400">/</span>
                         <input
                           type="number"
                           value={t1Dia}
                           onChange={(e) => setT1Dia(Number(e.target.value))}
-                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 rounded p-1"
+                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-[#2c2c2e] rounded p-1"
                         />
                       </div>
                     </div>
 
-                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 text-center border border-teal-100 dark:border-teal-900 space-y-1">
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#1c1c1e] text-center border border-teal-100 dark:border-teal-900 space-y-1">
                       <span className="text-[9px] font-black text-slate-400 block">Ukur 2</span>
                       <div className="flex items-center justify-center gap-1">
                         <input
                           type="number"
                           value={t2Sys}
                           onChange={(e) => setT2Sys(Number(e.target.value))}
-                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 rounded p-1"
+                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-[#2c2c2e] rounded p-1"
                         />
                         <span className="text-slate-400">/</span>
                         <input
                           type="number"
                           value={t2Dia}
                           onChange={(e) => setT2Dia(Number(e.target.value))}
-                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 rounded p-1"
+                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-[#2c2c2e] rounded p-1"
                         />
                       </div>
                     </div>
 
-                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 text-center border border-teal-100 dark:border-teal-900 space-y-1">
+                    <div className="p-2 rounded-xl bg-white dark:bg-[#1c1c1e] text-center border border-teal-100 dark:border-teal-900 space-y-1">
                       <span className="text-[9px] font-black text-slate-400 block">Ukur 3</span>
                       <div className="flex items-center justify-center gap-1">
                         <input
                           type="number"
                           value={t3Sys}
                           onChange={(e) => setT3Sys(Number(e.target.value))}
-                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 rounded p-1"
+                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-[#2c2c2e] rounded p-1"
                         />
                         <span className="text-slate-400">/</span>
                         <input
                           type="number"
                           value={t3Dia}
                           onChange={(e) => setT3Dia(Number(e.target.value))}
-                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 rounded p-1"
+                          className="w-10 text-center font-mono font-bold text-xs bg-slate-100 dark:bg-[#2c2c2e] rounded p-1"
                         />
                       </div>
                     </div>
@@ -494,7 +494,7 @@ export const ReadingFormModal: React.FC = () => {
                         playClickSound();
                         setSystolic((v) => Math.max(60, v - 1));
                       }}
-                      className="w-7 h-7 rounded-lg bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-black shadow-sm flex items-center justify-center active:scale-90"
+                      className="w-7 h-7 rounded-lg bg-white dark:bg-[#2c2c2e] text-sky-700 dark:text-sky-300 font-black shadow-sm flex items-center justify-center active:scale-90"
                     >
                       <Minus size={14} />
                     </button>
@@ -526,7 +526,7 @@ export const ReadingFormModal: React.FC = () => {
                         playClickSound();
                         setDiastolic((v) => Math.max(40, v - 1));
                       }}
-                      className="w-7 h-7 rounded-lg bg-white dark:bg-slate-800 text-teal-700 dark:text-teal-300 font-black shadow-sm flex items-center justify-center active:scale-90"
+                      className="w-7 h-7 rounded-lg bg-white dark:bg-[#2c2c2e] text-teal-700 dark:text-teal-300 font-black shadow-sm flex items-center justify-center active:scale-90"
                     >
                       <Minus size={14} />
                     </button>
@@ -558,7 +558,7 @@ export const ReadingFormModal: React.FC = () => {
                         playClickSound();
                         setPulse((v) => Math.max(40, v - 1));
                       }}
-                      className="w-7 h-7 rounded-lg bg-white dark:bg-slate-800 text-rose-700 dark:text-rose-300 font-black shadow-sm flex items-center justify-center active:scale-90"
+                      className="w-7 h-7 rounded-lg bg-white dark:bg-[#2c2c2e] text-rose-700 dark:text-rose-300 font-black shadow-sm flex items-center justify-center active:scale-90"
                     >
                       <Minus size={14} />
                     </button>
@@ -595,7 +595,7 @@ export const ReadingFormModal: React.FC = () => {
                       className={`px-2.5 py-2 rounded-xl text-[11px] font-bold transition-all text-left truncate ${
                         measurementContext === opt.value
                           ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                          : 'bg-slate-100 dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-300'
                       }`}
                     >
                       {opt.label}
@@ -622,7 +622,7 @@ export const ReadingFormModal: React.FC = () => {
                         className={`py-1.5 rounded-lg text-[11px] font-bold capitalize ${
                           position === pos
                             ? 'bg-teal-500 text-white'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                            : 'bg-slate-100 dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-300'
                         }`}
                       >
                         {pos}
@@ -647,7 +647,7 @@ export const ReadingFormModal: React.FC = () => {
                         className={`py-1.5 rounded-lg text-[11px] font-bold capitalize ${
                           arm === a
                             ? 'bg-teal-500 text-white'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                            : 'bg-slate-100 dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-300'
                         }`}
                       >
                         {a}
@@ -667,7 +667,7 @@ export const ReadingFormModal: React.FC = () => {
                   type="datetime-local"
                   value={timestamp}
                   onChange={(e) => setTimestamp(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
 
@@ -688,7 +688,7 @@ export const ReadingFormModal: React.FC = () => {
                         className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
                           isSelected
                             ? 'bg-teal-500 text-white shadow-sm'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                            : 'bg-slate-100 dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-300'
                         }`}
                       >
                         {tag}
@@ -709,7 +709,7 @@ export const ReadingFormModal: React.FC = () => {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Catatan gejala pusing, obat yang diminum, aktivitas fisik..."
-                  className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
                 />
               </div>
 

@@ -135,10 +135,10 @@ export const HabitsTrackerModal: React.FC<HabitsTrackerModalProps> = ({ isOpen, 
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[90vh] flex flex-col"
+          className="bg-white dark:bg-[#1c1c1e] rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden my-auto max-h-[90vh] flex flex-col"
         >
           {/* Header */}
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <div className="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/10">
             <div className="flex items-center gap-2.5">
               <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-md shadow-indigo-500/20">
                 <Moon className="w-5 h-5" />
@@ -172,7 +172,7 @@ export const HabitsTrackerModal: React.FC<HabitsTrackerModalProps> = ({ isOpen, 
                 type="date"
                 value={dateStr}
                 onChange={(e) => setDateStr(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
+                className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-semibold"
                 required
               />
             </div>
@@ -184,7 +184,7 @@ export const HabitsTrackerModal: React.FC<HabitsTrackerModalProps> = ({ isOpen, 
                   <Moon className="w-4 h-4" />
                   <span>Kualitas &amp; Durasi Tidur</span>
                 </div>
-                <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-indigo-200 dark:border-indigo-700">
+                <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 bg-white dark:bg-[#2c2c2e] px-2.5 py-1 rounded-lg border border-indigo-200 dark:border-indigo-700">
                   {sleepHours} Jam Tidur
                 </span>
               </div>
@@ -198,7 +198,7 @@ export const HabitsTrackerModal: React.FC<HabitsTrackerModalProps> = ({ isOpen, 
                     type="time"
                     value={sleepTime}
                     onChange={(e) => setSleepTime(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold"
+                    className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-bold"
                     required
                   />
                 </div>
@@ -210,7 +210,7 @@ export const HabitsTrackerModal: React.FC<HabitsTrackerModalProps> = ({ isOpen, 
                     type="time"
                     value={wakeTime}
                     onChange={(e) => setWakeTime(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold"
+                    className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-bold"
                     required
                   />
                 </div>
@@ -286,7 +286,7 @@ export const HabitsTrackerModal: React.FC<HabitsTrackerModalProps> = ({ isOpen, 
                 onChange={(e) => setActivityNotes(e.target.value)}
                 placeholder="Contoh: Jalan pagi 30 menit, minum teh herbal tanpa gula..."
                 rows={2}
-                className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs resize-none"
+                className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs resize-none"
               />
             </div>
 
@@ -301,7 +301,7 @@ export const HabitsTrackerModal: React.FC<HabitsTrackerModalProps> = ({ isOpen, 
 
             {/* Historical Habit Logs */}
             {existingLogs.length > 0 && (
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <div className="pt-3 border-t border-slate-100 dark:border-white/10 space-y-2">
                 <label className="font-extrabold text-slate-700 dark:text-slate-300 block">
                   Riwayat Kebiasaan 7 Hari Terakhir:
                 </label>
@@ -309,7 +309,7 @@ export const HabitsTrackerModal: React.FC<HabitsTrackerModalProps> = ({ isOpen, 
                   {existingLogs.map((h) => (
                     <div
                       key={h.id}
-                      className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between text-[11px]"
+                      className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/10 border border-slate-200/80 dark:border-white/10 flex items-center justify-between text-[11px]"
                     >
                       <div>
                         <span className="font-bold text-slate-800 dark:text-slate-200 block">

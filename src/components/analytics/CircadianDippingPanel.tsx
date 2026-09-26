@@ -63,7 +63,7 @@ export const CircadianDippingPanel: React.FC<CircadianDippingPanelProps> = ({ re
       </div>
 
       {!hasData ? (
-        <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center space-y-2">
+        <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-center space-y-2">
           <Moon size={28} className="text-slate-300 dark:text-slate-600 mx-auto" />
           <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Data Belum Cukup</p>
           <p className="text-[10px] text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
@@ -118,7 +118,7 @@ export const CircadianDippingPanel: React.FC<CircadianDippingPanelProps> = ({ re
             </div>
 
             {/* Visual dipping bar */}
-            <div className="relative h-6 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div className="relative h-6 rounded-full bg-slate-100 dark:bg-[#2c2c2e] overflow-hidden">
               {/* Normal range indicator (10-20%) */}
               <div
                 className="absolute top-0 h-full bg-emerald-100 dark:bg-emerald-900/30 opacity-60"

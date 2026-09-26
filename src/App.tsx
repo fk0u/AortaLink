@@ -374,7 +374,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col pb-28 md:pb-12 transition-colors">
+    <div className="min-h-screen bg-[#f2f2f7] dark:bg-black text-slate-900 dark:text-slate-100 flex flex-col pb-28 md:pb-12 transition-colors">
       
       {/* Toast Notifications */}
       <ToastContainer />
@@ -892,7 +892,7 @@ export function App() {
       />
 
       {/* Mobile Footer */}
-      <footer className="mt-8 border-t border-slate-200/80 dark:border-slate-800/80 py-4 text-center text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5">
+      <footer className="mt-8 border-t border-slate-200/80 dark:border-white/10 py-4 text-center text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5">
         <p className="font-bold text-slate-700 dark:text-slate-300">
           AortaLink — Open-Source AI Personal EHR
         </p>

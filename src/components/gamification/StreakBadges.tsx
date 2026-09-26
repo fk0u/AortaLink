@@ -197,7 +197,7 @@ export const StreakBadges: React.FC = () => {
             {lockedBadges.map((badge) => (
               <div
                 key={badge.key}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 opacity-60"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 opacity-60"
                 title={badge.description}
               >
                 <div className="p-1 rounded-lg bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 shrink-0">

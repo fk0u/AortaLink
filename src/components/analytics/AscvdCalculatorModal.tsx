@@ -68,10 +68,10 @@ export const AscvdCalculatorModal: React.FC<AscvdCalculatorModalProps> = ({ isOp
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[90vh] flex flex-col"
+          className="bg-white dark:bg-[#1c1c1e] rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden my-auto max-h-[90vh] flex flex-col"
         >
           {/* Header */}
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 shrink-0">
+          <div className="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/10 shrink-0">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-gradient-to-tr from-rose-500 to-orange-500 text-white shadow-md shadow-rose-500/20">
                 <HeartPulse className="w-5 h-5" />
@@ -96,7 +96,7 @@ export const AscvdCalculatorModal: React.FC<AscvdCalculatorModalProps> = ({ isOp
             <div className="flex flex-col items-center gap-2">
               <div className="relative w-40 h-20 overflow-hidden">
                 {/* Background arc */}
-                <div className="absolute inset-0 rounded-t-full border-[10px] border-b-0 border-slate-200 dark:border-slate-700" />
+                <div className="absolute inset-0 rounded-t-full border-[10px] border-b-0 border-slate-200 dark:border-white/10" />
                 {/* Colored arc */}
                 <div
                   className={`absolute inset-0 rounded-t-full border-[10px] border-b-0 transition-all duration-700
@@ -140,13 +140,13 @@ export const AscvdCalculatorModal: React.FC<AscvdCalculatorModalProps> = ({ isOp
                 <label className="space-y-1">
                   <span className="text-[10px] font-bold text-slate-500">Usia (40-79)</span>
                   <input type="number" min={40} max={79} value={age} onChange={(e) => setAge(Number(e.target.value))}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </label>
                 <label className="space-y-1">
                   <span className="text-[10px] font-bold text-slate-500">Jenis Kelamin</span>
                   <select value={gender} onChange={(e) => setGender(e.target.value as 'male' | 'female')}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="male">Pria</option>
                     <option value="female">Wanita</option>
@@ -158,7 +158,7 @@ export const AscvdCalculatorModal: React.FC<AscvdCalculatorModalProps> = ({ isOp
               <label className="space-y-1 block">
                 <span className="text-[10px] font-bold text-slate-500">Ras (untuk koefisien PCE)</span>
                 <select value={race} onChange={(e) => setRace(e.target.value as any)}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="other">Lainnya / Asia</option>
                   <option value="white">Kulit Putih (White)</option>
@@ -171,13 +171,13 @@ export const AscvdCalculatorModal: React.FC<AscvdCalculatorModalProps> = ({ isOp
                 <label className="space-y-1">
                   <span className="text-[10px] font-bold text-slate-500">Total Kolesterol (mg/dL)</span>
                   <input type="number" min={100} max={400} value={totalCholesterol} onChange={(e) => setTotalCholesterol(Number(e.target.value))}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </label>
                 <label className="space-y-1">
                   <span className="text-[10px] font-bold text-slate-500">HDL Kolesterol (mg/dL)</span>
                   <input type="number" min={20} max={100} value={hdlCholesterol} onChange={(e) => setHdlCholesterol(Number(e.target.value))}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </label>
               </div>
@@ -186,7 +186,7 @@ export const AscvdCalculatorModal: React.FC<AscvdCalculatorModalProps> = ({ isOp
               <label className="space-y-1 block">
                 <span className="text-[10px] font-bold text-slate-500">Tekanan Darah Sistolik (mmHg) — Otomatis dari rata-rata</span>
                 <input type="number" min={90} max={220} value={systolicBP} onChange={(e) => setSystolicBP(Number(e.target.value))}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </label>
 
@@ -197,7 +197,7 @@ export const AscvdCalculatorModal: React.FC<AscvdCalculatorModalProps> = ({ isOp
                   { label: 'Diabetes Melitus', value: diabetes, setter: setDiabetes },
                   { label: 'Perokok Aktif', value: smoker, setter: setSmoker }
                 ].map(({ label, value, setter }) => (
-                  <label key={label} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 cursor-pointer">
+                  <label key={label} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10 cursor-pointer">
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{label}</span>
                     <button
                       type="button"
@@ -229,7 +229,7 @@ export const AscvdCalculatorModal: React.FC<AscvdCalculatorModalProps> = ({ isOp
             )}
 
             {/* Disclaimer */}
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-start gap-2 text-[10px] text-slate-500">
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10 flex items-start gap-2 text-[10px] text-slate-500">
               <Info className="w-4 h-4 shrink-0 mt-0.5" />
               <span>
                 Kalkulator ini menggunakan formula Pooled Cohort Equations (ACC/AHA 2013) yang bersifat open-source. Hasil estimasi BUKAN pengganti diagnosis dokter spesialis.
@@ -238,7 +238,7 @@ export const AscvdCalculatorModal: React.FC<AscvdCalculatorModalProps> = ({ isOp
           </div>
 
           {/* Actions */}
-          <div className="p-5 border-t border-slate-100 dark:border-slate-800 shrink-0">
+          <div className="p-5 border-t border-slate-100 dark:border-white/10 shrink-0">
             <button
               onClick={handleSave}
               disabled={isSaving || result.riskPercent < 0}

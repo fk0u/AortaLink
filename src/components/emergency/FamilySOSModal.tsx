@@ -68,7 +68,7 @@ export const FamilySOSModal: React.FC<FamilySOSModalProps> = ({ isOpen, onClose 
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-white dark:bg-slate-900 rounded-[32px] max-w-md w-full shadow-2xl border border-rose-300 dark:border-rose-900 overflow-hidden my-auto p-6 space-y-6 text-center"
+          className="bg-white dark:bg-[#1c1c1e] rounded-[32px] max-w-md w-full shadow-2xl border border-rose-300 dark:border-rose-900 overflow-hidden my-auto p-6 space-y-6 text-center"
         >
           <div className="flex items-center justify-between border-b border-rose-100 dark:border-rose-900/60 pb-3">
             <div className="flex items-center gap-2 text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider">
@@ -122,7 +122,7 @@ export const FamilySOSModal: React.FC<FamilySOSModalProps> = ({ isOpen, onClose 
                 value={caregiverPhone}
                 onChange={(e) => setCaregiverPhone(e.target.value)}
                 placeholder="Contoh: 081234567890"
-                className="flex-1 px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
+                className="flex-1 px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-semibold"
               />
               <button
                 onClick={() => handleSendWhatsAppSOS(caregiverPhone, 'Keluarga')}
@@ -146,7 +146,7 @@ export const FamilySOSModal: React.FC<FamilySOSModalProps> = ({ isOpen, onClose 
               </div>
             )}
 
-            <details className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2">
+            <details className="rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2">
               <summary className="text-[11px] font-bold text-slate-500 dark:text-slate-400 cursor-pointer">
                 Nomor dokter (opsional)
               </summary>
@@ -155,7 +155,7 @@ export const FamilySOSModal: React.FC<FamilySOSModalProps> = ({ isOpen, onClose 
                 value={doctorPhone}
                 onChange={(e) => setDoctorPhone(e.target.value)}
                 placeholder="Nomor WhatsApp / telepon dokter Anda"
-                className="mt-2 w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
+                className="mt-2 w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-semibold"
                 aria-label="Nomor telepon dokter"
               />
             </details>

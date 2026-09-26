@@ -41,7 +41,7 @@ const INSIGHT_STYLE: Record<MlInsight['priority'], { border: string; bg: string;
   },
   info: {
     border: 'border-slate-200 dark:border-slate-700',
-    bg: 'bg-slate-50 dark:bg-slate-800/60',
+    bg: 'bg-slate-50 dark:bg-white/10',
     icon: <Info size={15} className="text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" />
   }
 };
@@ -163,12 +163,12 @@ export const LocalMlAssistantWidget: React.FC = () => {
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
-            className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-t-[32px] sm:rounded-[32px] max-w-lg w-full shadow-2xl overflow-hidden flex flex-col h-[640px] max-h-[92vh] text-slate-900 dark:text-slate-100"
+            className="bg-white dark:bg-[#1c1c1e] border border-slate-200/90 dark:border-white/10 rounded-t-[32px] sm:rounded-[32px] max-w-lg w-full shadow-2xl overflow-hidden flex flex-col h-[640px] max-h-[92vh] text-slate-900 dark:text-slate-100"
           >
             <div className="m3-bottom-sheet-grabber sm:hidden" />
 
             {/* Header */}
-            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
+            <div className="p-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/5 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-teal-600 text-white shadow-sm">
                   <BrainCircuit size={18} />
@@ -190,7 +190,7 @@ export const LocalMlAssistantWidget: React.FC = () => {
                   playClickSound();
                   closeModal();
                 }}
-                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#2c2c2e] text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 flex items-center justify-center transition-colors"
                 aria-label="Tutup asisten analisis"
               >
                 <X size={16} />
@@ -217,7 +217,7 @@ export const LocalMlAssistantWidget: React.FC = () => {
               {report && (
                 <>
                   {/* Trend snapshot */}
-                  <div className="p-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 space-y-1.5">
+                  <div className="p-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/10 space-y-1.5">
                     <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       <TrendGlyph direction={report.trend.direction} />
                       Snapshot Tren
@@ -252,9 +252,9 @@ export const LocalMlAssistantWidget: React.FC = () => {
                         </p>
                       </div>
                       <div className="flex justify-start">
-                        <div className="max-w-[90%] px-3.5 py-2.5 rounded-2xl rounded-bl-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
+                        <div className="max-w-[90%] px-3.5 py-2.5 rounded-2xl rounded-bl-md bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap">
                           {entry.answer.text}
-                          <p className="mt-2 pt-1.5 border-t border-slate-200 dark:border-slate-700 text-[9px] font-bold font-mono uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                          <p className="mt-2 pt-1.5 border-t border-slate-200 dark:border-white/10 text-[9px] font-bold font-mono uppercase tracking-wide text-slate-400 dark:text-slate-500">
                             Sumber: {entry.answer.sources.join(' • ')}
                           </p>
                         </div>
@@ -270,7 +270,7 @@ export const LocalMlAssistantWidget: React.FC = () => {
             </div>
 
             {/* Question chips + input */}
-            <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 shrink-0">
+            <div className="border-t border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-[#1c1c1e] shrink-0">
               {report && (
                 <div className="px-3 pt-2.5 flex gap-1.5 overflow-x-auto">
                   {curatedQuestions.map((q) => (
@@ -278,7 +278,7 @@ export const LocalMlAssistantWidget: React.FC = () => {
                       key={q.id}
                       type="button"
                       onClick={() => handleCurated(q.id, q.label)}
-                      className="px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap hover:border-teal-500 hover:text-teal-700 dark:hover:text-teal-300 transition-colors"
+                      className="px-3 py-1.5 rounded-full bg-white dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-[10px] font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap hover:border-teal-500 hover:text-teal-700 dark:hover:text-teal-300 transition-colors"
                     >
                       {q.label}
                     </button>
@@ -291,7 +291,7 @@ export const LocalMlAssistantWidget: React.FC = () => {
                   placeholder="Tanya tentang tren, pola, kepatuhan, atau lab Anda…"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  className="flex-1 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="flex-1 px-4 py-2.5 rounded-2xl bg-white dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   aria-label="Pertanyaan untuk asisten analisis"
                 />
                 <button

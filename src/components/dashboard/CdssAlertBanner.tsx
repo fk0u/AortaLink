@@ -55,10 +55,10 @@ export const CdssAlertBanner: React.FC<CdssAlertBannerProps> = ({
 
         {/* Dipping summary note if abnormal */}
         {hasValidDipping && dippingReport.pattern !== 'dipper' && (
-          <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 text-xs space-y-1">
+          <div className="p-2.5 rounded-xl bg-white/80 dark:bg-[#1c1c1e]/80 border border-slate-200/60 dark:border-white/10 text-xs space-y-1">
             <div className="flex items-center justify-between text-[11px] font-bold text-slate-900 dark:text-slate-100">
               <span>Ritme Sirkadian: {dippingReport.label}</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-300 font-mono">
                 {dippingReport.sysDippingPercent.toFixed(1)}%
               </span>
             </div>
@@ -74,7 +74,7 @@ export const CdssAlertBanner: React.FC<CdssAlertBannerProps> = ({
             {alerts.slice(0, 2).map((alert) => (
               <div
                 key={alert.id}
-                className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 text-xs space-y-1"
+                className="p-2.5 rounded-xl bg-white/80 dark:bg-[#1c1c1e]/80 border border-slate-200/60 dark:border-white/10 text-xs space-y-1"
               >
                 <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
@@ -82,7 +82,7 @@ export const CdssAlertBanner: React.FC<CdssAlertBannerProps> = ({
                     <span>{alert.title}</span>
                   </div>
                   {alert.valueString && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-mono text-slate-700 dark:text-slate-300">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#2c2c2e] font-mono text-slate-700 dark:text-slate-300">
                       {alert.valueString}
                     </span>
                   )}

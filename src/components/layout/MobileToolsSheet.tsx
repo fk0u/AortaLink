@@ -54,7 +54,7 @@ export const MobileToolsSheet: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-label="Menu Alat Tambahan AortaLink"
-            className="fixed inset-x-0 bottom-0 z-[70] max-h-[85vh] overflow-y-auto px-3 pb-safe pt-2 bg-white dark:bg-slate-900 border-t border-slate-200/90 dark:border-slate-800 rounded-t-[32px] shadow-2xl"
+            className="fixed inset-x-0 bottom-0 z-[70] max-h-[85vh] overflow-y-auto px-3 pb-safe pt-2 bg-white dark:bg-[#1c1c1e] border-t border-slate-200/90 dark:border-white/10 rounded-t-[32px] shadow-2xl"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -66,7 +66,7 @@ export const MobileToolsSheet: React.FC = () => {
             <div className="max-w-lg mx-auto pb-6 space-y-4">
               
               {/* Sheet Header */}
-              <div className="flex items-center justify-between px-2 pt-1 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center justify-between px-2 pt-1 border-b border-slate-100 dark:border-white/10 pb-3">
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">
                     AortaLink Hub
@@ -81,7 +81,7 @@ export const MobileToolsSheet: React.FC = () => {
                     playClickSound();
                     closeSheet();
                   }}
-                  className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 active:scale-95 transition-all"
+                  className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-[#2c2c2e] flex items-center justify-center text-slate-600 dark:text-slate-300 active:scale-95 transition-all"
                   aria-label="Tutup"
                 >
                   <X size={20} />
@@ -101,7 +101,7 @@ export const MobileToolsSheet: React.FC = () => {
                       closeSheet();
                       openProfileModal();
                     }}
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 active:scale-[0.98] transition-all text-left"
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/70 dark:border-white/10 active:scale-[0.98] transition-all text-left"
                   >
                     <div className="p-2 rounded-xl bg-teal-500 text-white shrink-0">
                       <UserRound size={16} />
@@ -119,7 +119,7 @@ export const MobileToolsSheet: React.FC = () => {
                       closeSheet();
                       openExportPdfModal();
                     }}
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 active:scale-[0.98] transition-all text-left"
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/70 dark:border-white/10 active:scale-[0.98] transition-all text-left"
                   >
                     <div className="p-2 rounded-xl bg-sky-500 text-white shrink-0">
                       <FileText size={16} />
@@ -174,7 +174,7 @@ export const MobileToolsSheet: React.FC = () => {
                       closeSheet();
                       openReminderModal();
                     }}
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 active:scale-[0.98] transition-all text-left"
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/70 dark:border-white/10 active:scale-[0.98] transition-all text-left"
                   >
                     <div className="p-2 rounded-xl bg-amber-500 text-white shrink-0">
                       <Bell size={16} />
@@ -188,7 +188,7 @@ export const MobileToolsSheet: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => goTo('/settings')}
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 active:scale-[0.98] transition-all text-left"
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/70 dark:border-white/10 active:scale-[0.98] transition-all text-left"
                   >
                     <div className="p-2 rounded-xl bg-purple-500 text-white shrink-0">
                       <Settings size={16} />
@@ -210,7 +210,7 @@ export const MobileToolsSheet: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => goTo('/backup')}
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 active:scale-[0.98] transition-all text-left"
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/70 dark:border-white/10 active:scale-[0.98] transition-all text-left"
                   >
                     <div className="p-2 rounded-xl bg-indigo-500 text-white shrink-0">
                       <Database size={16} />
@@ -224,7 +224,7 @@ export const MobileToolsSheet: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => goTo('/settings')}
-                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 active:scale-[0.98] transition-all text-left"
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/70 dark:border-white/10 active:scale-[0.98] transition-all text-left"
                   >
                     <div className="p-2 rounded-xl bg-emerald-500 text-white shrink-0">
                       <ShieldCheck size={16} />

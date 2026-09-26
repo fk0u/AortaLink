@@ -175,7 +175,7 @@ export const HistoryFilter: React.FC = () => {
   };
 
   return (
-    <div className="rounded-[24px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm space-y-3">
+    <div className="rounded-[24px] bg-white dark:bg-[#1c1c1e] border border-slate-200/80 dark:border-white/10 p-4 shadow-sm space-y-3">
       
       {/* Top Search & Actions */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
@@ -188,7 +188,7 @@ export const HistoryFilter: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari angka tensi, catatan, atau label..."
-            className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+            className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200/80 dark:border-white/10 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
           />
           {searchQuery && (
             <button
@@ -207,7 +207,7 @@ export const HistoryFilter: React.FC = () => {
           <button
             type="button"
             onClick={handleExportCSV}
-            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs active:scale-95 transition-all"
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs active:scale-95 transition-all"
             title="Ekspor Data ke File CSV"
           >
             <Download size={14} />
@@ -227,7 +227,7 @@ export const HistoryFilter: React.FC = () => {
           <button
             type="button"
             onClick={() => jsonInputRef.current?.click()}
-            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs active:scale-95 transition-all"
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs active:scale-95 transition-all"
             title="Pulihkan Cadangan Database JSON"
           >
             <Upload size={14} />
@@ -253,7 +253,7 @@ export const HistoryFilter: React.FC = () => {
       </div>
 
       {/* Filter Chips Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-100 dark:border-white/10">
         
         {/* Date Filter Chips */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
@@ -277,7 +277,7 @@ export const HistoryFilter: React.FC = () => {
                 className={`m3-chip whitespace-nowrap text-[11px] py-1 px-3 ${
                   isSelected
                     ? 'bg-teal-500 text-white border-teal-500 shadow-md shadow-teal-500/25'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
+                    : 'bg-slate-100 dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-300 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
                 {labels[range]}
@@ -295,7 +295,7 @@ export const HistoryFilter: React.FC = () => {
               playClickSound();
               setCategoryFilter(e.target.value as any);
             }}
-            className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+            className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200/80 dark:border-white/10 text-[11px] font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
           >
             <option value="all">Semua Kategori AHA</option>
             <option value="normal">Normal (&lt; 120/80)</option>

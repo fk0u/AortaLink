@@ -130,10 +130,10 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[90vh] flex flex-col"
+          className="bg-white dark:bg-[#1c1c1e] rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden max-h-[90vh] flex flex-col"
         >
           {/* Header */}
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <div className="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/10">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
                 <FlaskConical className="w-5 h-5" />
@@ -157,7 +157,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
 
           <div className="p-5 overflow-y-auto space-y-6 flex-1 text-xs">
             {/* Input Form */}
-            <form onSubmit={handleSubmit} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-4">
+            <form onSubmit={handleSubmit} className="p-4 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/80 dark:border-white/10 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-1.5">
                   <Plus className="w-4 h-4" /> Input Hasil Lab Baru
@@ -176,7 +176,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* Uric Acid */}
-                <div className="bg-white dark:bg-slate-700/60 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1">
+                <div className="bg-white dark:bg-slate-700/60 p-3 rounded-xl border border-slate-200/80 dark:border-white/10 space-y-1">
                   <label className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase">
                     Asam Urat
                   </label>
@@ -195,7 +195,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
                 </div>
 
                 {/* Blood Urea */}
-                <div className="bg-white dark:bg-slate-700/60 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1">
+                <div className="bg-white dark:bg-slate-700/60 p-3 rounded-xl border border-slate-200/80 dark:border-white/10 space-y-1">
                   <label className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase">
                     Ureum Darah
                   </label>
@@ -214,7 +214,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
                 </div>
 
                 {/* Serum Creatinine */}
-                <div className="bg-white dark:bg-slate-700/60 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-1">
+                <div className="bg-white dark:bg-slate-700/60 p-3 rounded-xl border border-slate-200/80 dark:border-white/10 space-y-1">
                   <label className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase">
                     Kreatinin
                   </label>
@@ -261,12 +261,12 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
 
               {/* Extended Hospital Form Fields */}
               {showExtended && (
-                <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3">
+                <div className="p-3.5 rounded-2xl bg-white dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 space-y-3">
                   <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
                     Profil Lipid &amp; Kardiovaskular (AHA/ACC)
                   </span>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/10">
                       <label className="text-[9px] font-bold text-slate-500 block">Total Kolesterol</label>
                       <input
                         type="number"
@@ -277,7 +277,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
                       <span className="text-[8px] text-slate-400">&lt;200 mg/dL</span>
                     </div>
 
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/10">
                       <label className="text-[9px] font-bold text-slate-500 block">LDL-C (Jahat)</label>
                       <input
                         type="number"
@@ -288,7 +288,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
                       <span className="text-[8px] text-slate-400">&lt;100 mg/dL</span>
                     </div>
 
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/10">
                       <label className="text-[9px] font-bold text-slate-500 block">HDL-C (Baik)</label>
                       <input
                         type="number"
@@ -299,7 +299,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
                       <span className="text-[8px] text-slate-400">&gt;40 mg/dL</span>
                     </div>
 
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/10">
                       <label className="text-[9px] font-bold text-slate-500 block">Trigliserida</label>
                       <input
                         type="number"
@@ -315,7 +315,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
                     Metabolik, Elektrolit &amp; Urin
                   </span>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/10">
                       <label className="text-[9px] font-bold text-slate-500 block">Gula Darah Puasa</label>
                       <input
                         type="number"
@@ -326,7 +326,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
                       <span className="text-[8px] text-slate-400">&lt;100 mg/dL</span>
                     </div>
 
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/10">
                       <label className="text-[9px] font-bold text-slate-500 block">HbA1c (%)</label>
                       <input
                         type="number"
@@ -338,7 +338,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
                       <span className="text-[8px] text-slate-400">&lt;5.7%</span>
                     </div>
 
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/10">
                       <label className="text-[9px] font-bold text-slate-500 block">Kalium (K+)</label>
                       <input
                         type="number"
@@ -350,7 +350,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
                       <span className="text-[8px] text-slate-400">3.5–5.0 mEq</span>
                     </div>
 
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/10">
                       <label className="text-[9px] font-bold text-slate-500 block">Natrium (Na+)</label>
                       <input
                         type="number"
@@ -361,7 +361,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
                       <span className="text-[8px] text-slate-400">135–145 mEq</span>
                     </div>
 
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/10">
                       <label className="text-[9px] font-bold text-slate-500 block">Proteinuria</label>
                       <select
                         value={proteinuria}
@@ -386,7 +386,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
                   placeholder="Catatan laboratorium tambahan..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-700/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-700/60 border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
                 />
               </div>
 
@@ -406,7 +406,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
               </h4>
 
               {(!labResults || labResults.length === 0) ? (
-                <div className="p-6 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-400">
+                <div className="p-6 text-center rounded-2xl border border-dashed border-slate-200 dark:border-white/10 text-slate-400">
                   Belum ada catatan hasil laboratorium. Masukkan hasil tes darah di atas.
                 </div>
               ) : (
@@ -418,7 +418,7 @@ export const LabResultsModal: React.FC<LabResultsModalProps> = ({ isOpen, onClos
                     return (
                       <div
                         key={item.id}
-                        className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-3"
+                        className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-3"
                       >
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">

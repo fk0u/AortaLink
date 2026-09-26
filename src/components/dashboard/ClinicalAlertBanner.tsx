@@ -39,7 +39,7 @@ export const ClinicalAlertBanner: React.FC<ClinicalAlertBannerProps> = ({ alerts
               className={`p-4 rounded-2xl border ${bgClass} backdrop-blur-sm shadow-sm transition-all`}
             >
               <div className="flex items-start gap-3.5">
-                <div className={`p-2 rounded-xl bg-white/60 dark:bg-slate-900/60 shadow-sm ${iconColor} shrink-0 mt-0.5`}>
+                <div className={`p-2 rounded-xl bg-white/60 dark:bg-[#1c1c1e]/60 shadow-sm ${iconColor} shrink-0 mt-0.5`}>
                   {isCritical ? (
                     <AlertOctagon className="w-5 h-5 animate-pulse" />
                   ) : isWarning ? (
@@ -54,7 +54,7 @@ export const ClinicalAlertBanner: React.FC<ClinicalAlertBannerProps> = ({ alerts
                     <h4 className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
                       <span>{alert.title}</span>
                       {alert.valueString && (
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-white/70 dark:bg-slate-900/70 border border-current">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-white/70 dark:bg-[#1c1c1e]/70 border border-current">
                           {alert.valueString}
                         </span>
                       )}

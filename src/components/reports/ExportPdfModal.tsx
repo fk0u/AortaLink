@@ -110,10 +110,10 @@ export const ExportPdfModal: React.FC = () => {
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[92vh] flex flex-col"
+          className="bg-white dark:bg-[#1c1c1e] rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden my-auto max-h-[92vh] flex flex-col"
         >
           {/* Header */}
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 shrink-0">
+          <div className="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/10 shrink-0">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
                 <FileText className="w-5 h-5" />
@@ -159,7 +159,7 @@ export const ExportPdfModal: React.FC = () => {
                     className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
                       isSelected
                         ? 'bg-teal-50/90 dark:bg-teal-950/50 border-teal-500 ring-2 ring-teal-500/20 shadow-md'
-                        : 'bg-slate-50/70 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                        : 'bg-slate-50/70 dark:bg-white/5 border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-slate-700'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -197,7 +197,7 @@ export const ExportPdfModal: React.FC = () => {
             </div>
 
             {/* Complete Content Inclusions Guarantee */}
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-1.5">
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/80 dark:border-white/10 space-y-1.5">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
                 Isi Lengkap Setiap Dokumen PDF:
               </span>
@@ -238,7 +238,7 @@ export const ExportPdfModal: React.FC = () => {
           </div>
 
           {/* Actions Footer */}
-          <div className="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 shrink-0">
+          <div className="p-5 border-t border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-[#1c1c1e] shrink-0">
             <button
               onClick={handleExportPDF}
               disabled={isGenerating || readings.length === 0}

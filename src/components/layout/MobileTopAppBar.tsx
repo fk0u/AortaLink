@@ -1,34 +1,50 @@
 import React from 'react';
 import { CustomProfileSelector } from '../profiles/CustomProfileSelector';
-import { Heart, Volume2, MoreVertical, ShieldAlert } from '../icons/AppIcons';
+import { Heart, Volume2, MoreVertical, ShieldAlert, Plus } from '../icons/AppIcons';
 import { playClickSound } from '../../utils/audio-fx';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useAppStore } from '../../store/useAppStore';
 import { speakTextIndonesian } from '../../utils/speech-reader';
 import { classifyBP } from '../../utils/bp-classifier';
 import { useReadings } from '../../hooks/useReadings';
 import { useProfiles } from '../../hooks/useProfiles';
 
-import { timeService } from '../../services/time/time-service';
-
 interface MobileTopAppBarProps {
   onOpenSOS?: () => void;
 }
 
+const SCREEN_TITLES: Record<string, string> = {
+  '/dashboard': 'Ringkasan',
+  '/history': 'Jurnal',
+  '/reports': 'Laporan',
+  '/reminders': 'Terapi',
+  '/profile': 'Profil',
+  '/settings': 'Pengaturan'
+};
+
+/**
+ * iOS-style nav bar: large title that collapses into a centered inline title
+ * on scroll (translucent material + hairline separator), with the primary
+ * "+" action on the trailing edge — the Apple Health app pattern.
+ */
 export const MobileTopAppBar: React.FC<MobileTopAppBarProps> = ({ onOpenSOS }) => {
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const openReadingModal = useAppStore((state) => state.openReadingModal);
   const openMobileToolsSheet = useAppStore((state) => state.openMobileToolsSheet);
   const { stats } = useReadings();
   const { activeProfile } = useProfiles();
 
-  const [currentTimeStr, setCurrentTimeStr] = React.useState(() => timeService.formatTimeWithWITA());
+  const [scrolled, setScrolled] = React.useState(false);
 
   React.useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTimeStr(timeService.formatTimeWithWITA());
-    }, 10000);
-    return () => clearInterval(timer);
+    const handleScroll = () => setScrolled(window.scrollY > 28);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const title = SCREEN_TITLES[pathname] || 'AortaLink';
 
   const handleSpeakLatestReading = () => {
     playClickSound();
@@ -44,69 +60,99 @@ export const MobileTopAppBar: React.FC<MobileTopAppBarProps> = ({ onOpenSOS }) =
   };
 
   return (
-    <header className="h-14 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-4 transition-colors flex items-center justify-between shadow-sm">
-      {/* Left: Brand & Profile Switcher */}
-      <div className="flex items-center gap-2.5 min-w-0">
-        <div 
-          onClick={() => {
-            playClickSound();
-            navigate({ to: '/dashboard' });
-          }}
-          className="w-8 h-8 rounded-xl bg-teal-600 dark:bg-teal-500 text-white flex items-center justify-center shrink-0 cursor-pointer active:scale-95 transition-transform"
+    <header className={`sticky top-0 z-40 ios-nav-blur ${scrolled ? 'ios-hairline-b' : ''}`}>
+      {/* Compact bar row */}
+      <div className="relative h-12 px-4 flex items-center justify-between">
+        {/* Centered inline title while scrolled */}
+        <span
+          aria-hidden={!scrolled}
+          className={`absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-slate-900 dark:text-white transition-opacity duration-200 ${
+            scrolled ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
         >
-          <Heart size={16} />
-        </div>
-        <div className="min-w-0">
-          <CustomProfileSelector />
-        </div>
-      </div>
-
-      {/* Right: Clean Action Buttons & Time */}
-      <div className="flex items-center gap-2 shrink-0">
-        <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">
-          {currentTimeStr}
+          {title}
         </span>
 
-        {/* Voice Reader */}
-        <button
-          type="button"
-          onClick={handleSpeakLatestReading}
-          className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center active:scale-90 transition-all hover:bg-slate-200 dark:hover:bg-slate-700"
-          title="Dengarkan Hasil Tensi Terakhir"
-          aria-label="Bacakan hasil tensi dengan suara"
-        >
-          <Volume2 size={16} />
-        </button>
+        {/* Left: Brand mark & Profile Switcher */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div
+            onClick={() => {
+              playClickSound();
+              navigate({ to: '/dashboard' });
+            }}
+            className="w-8 h-8 rounded-[10px] bg-teal-600 text-white flex items-center justify-center shrink-0 cursor-pointer active:scale-95 transition-transform"
+            role="button"
+            aria-label="Ke Ringkasan"
+          >
+            <Heart size={15} className="fill-white/90" />
+          </div>
+          <div className="min-w-0">
+            <CustomProfileSelector />
+          </div>
+        </div>
 
-        {/* Emergency SOS */}
-        {onOpenSOS && (
+        {/* Right: primary action + utilities */}
+        <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
             onClick={() => {
               playClickSound();
-              onOpenSOS();
+              openReadingModal();
             }}
-            className="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center active:scale-90 transition-all hover:bg-rose-200 dark:hover:bg-rose-900"
-            title="Kirim SOS Darurat"
-            aria-label="Kirim notifikasi darurat SOS"
+            className="w-9 h-9 rounded-full bg-teal-600 text-white flex items-center justify-center active:scale-90 transition-transform shadow-sm mr-0.5"
+            title="Catat Tekanan Darah"
+            aria-label="Catat tensi darah baru"
           >
-            <ShieldAlert size={16} />
+            <Plus size={20} strokeWidth={2.6} />
           </button>
-        )}
 
-        {/* Tools & Menu Drawer Button */}
-        <button
-          type="button"
-          onClick={() => {
-            playClickSound();
-            openMobileToolsSheet();
-          }}
-          className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center active:scale-90 transition-all hover:bg-slate-200 dark:hover:bg-slate-700"
-          title="Buka Menu Alat & Pengaturan"
-          aria-label="Buka menu alat"
-        >
-          <MoreVertical size={16} />
-        </button>
+          <button
+            type="button"
+            onClick={handleSpeakLatestReading}
+            className="w-9 h-9 rounded-full text-slate-500 dark:text-slate-300 flex items-center justify-center active:scale-90 transition-all hover:bg-black/5 dark:hover:bg-white/10"
+            title="Dengarkan Hasil Tensi Terakhir"
+            aria-label="Bacakan hasil tensi dengan suara"
+          >
+            <Volume2 size={19} />
+          </button>
+
+          {onOpenSOS && (
+            <button
+              type="button"
+              onClick={() => {
+                playClickSound();
+                onOpenSOS();
+              }}
+              className="w-9 h-9 rounded-full text-rose-500 flex items-center justify-center active:scale-90 transition-all hover:bg-rose-500/10"
+              title="Kirim SOS Darurat"
+              aria-label="Kirim notifikasi darurat SOS"
+            >
+              <ShieldAlert size={19} />
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              playClickSound();
+              openMobileToolsSheet();
+            }}
+            className="w-9 h-9 rounded-full text-slate-500 dark:text-slate-300 flex items-center justify-center active:scale-90 transition-all hover:bg-black/5 dark:hover:bg-white/10"
+            title="Buka Menu Alat & Pengaturan"
+            aria-label="Buka menu alat"
+          >
+            <MoreVertical size={19} />
+          </button>
+        </div>
+      </div>
+
+      {/* Large title (collapses away on scroll) */}
+      <div
+        className={`px-5 pb-1.5 overflow-hidden transition-all duration-200 ${
+          scrolled ? 'max-h-0 opacity-0' : 'max-h-12 opacity-100'
+        }`}
+      >
+        <h1 className="ios-large-title text-slate-900 dark:text-white">{title}</h1>
       </div>
     </header>
   );

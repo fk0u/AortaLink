@@ -18,10 +18,10 @@ export const KnowledgeGuideModal: React.FC<KnowledgeGuideModalProps> = ({ isOpen
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[90vh] flex flex-col"
+          className="bg-white dark:bg-[#1c1c1e] rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden my-auto max-h-[90vh] flex flex-col"
         >
           {/* Header */}
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <div className="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/10">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
                 <BookOpen className="w-5 h-5" />
@@ -52,19 +52,19 @@ export const KnowledgeGuideModal: React.FC<KnowledgeGuideModalProps> = ({ isOpen
                 2. Tata Cara Mengukur Tekanan Darah yang Akurat di Rumah
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 space-y-1">
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/60 dark:border-white/10 space-y-1">
                   <span className="font-bold text-teal-600 dark:text-teal-400">1. Istirahat 5 Menit</span>
                   <p className="text-slate-500">Duduk tenang di kursi dengan punggung tersandar dan kaki menempel di lantai. Jangan mengobrol saat diukur.</p>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 space-y-1">
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/60 dark:border-white/10 space-y-1">
                   <span className="font-bold text-teal-600 dark:text-teal-400">2. Hindari Stimulan</span>
                   <p className="text-slate-500">Jangan minum kopi/kafein, merokok, atau berolahraga berat 30 menit sebelum pengukuran.</p>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 space-y-1">
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/60 dark:border-white/10 space-y-1">
                   <span className="font-bold text-teal-600 dark:text-teal-400">3. Posisi Lengan Sejajar Jantung</span>
                   <p className="text-slate-500">Letakkan lengan di atas meja sehingga manset tensimeter berada setinggi posisi jantung Anda.</p>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 space-y-1">
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/60 dark:border-white/10 space-y-1">
                   <span className="font-bold text-teal-600 dark:text-teal-400">4. Ukur 2 Kali berturut-turut</span>
                   <p className="text-slate-500">Beri jeda 1-2 menit antar pengukuran untuk mendapatkan hasil rata-rata yang stabil.</p>
                 </div>

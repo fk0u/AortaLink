@@ -1,5 +1,7 @@
-/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 */
-/* AortaLink Material 3 / Flutter & Jetpack Compose Mobile-First Design System */
+/* AortaLink Design System — Apple HIG (iOS) mobile-first.
+   System materials, grouped inset surfaces, hairline separators, SF-first type.
+   Legacy `m3-*` / `hallmark-*` class names are kept so existing JSX re-themes
+   automatically. */
 
 @tailwind base;
 @tailwind components;
@@ -7,78 +9,81 @@
 
 @layer base {
   :root {
-    --m3-surface: #f8fafc;
-    --m3-surface-dim: #f1f5f9;
+    /* iOS system backgrounds (light) */
+    --ios-bg: #f2f2f7;              /* systemGroupedBackground */
+    --ios-card: #ffffff;            /* secondarySystemGroupedBackground */
+    --ios-elevated: #ffffff;
+    --ios-fill: rgba(120, 120, 128, 0.12);   /* quaternary fill */
+    --ios-fill-strong: rgba(120, 120, 128, 0.2);
+    --ios-hairline: rgba(60, 60, 67, 0.18);
+
+    /* Brand tint (kept from AortaLink teal, applied iOS-style) */
+    --ios-tint: #0d9488;
+    --ios-tint-dark: #2dd4bf;
+
+    /* Legacy variable aliases (values re-pointed at iOS tokens) */
+    --m3-surface: var(--ios-bg);
+    --m3-surface-dim: #e4e4e9;
     --m3-surface-bright: #ffffff;
-    --m3-surface-container-lowest: #ffffff;
-    --m3-surface-container-low: #f8fafc;
-    --m3-surface-container: #f1f5f9;
-    --m3-surface-container-high: #e2e8f0;
-    --m3-surface-container-highest: #cbd5e1;
-    --m3-on-surface: #0f172a;
-    --m3-on-surface-variant: #475569;
-    --m3-outline: #cbd5e1;
-    --m3-outline-variant: #e2e8f0;
+    --m3-surface-container-lowest: var(--ios-card);
+    --m3-surface-container-low: var(--ios-bg);
+    --m3-surface-container: var(--ios-fill);
+    --m3-surface-container-high: var(--ios-fill-strong);
+    --m3-surface-container-highest: rgba(120, 120, 128, 0.28);
+    --m3-on-surface: #111114;
+    --m3-on-surface-variant: #6b6b70;
+    --m3-outline: rgba(60, 60, 67, 0.29);
+    --m3-outline-variant: var(--ios-hairline);
+    --m3-primary: var(--ios-tint);
 
-    --m3-primary: #0d9488;
-    --m3-primary-container: #ccfbf1;
-    --m3-on-primary-container: #115e59;
-
-    --m3-secondary: #0284c7;
-    --m3-secondary-container: #e0f2fe;
-    --m3-on-secondary-container: #0369a1;
-
-    --m3-tertiary: #6366f1;
-    --m3-tertiary-container: #e0e7ff;
-    --m3-on-tertiary-container: #3730a3;
-
-    --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+      'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
   }
 
   .dark {
-    --m3-surface: #090d16;
-    --m3-surface-dim: #050810;
-    --m3-surface-bright: #1e293b;
-    --m3-surface-container-lowest: #0c1220;
-    --m3-surface-container-low: #0f172a;
-    --m3-surface-container: #131d33;
-    --m3-surface-container-high: #1e293b;
-    --m3-surface-container-highest: #334155;
-    --m3-on-surface: #f8fafc;
-    --m3-on-surface-variant: #94a3b8;
-    --m3-outline: #334155;
-    --m3-outline-variant: #1e293b;
+    /* iOS system backgrounds (dark): true black canvas, elevated cards */
+    --ios-bg: #000000;
+    --ios-card: #1c1c1e;
+    --ios-elevated: #2c2c2e;
+    --ios-fill: rgba(120, 120, 128, 0.24);
+    --ios-fill-strong: rgba(120, 120, 128, 0.32);
+    --ios-hairline: rgba(84, 84, 88, 0.65);
 
-    --m3-primary: #2dd4bf;
-    --m3-primary-container: #134e4a;
-    --m3-on-primary-container: #ccfbf1;
-
-    --m3-secondary: #38bdf8;
-    --m3-secondary-container: #0c4a6e;
-    --m3-on-secondary-container: #e0f2fe;
-
-    --m3-tertiary: #818cf8;
-    --m3-tertiary-container: #312e81;
-    --m3-on-tertiary-container: #e0e7ff;
+    --m3-surface: var(--ios-bg);
+    --m3-surface-dim: #000000;
+    --m3-surface-bright: #1c1c1e;
+    --m3-surface-container-lowest: var(--ios-card);
+    --m3-surface-container-low: var(--ios-bg);
+    --m3-surface-container: var(--ios-fill);
+    --m3-surface-container-high: var(--ios-fill-strong);
+    --m3-surface-container-highest: rgba(120, 120, 128, 0.4);
+    --m3-on-surface: #f5f5f7;
+    --m3-on-surface-variant: #98989f;
+    --m3-outline: rgba(84, 84, 88, 0.6);
+    --m3-outline-variant: var(--ios-hairline);
+    --m3-primary: var(--ios-tint-dark);
   }
 
   html {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     overflow-x: clip;
+    scroll-behavior: smooth;
   }
 
   body {
-    background-color: var(--m3-surface);
+    background-color: var(--ios-bg);
     color: var(--m3-on-surface);
     font-family: var(--font-display);
     min-height: 100vh;
     overflow-x: clip;
+    overscroll-behavior-y: none;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     user-select: none;
     -webkit-user-select: none;
+    letter-spacing: -0.01em;
   }
 
   input, textarea, [contenteditable="true"] {
@@ -86,10 +91,14 @@
     -webkit-user-select: text;
   }
 
+  /* Prevent iOS Safari zoom-on-focus: form controls must be >= 16px on mobile */
   @media (max-width: 767px) {
     body {
-      font-size: 15px;
-      line-height: 1.45;
+      font-size: 16px;
+      line-height: 1.47;
+    }
+    input, select, textarea {
+      font-size: 16px !important;
     }
   }
 }
@@ -111,23 +120,52 @@
 
 /* Safe Area Inset Support for Mobile Browsers & PWAs */
 .pb-safe {
-  padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 1.25rem));
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem));
 }
 .pt-safe {
   padding-top: max(0.5rem, env(safe-area-inset-top, 0.5rem));
 }
 
-/* Material 3 & Jetpack Compose / Flutter Tonal Surface Classes */
+/* ---- iOS materials ----------------------------------------------------- */
+
+/* Translucent nav-bar / tab-bar material */
+.ios-nav-blur {
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  backdrop-filter: saturate(180%) blur(24px);
+}
+.dark .ios-nav-blur {
+  background: rgba(18, 18, 20, 0.78);
+}
+
+/* Hairline separator */
+.ios-hairline-b {
+  border-bottom: 0.5px solid var(--ios-hairline);
+}
+.ios-hairline-t {
+  border-top: 0.5px solid var(--ios-hairline);
+}
+
+/* Large title (iOS nav bar collapsed state handled by JS) */
+.ios-large-title {
+  font-size: 32px;
+  line-height: 38px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* ---- Grouped inset surfaces (legacy class names re-pointed) ------------ */
+
 .m3-surface-card {
-  @apply bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 rounded-[24px] shadow-sm hover:shadow-md transition-all duration-200;
+  @apply bg-[var(--ios-card)] dark:bg-[#1c1c1e] rounded-[18px] shadow-[0_1px_2px_rgba(0,0,0,0.04)];
 }
 
 .m3-card-elevated {
-  @apply bg-gradient-to-b from-white to-slate-50/60 dark:from-slate-900 dark:to-slate-950/80 border border-slate-200/90 dark:border-slate-800/90 rounded-[28px] shadow-xl shadow-slate-950/5 dark:shadow-black/40 transition-all duration-200;
+  @apply bg-[var(--ios-card)] dark:bg-[#1c1c1e] rounded-[20px] shadow-[0_4px_16px_rgba(0,0,0,0.06)];
 }
 
 .m3-card-hero {
-  @apply relative overflow-hidden rounded-[32px] border border-slate-200/90 dark:border-slate-800/90 shadow-2xl transition-all duration-300;
+  @apply relative overflow-hidden rounded-[22px] bg-[var(--ios-card)] dark:bg-[#1c1c1e] shadow-[0_2px_10px_rgba(0,0,0,0.06)];
 }
 
 /* Dynamic AHA Blood Pressure Glow Effects */
@@ -147,35 +185,35 @@
   box-shadow: 0 10px 35px -8px rgba(190, 18, 60, 0.45);
 }
 
-/* Material 3 Action Chip */
+/* iOS-style chip */
 .m3-chip {
-  @apply inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition-all duration-150 active:scale-95 cursor-pointer border select-none;
+  @apply inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-semibold transition-all duration-150 active:scale-95 cursor-pointer select-none bg-[var(--ios-fill)] dark:bg-white/10;
 }
 
-/* Material 3 Segmented Button */
+/* iOS segmented control */
 .m3-segmented-container {
-  @apply flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80;
+  @apply flex items-center p-[2px] rounded-[10px] bg-[var(--ios-fill)] dark:bg-white/10;
 }
 .m3-segmented-item {
-  @apply flex-1 py-1.5 px-3 rounded-xl text-xs font-bold text-center transition-all duration-200 cursor-pointer select-none active:scale-95;
+  @apply flex-1 py-[7px] px-3 rounded-[8px] text-[13px] font-semibold text-center transition-all duration-200 cursor-pointer select-none text-slate-600 dark:text-slate-300 active:scale-[0.98];
 }
 .m3-segmented-item-active {
-  @apply bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-md shadow-slate-950/5;
+  @apply bg-white dark:bg-[#636366] text-slate-900 dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.12)];
 }
 
-/* Material 3 Floating Action Button (FAB) */
+/* Circular accent action (replaces the Material FAB) */
 .m3-fab {
-  @apply w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-500 to-sky-500 text-white flex items-center justify-center shadow-xl shadow-teal-500/35 active:scale-90 transition-all duration-150 focus:outline-none focus:ring-4 focus:ring-teal-500/30;
+  @apply w-11 h-11 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-md active:scale-90 transition-transform duration-150 focus:outline-none focus:ring-4 focus:ring-teal-500/25;
 }
 
-/* Material 3 Tonal Button */
+/* iOS filled button */
 .m3-tonal-button {
-  @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl font-extrabold text-xs transition-all duration-150 active:scale-95 cursor-pointer select-none disabled:opacity-50 disabled:pointer-events-none;
+  @apply inline-flex items-center justify-center gap-2 px-4 min-h-[44px] rounded-[14px] font-semibold text-[15px] transition-all duration-150 active:scale-[0.97] cursor-pointer select-none disabled:opacity-50 disabled:pointer-events-none;
 }
 
-/* Material 3 Bottom Sheet Grabber */
+/* iOS sheet grabber */
 .m3-bottom-sheet-grabber {
-  @apply w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600 mx-auto my-2.5 shrink-0;
+  @apply w-9 h-[5px] rounded-full bg-black/15 dark:bg-white/25 mx-auto my-2 shrink-0;
 }
 
 /* Legacy Utility Compat */
@@ -183,13 +221,18 @@
   @apply m3-surface-card;
 }
 .hallmark-button-primary {
-  @apply bg-gradient-to-r from-teal-600 to-sky-600 hover:from-teal-500 hover:to-sky-500 text-white font-bold rounded-2xl shadow-lg shadow-teal-500/25 active:scale-[0.98] transition-all duration-200 focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+  @apply inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-semibold text-[15px] rounded-[14px] min-h-[44px] transition-all duration-150 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
 }
 .hallmark-button-secondary {
-  @apply bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded-2xl active:scale-[0.98] transition-all duration-200 focus-visible:ring-2 focus-visible:ring-slate-400;
+  @apply inline-flex items-center justify-center gap-2 bg-[var(--ios-fill)] hover:bg-[var(--ios-fill-strong)] dark:bg-white/10 text-slate-800 dark:text-slate-200 font-semibold text-[15px] rounded-[14px] min-h-[44px] active:scale-[0.97] transition-all duration-150 focus-visible:ring-2 focus-visible:ring-slate-400;
 }
 .hallmark-badge {
-  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold border tracking-tight transition-all duration-300;
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border tracking-tight transition-all duration-300;
+}
+
+/* iOS switch (tinted green like system toggles) */
+.ios-switch-on {
+  background-color: #34c759 !important;
 }
 
 /* Print Friendly Styles */

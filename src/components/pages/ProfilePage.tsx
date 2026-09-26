@@ -68,7 +68,7 @@ export const ProfilePage: React.FC = () => {
               playClickSound();
               navigate({ to: '/settings' });
             }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-extrabold text-xs text-slate-700 dark:text-slate-200 shadow-sm active:scale-95 transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/10 font-extrabold text-xs text-slate-700 dark:text-slate-200 shadow-sm active:scale-95 transition-all"
           >
             <Settings size={16} />
             Pengaturan
@@ -99,21 +99,21 @@ export const ProfilePage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-2xl p-4 bg-white/80 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800">
+            <div className="rounded-2xl p-4 bg-white/80 dark:bg-[#1c1c1e]/70 border border-slate-200/80 dark:border-white/10">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Target Tensi</p>
               <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1 flex items-center gap-2">
                 <Target size={16} className="text-teal-500" />
                 {activeTarget}
               </p>
             </div>
-            <div className="rounded-2xl p-4 bg-white/80 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800">
+            <div className="rounded-2xl p-4 bg-white/80 dark:bg-[#1c1c1e]/70 border border-slate-200/80 dark:border-white/10">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Catatan</p>
               <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1 flex items-center gap-2">
                 <HeartPulse size={16} className="text-rose-500" />
                 {stats.totalReadings}
               </p>
             </div>
-            <div className="rounded-2xl p-4 bg-white/80 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800">
+            <div className="rounded-2xl p-4 bg-white/80 dark:bg-[#1c1c1e]/70 border border-slate-200/80 dark:border-white/10">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Kepatuhan Target</p>
               <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
                 {stats.targetComplianceRate}%
@@ -135,7 +135,7 @@ export const ProfilePage: React.FC = () => {
                   className={`inline-flex items-center gap-2 px-3 py-2 rounded-2xl border text-sm font-bold transition-all active:scale-95 ${
                     isActive
                       ? 'bg-teal-500 text-white border-teal-500 shadow-md shadow-teal-500/20'
-                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800'
+                      : 'bg-white dark:bg-[#1c1c1e] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800'
                   }`}
                 >
                   <span className="w-5 h-5 rounded-full bg-teal-500/20 text-teal-700 dark:text-teal-300 text-[10px] flex items-center justify-center font-black">

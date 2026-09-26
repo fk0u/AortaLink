@@ -67,7 +67,7 @@ export const BPRestTimerModal: React.FC<BPRestTimerModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[32px] max-w-md w-full shadow-2xl border border-slate-200/80 dark:border-slate-800 p-6 overflow-hidden my-auto text-center space-y-6"
+          className="bg-white/90 dark:bg-[#1c1c1e]/90 backdrop-blur-2xl rounded-[32px] max-w-md w-full shadow-2xl border border-slate-200/80 dark:border-white/10 p-6 overflow-hidden my-auto text-center space-y-6"
         >
           {/* Header */}
           <div className="flex items-center justify-between">

@@ -69,7 +69,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ readings }) => {
   return (
     <div className="hallmark-card p-4 md:p-5 space-y-4 md:space-y-5">
       {/* Calendar Header & Month Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-white/10">
         <div className="flex items-center gap-3 min-w-0">
           <div className="p-2 rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 shrink-0">
             <CalendarIcon className="w-5 h-5" />
@@ -93,14 +93,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ readings }) => {
               setCurrentMonth(new Date());
               setSelectedDate(new Date());
             }}
-            className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-xs font-bold text-slate-700 dark:text-slate-300 transition-all active:scale-95 min-h-11"
+            className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 text-xs font-bold text-slate-700 dark:text-slate-300 transition-all active:scale-95 min-h-11"
           >
             Hari Ini
           </button>
           <button
             type="button"
             onClick={handlePrevMonth}
-            className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 active:scale-95 transition-all flex items-center justify-center"
+            className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 active:scale-95 transition-all flex items-center justify-center"
             title="Bulan Sebelumnya"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -108,7 +108,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ readings }) => {
           <button
             type="button"
             onClick={handleNextMonth}
-            className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 active:scale-95 transition-all flex items-center justify-center"
+            className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 active:scale-95 transition-all flex items-center justify-center"
             title="Bulan Berikutnya"
           >
             <ChevronRight className="w-4 h-4" />
@@ -161,7 +161,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ readings }) => {
                   ? 'bg-teal-50 dark:bg-teal-950/60 border-teal-500 shadow-md ring-2 ring-teal-500/20'
                   : isTodayDay
                   ? 'bg-sky-50/80 dark:bg-sky-950/40 border-sky-300 dark:border-sky-800'
-                  : 'bg-slate-50/80 dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  : 'bg-slate-50/80 dark:bg-white/5 border-slate-200/60 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
               <div className="w-full flex items-center justify-between">
@@ -200,7 +200,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ readings }) => {
       </div>
 
       {/* Selected Date Detail Drawer */}
-      <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+      <div className="pt-4 border-t border-slate-100 dark:border-white/10 space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Riwayat Tanggal {format(selectedDate, 'dd MMMM yyyy', { locale: idLocale })}
@@ -217,7 +217,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ readings }) => {
               return (
                 <div
                   key={r.id}
-                  className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between"
+                  className="p-3 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/80 dark:border-white/10 flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${category.colorClass}`}></div>
@@ -240,7 +240,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ readings }) => {
             })}
           </div>
         ) : (
-          <div className="p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-800/30 text-center text-xs text-slate-400 font-semibold">
+          <div className="p-4 rounded-2xl bg-slate-50/50 dark:bg-white/5 text-center text-xs text-slate-400 font-semibold">
             Tidak ada pengukuran tensi yang dicatat pada tanggal ini.
           </div>
         )}

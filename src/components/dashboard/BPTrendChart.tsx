@@ -50,8 +50,8 @@ export const BPTrendChart: React.FC<BPTrendChartProps> = ({ readings }) => {
       const cat = classifyBP(reading.systolic, reading.diastolic);
 
       return (
-        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 text-xs space-y-1.5 min-w-[170px]">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+        <div className="bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200 dark:border-white/10 text-xs space-y-1.5 min-w-[170px]">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-1">
             <span className="font-bold text-slate-800 dark:text-slate-200">
               {data.dateStr}, {data.timeStr}
             </span>
@@ -76,7 +76,7 @@ export const BPTrendChart: React.FC<BPTrendChartProps> = ({ readings }) => {
           </div>
 
           {reading.notes && (
-            <p className="text-[10px] text-slate-500 italic border-t border-slate-100 dark:border-slate-800 pt-1">
+            <p className="text-[10px] text-slate-500 italic border-t border-slate-100 dark:border-white/10 pt-1">
               &ldquo;{reading.notes}&rdquo;
             </p>
           )}
@@ -130,7 +130,7 @@ export const BPTrendChart: React.FC<BPTrendChartProps> = ({ readings }) => {
             </button>
 
             {/* Date Range Chips */}
-            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-[11px]">
+            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-white/10 rounded-xl text-[11px]">
               {(['7days', '30days', '90days', 'all'] as DateFilterRange[]).map((range) => {
                 const labels: Record<string, string> = {
                   '7days': '7H',
@@ -222,7 +222,7 @@ export const BPTrendChart: React.FC<BPTrendChartProps> = ({ readings }) => {
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="h-48 flex flex-col items-center justify-center text-center p-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl space-y-1.5">
+          <div className="h-48 flex flex-col items-center justify-center text-center p-4 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl space-y-1.5">
             <Calendar size={28} className="text-slate-300 dark:text-slate-600" />
             <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
               Belum Ada Data Tren Tekanan Darah
@@ -234,7 +234,7 @@ export const BPTrendChart: React.FC<BPTrendChartProps> = ({ readings }) => {
         )}
 
         {/* Legend */}
-        <div className="flex items-center justify-center gap-4 pt-1.5 border-t border-slate-100 dark:border-slate-800/80 text-[11px] font-bold">
+        <div className="flex items-center justify-center gap-4 pt-1.5 border-t border-slate-100 dark:border-white/10 text-[11px] font-bold">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
             <span className="text-slate-700 dark:text-slate-300">Sistolik (Target &le; 120)</span>

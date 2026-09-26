@@ -102,10 +102,10 @@ export const JsonImportExportModal: React.FC<JsonImportExportModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl max-w-xl w-full shadow-2xl overflow-hidden my-auto flex flex-col text-slate-900 dark:text-slate-100 max-h-[90vh]"
+          className="bg-white dark:bg-[#1c1c1e] border border-slate-200/90 dark:border-white/10 rounded-3xl max-w-xl w-full shadow-2xl overflow-hidden my-auto flex flex-col text-slate-900 dark:text-slate-100 max-h-[90vh]"
         >
           {/* Header */}
-          <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 shrink-0">
+          <div className="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/5 shrink-0">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-2xl bg-teal-500 text-white shadow-md shadow-teal-500/20">
                 <FileJson className="w-5 h-5" />
@@ -132,7 +132,7 @@ export const JsonImportExportModal: React.FC<JsonImportExportModalProps> = ({
           <div className="p-6 space-y-6 overflow-y-auto">
             
             {/* Export Section */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/80 dark:border-white/10 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-black text-slate-900 dark:text-slate-100">
                   <Download className="w-4 h-4 text-teal-600 dark:text-teal-400" />
@@ -169,7 +169,7 @@ export const JsonImportExportModal: React.FC<JsonImportExportModalProps> = ({
                 className={`p-5 rounded-2xl border-2 border-dashed text-center transition-all cursor-pointer ${
                   dragActive
                     ? 'border-teal-500 bg-teal-50/50 dark:bg-teal-950/20'
-                    : 'border-slate-200 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30 hover:border-teal-400'
+                    : 'border-slate-200 dark:border-white/10 bg-slate-50/30 dark:bg-white/5 hover:border-teal-400'
                 }`}
               >
                 <input
@@ -204,7 +204,7 @@ export const JsonImportExportModal: React.FC<JsonImportExportModalProps> = ({
                 value={pastedJsonText}
                 onChange={(e) => setPastedJsonText(e.target.value)}
                 placeholder='Tempelkan isi JSON v1.1 / v2.0 (contoh: { "version": "1.1.0", "profiles": [...], "readings": [...] })'
-                className="w-full p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[11px] leading-relaxed text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full p-3 rounded-2xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 font-mono text-[11px] leading-relaxed text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
               <button
                 type="button"
@@ -220,7 +220,7 @@ export const JsonImportExportModal: React.FC<JsonImportExportModalProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="p-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 text-center text-[10px] text-slate-400 font-medium shrink-0">
+          <div className="p-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-white/10 text-center text-[10px] text-slate-400 font-medium shrink-0">
             Kompatibel dengan Format v1.0.0, v1.1.0, v2.0.0, &amp; HL7 FHIR R4
           </div>
         </motion.div>

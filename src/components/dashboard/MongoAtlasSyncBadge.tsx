@@ -8,8 +8,8 @@ import { useAuthStore } from '../../store/useAuthStore';
 type SyncUiState = 'local' | 'offline' | 'syncing' | 'synced' | 'error';
 
 const BADGE_STYLES: Record<SyncUiState, string> = {
-  local: 'bg-slate-100/80 dark:bg-slate-800/60 border-slate-200/70 dark:border-slate-700 text-slate-600 dark:text-slate-300',
-  offline: 'bg-slate-100/80 dark:bg-slate-800/60 border-slate-200/70 dark:border-slate-700 text-slate-600 dark:text-slate-300',
+  local: 'bg-slate-100/80 dark:bg-white/10 border-slate-200/70 dark:border-white/10 text-slate-600 dark:text-slate-300',
+  offline: 'bg-slate-100/80 dark:bg-white/10 border-slate-200/70 dark:border-white/10 text-slate-600 dark:text-slate-300',
   syncing: 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-200/70 dark:border-amber-900/50 text-amber-900 dark:text-amber-200',
   synced: 'bg-teal-50/70 dark:bg-teal-950/30 border-teal-200/70 dark:border-teal-900/40 text-teal-900 dark:text-teal-200',
   error: 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-200/70 dark:border-rose-900/50 text-rose-900 dark:text-rose-200'

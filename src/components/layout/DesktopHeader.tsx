@@ -62,7 +62,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({ onOpenSOS }) => {
   ];
 
   return (
-    <header className="hidden md:block sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-b border-slate-200/80 dark:border-slate-800/80 px-6 py-3 transition-colors">
+    <header className="hidden md:block sticky top-0 z-40 bg-white/95 ios-nav-blur ios-hairline-b backdrop-blur-2xl border-b border-slate-200/80 dark:border-white/10 px-6 py-3 transition-colors">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-6">
         
         {/* Left: App Brand Logo */}
@@ -84,7 +84,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({ onOpenSOS }) => {
         </div>
 
         {/* Center: Desktop Navigation Tabs */}
-        <nav className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+        <nav className="flex items-center gap-1 bg-slate-100 dark:bg-white/10 p-1.5 rounded-xl border border-slate-200/80 dark:border-white/10">
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
             const Icon = item.icon;
@@ -95,7 +95,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({ onOpenSOS }) => {
                 onClick={() => handleTabClick(item.id)}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
                   isActive
-                    ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-sm'
+                    ? 'bg-white dark:bg-[#1c1c1e] text-teal-600 dark:text-teal-400 shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
@@ -109,7 +109,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({ onOpenSOS }) => {
         {/* Right: Actions, Theme Switcher & Custom Profile Selector */}
         <div className="flex items-center gap-2.5 shrink-0">
           {/* Live Timezone Clock */}
-          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300 select-none">
+          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200/80 dark:border-white/10 text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300 select-none">
             <Clock size={13} className="text-teal-600 dark:text-teal-400" />
             <span>{currentTimeStr}</span>
           </div>
@@ -134,7 +134,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({ onOpenSOS }) => {
           <button
             type="button"
             onClick={toggleTheme}
-            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 transition-all active:scale-95"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200 transition-all active:scale-95"
             title={theme === 'dark' ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
           >
             {theme === 'dark' ? <SunMedium size={16} className="text-amber-400" /> : <MoonStar size={16} className="text-slate-600" />}
@@ -146,7 +146,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({ onOpenSOS }) => {
               playClickSound();
               navigate({ to: '/profile' });
             }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 font-extrabold text-xs transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200 font-extrabold text-xs transition-all active:scale-95"
           >
             <UserRound size={15} />
             <span>Profil</span>
@@ -158,7 +158,7 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({ onOpenSOS }) => {
               playClickSound();
               navigate({ to: '/settings' });
             }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 font-extrabold text-xs transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200 font-extrabold text-xs transition-all active:scale-95"
           >
             <Settings size={15} />
             <span>Pengaturan</span>

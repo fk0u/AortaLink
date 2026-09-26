@@ -51,7 +51,7 @@ export const CustomProfileSelector: React.FC = () => {
           playClickSound();
           setIsOpen(!isOpen);
         }}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700/80 transition-all active:scale-95 shadow-sm"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-white/10 transition-all active:scale-95 shadow-sm"
       >
         <div className="w-6 h-6 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold text-[10px]">
           {getProfileInitial(activeProfile?.name)}
@@ -72,9 +72,9 @@ export const CustomProfileSelector: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-2 z-50 overflow-hidden"
+            className="absolute left-0 mt-2 w-72 bg-white dark:bg-[#1c1c1e] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 p-2 z-50 overflow-hidden"
           >
-            <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="px-3 py-2 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                 Pilih Profil Pasien
               </span>
@@ -119,7 +119,7 @@ export const CustomProfileSelector: React.FC = () => {
             </div>
 
             {/* Bottom Add Profile Action */}
-            <div className="pt-1 mt-1 border-t border-slate-100 dark:border-slate-800">
+            <div className="pt-1 mt-1 border-t border-slate-100 dark:border-white/10">
               <button
                 type="button"
                 onClick={() => {
@@ -127,7 +127,7 @@ export const CustomProfileSelector: React.FC = () => {
                   setIsOpen(false);
                   openProfileModal();
                 }}
-                className="w-full flex items-center justify-center gap-1.5 p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors active:scale-95"
+                className="w-full flex items-center justify-center gap-1.5 p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#2c2c2e] dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors active:scale-95"
               >
                 <Plus size={14} className="text-teal-500" />
                 Kelola &amp; Tambah Profil

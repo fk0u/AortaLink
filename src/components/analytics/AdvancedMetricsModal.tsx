@@ -26,10 +26,10 @@ export const AdvancedMetricsModal: React.FC<AdvancedMetricsModalProps> = ({ isOp
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[90vh] flex flex-col"
+          className="bg-white dark:bg-[#1c1c1e] rounded-3xl max-w-xl w-full shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden my-auto max-h-[90vh] flex flex-col"
         >
           {/* Header */}
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <div className="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/10">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-gradient-to-tr from-teal-500 to-sky-500 text-white">
                 <Sparkles className="w-5 h-5" />
@@ -88,19 +88,19 @@ export const AdvancedMetricsModal: React.FC<AdvancedMetricsModalProps> = ({ isOp
             </div>
 
             {/* 2. Blood Pressure Variabilty (SD & CV%) */}
-            <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-white/10">
               <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Heart className="w-4 h-4 text-rose-500" />
                 2. Variabilitas Tekanan Darah (SD &amp; CV%)
               </h4>
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
                   <span className="text-slate-400 block font-semibold">Deviasi Standar (SD):</span>
                   <span className="text-lg font-extrabold text-slate-900 dark:text-slate-100">
                     Sistolik ±{analytics.systolicSD} mmHg
                   </span>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
                   <span className="text-slate-400 block font-semibold">Koefisien Variasi (CV%):</span>
                   <span className="text-lg font-extrabold text-slate-900 dark:text-slate-100">
                     {analytics.systolicCV}%

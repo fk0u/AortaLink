@@ -97,7 +97,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           initial={{ opacity: 0, y: 30, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 30, scale: 0.96 }}
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-t-[32px] sm:rounded-[32px] max-w-md w-full shadow-2xl overflow-hidden"
+          className="bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/10 rounded-t-[32px] sm:rounded-[32px] max-w-md w-full shadow-2xl overflow-hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Panduan memulai AortaLink"
@@ -127,7 +127,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             </div>
 
             {/* Step content */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-2.5">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10 space-y-2.5">
               <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
                 <div className="w-8 h-8 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0">
                   {step.icon}
@@ -157,7 +157,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="px-3 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-extrabold text-sm active:scale-95 transition-all flex items-center gap-1"
+                  className="px-3 py-3 rounded-2xl bg-slate-100 dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-300 font-extrabold text-sm active:scale-95 transition-all flex items-center gap-1"
                   aria-label="Lewati langkah ini"
                 >
                   Lewati <ArrowRight size={14} />

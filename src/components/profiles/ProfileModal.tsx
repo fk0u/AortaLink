@@ -184,10 +184,10 @@ export const ProfileModal: React.FC = () => {
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[90vh] flex flex-col"
+          className="bg-white dark:bg-[#1c1c1e] rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden my-auto max-h-[90vh] flex flex-col"
         >
           {/* Header */}
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <div className="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/10">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
                 <User size={20} />
@@ -240,7 +240,7 @@ export const ProfileModal: React.FC = () => {
                         className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${
                           isActive
                             ? 'bg-teal-50/80 dark:bg-teal-950/40 border-teal-500/40 shadow-sm'
-                            : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800'
+                            : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-slate-800'
                         }`}
                       >
                         <div
@@ -299,7 +299,7 @@ export const ProfileModal: React.FC = () => {
             ) : (
               /* Add / Edit Profile Form */
               <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-2">
                   <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     {editingProfile ? `Edit Profil: ${editingProfile.name}` : 'Tambah Profil Anggota Keluarga'}
                   </h4>
@@ -334,7 +334,7 @@ export const ProfileModal: React.FC = () => {
                           className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-90 shrink-0 ${
                             avatar === item.id
                               ? 'bg-teal-500 text-white shadow-md shadow-teal-500/25'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                              : 'bg-slate-100 dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-300'
                           }`}
                         >
                           <Icon size={16} />
@@ -355,7 +355,7 @@ export const ProfileModal: React.FC = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Contoh: Ibu Maryam / Ayah Hendra"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
                     required
                   />
                 </div>
@@ -372,7 +372,7 @@ export const ProfileModal: React.FC = () => {
                         playClickSound();
                         setRelationship(e.target.value as any);
                       }}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none"
                     >
                       <option value="self">Saya Sendiri</option>
                       <option value="parent">Orang Tua (Ibu / Ayah)</option>
@@ -393,13 +393,13 @@ export const ProfileModal: React.FC = () => {
                       placeholder="Contoh: 65"
                       min={1}
                       max={120}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 {/* Target Blood Pressure */}
-                <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+                <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-white/5 p-3 rounded-2xl border border-slate-200/80 dark:border-white/10">
                   <div>
                     <label className="text-[11px] font-bold text-sky-600 dark:text-sky-400 block mb-1">
                       Target Sistolik (&lt; mmHg)
@@ -434,7 +434,7 @@ export const ProfileModal: React.FC = () => {
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Contoh: Memiliki riwayat alergi obat tertentu, rutin minum Amlodipine..."
                     rows={2}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none resize-none"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-slate-200 focus:outline-none resize-none"
                   />
                 </div>
 

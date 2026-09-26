@@ -25,7 +25,7 @@ export const ReadingCard: React.FC<ReadingCardProps> = ({ reading, onEdit, onDel
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.18 }}
-      className="group relative overflow-hidden rounded-[22px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm hover:shadow-md transition-all duration-200"
+      className="group relative overflow-hidden rounded-[22px] bg-white dark:bg-[#1c1c1e] border border-slate-200/80 dark:border-white/10 p-4 shadow-sm hover:shadow-md transition-all duration-200"
     >
       {/* Category Indicator Accent Strip */}
       <div className={`absolute top-0 left-0 bottom-0 w-1.5 ${category.colorClass}`} />
@@ -104,7 +104,7 @@ export const ReadingCard: React.FC<ReadingCardProps> = ({ reading, onEdit, onDel
           )}
 
           {reading.position && (
-            <span className="capitalize px-2 py-0.5 rounded-md font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+            <span className="capitalize px-2 py-0.5 rounded-md font-semibold bg-slate-100 dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-400">
               {reading.position} • {reading.arm || 'kiri'}
             </span>
           )}
@@ -113,7 +113,7 @@ export const ReadingCard: React.FC<ReadingCardProps> = ({ reading, onEdit, onDel
             MAP: {mapValue} mmHg
           </span>
 
-          <span className="px-2 py-0.5 rounded-md font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+          <span className="px-2 py-0.5 rounded-md font-semibold bg-slate-100 dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-400">
             PP: {pulsePressure} mmHg
           </span>
         </div>
@@ -124,7 +124,7 @@ export const ReadingCard: React.FC<ReadingCardProps> = ({ reading, onEdit, onDel
             {reading.tags.map((t) => (
               <span
                 key={t}
-                className="inline-flex items-center gap-1 text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md"
+                className="inline-flex items-center gap-1 text-[10px] font-semibold bg-slate-100 dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md"
               >
                 <Tag size={10} className="text-teal-500" />
                 {t}
@@ -135,7 +135,7 @@ export const ReadingCard: React.FC<ReadingCardProps> = ({ reading, onEdit, onDel
 
         {/* Clinical Note / Doctor Notes */}
         {reading.notes && (
-          <p className="text-xs text-slate-600 dark:text-slate-300 italic pt-1 border-t border-slate-100 dark:border-slate-800/70">
+          <p className="text-xs text-slate-600 dark:text-slate-300 italic pt-1 border-t border-slate-100 dark:border-white/10">
             &ldquo;{reading.notes}&rdquo;
           </p>
         )}

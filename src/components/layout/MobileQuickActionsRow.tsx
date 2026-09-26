@@ -1,21 +1,13 @@
 import React from 'react';
-import { 
-  Plus, 
-  Timer, 
-  Pill, 
-  FlaskConical, 
-  Moon, 
-  HeartPulse, 
-  FileText, 
-  Stethoscope, 
+import {
+  Pill,
+  FlaskConical,
+  Moon,
+  HeartPulse,
   Utensils,
-  BrainCircuit,
-  ArrowRight,
-  AlertTriangle,
-  FileCode
+  AlertTriangle
 } from '../icons/AppIcons';
 import { playClickSound } from '../../utils/audio-fx';
-import { useAppStore } from '../../store/useAppStore';
 
 interface MobileQuickActionsRowProps {
   onOpenReading: () => void;
@@ -31,137 +23,92 @@ interface MobileQuickActionsRowProps {
   onOpenFhir: () => void;
 }
 
-
+/**
+ * iOS Health "Favorites" pattern: a 2-column grid of roomy, tappable tiles
+ * (one thumb-reachable action per tile) plus a compact row of advanced tools.
+ * The primary "record reading" action lives in the nav bar "+", not here.
+ */
 export const MobileQuickActionsRow: React.FC<MobileQuickActionsRowProps> = ({
-  onOpenReading,
-  onOpenRestTimer,
   onOpenMedication,
   onOpenLab,
   onOpenHabits,
   onOpenSodium,
   onOpenAscvd,
   onOpenSOS,
+  onOpenRestTimer,
   onOpenExportPdf,
   onOpenClinicalNotes,
   onOpenFhir,
 }) => {
-  const openAiModal = useAppStore((state) => state.openAiModal);
-
-  const actions = [
-    {
-      id: 'quick-reading',
-      label: 'Catat Tensi',
-      sublabel: 'Input Real-time',
-      icon: Plus,
-      color: 'bg-teal-600 dark:bg-teal-500 text-white',
-      onClick: onOpenReading,
-    },
-    {
-      id: 'ai-consult',
-      label: 'Analisis ML',
-      sublabel: 'Mesin Lokal',
-      icon: BrainCircuit,
-      color: 'bg-teal-800 dark:bg-teal-700 text-white',
-      onClick: () => openAiModal(),
-    },
-    {
-      id: 'rest-timer',
-      label: 'Rest 5 Menit',
-      sublabel: 'Protokol AHA',
-      icon: Timer,
-      color: 'bg-slate-800 dark:bg-slate-700 text-white',
-      onClick: onOpenRestTimer,
-    },
+  const favorites = [
     {
       id: 'medication',
       label: 'Jadwal Obat',
-      sublabel: 'CCB & ARB',
+      sublabel: 'Kepatuhan harian',
       icon: Pill,
-      color: 'bg-purple-600 dark:bg-purple-500 text-white',
-      onClick: onOpenMedication,
+      tint: 'bg-purple-500',
+      onClick: onOpenMedication
     },
     {
       id: 'lab',
       label: 'Lab Ginjal',
-      sublabel: 'Uric & eGFR',
+      sublabel: 'Asam urat & eGFR',
       icon: FlaskConical,
-      color: 'bg-indigo-600 dark:bg-indigo-500 text-white',
-      onClick: onOpenLab,
+      tint: 'bg-teal-500',
+      onClick: onOpenLab
     },
     {
       id: 'habits',
-      label: 'Gaya Hidup',
-      sublabel: 'Tidur & Olahraga',
+      label: 'Tidur & Gaya Hidup',
+      sublabel: 'Pemicu tensi',
       icon: Moon,
-      color: 'bg-blue-600 dark:bg-blue-500 text-white',
-      onClick: onOpenHabits,
+      tint: 'bg-indigo-500',
+      onClick: onOpenHabits
     },
     {
       id: 'ascvd',
       label: 'Risiko Jantung',
       sublabel: 'Kalkulator ASCVD',
       icon: HeartPulse,
-      color: 'bg-rose-600 dark:bg-rose-500 text-white',
-      onClick: onOpenAscvd,
+      tint: 'bg-rose-500',
+      onClick: onOpenAscvd
     },
     {
       id: 'sodium',
       label: 'Batas Garam',
-      sublabel: 'DASH Diet',
+      sublabel: 'Diet DASH',
       icon: Utensils,
-      color: 'bg-amber-600 dark:bg-amber-500 text-white',
-      onClick: onOpenSodium,
-    },
-    {
-      id: 'pdf-report',
-      label: 'Laporan PDF',
-      sublabel: 'Resume Dokter',
-      icon: FileText,
-      color: 'bg-sky-600 dark:bg-sky-500 text-white',
-      onClick: onOpenExportPdf,
-    },
-    {
-      id: 'clinical-notes',
-      label: 'Catatan SOAP',
-      sublabel: 'Jurnal Klinis',
-      icon: Stethoscope,
-      color: 'bg-violet-600 dark:bg-violet-500 text-white',
-      onClick: onOpenClinicalNotes,
-    },
-    {
-      id: 'fhir-inspector',
-      label: 'Resource FHIR',
-      sublabel: 'HL7 R4 JSON',
-      icon: FileCode,
-      color: 'bg-cyan-700 dark:bg-cyan-600 text-white',
-      onClick: onOpenFhir,
+      tint: 'bg-amber-500',
+      onClick: onOpenSodium
     },
     {
       id: 'sos',
       label: 'SOS Darurat',
-      sublabel: 'Keluarga & Ambulans',
+      sublabel: 'Keluarga & ambulans',
       icon: AlertTriangle,
-      color: 'bg-rose-600 dark:bg-rose-500 text-white',
-      onClick: onOpenSOS,
-    },
+      tint: 'bg-red-500',
+      onClick: onOpenSOS
+    }
+  ];
+
+  const advancedTools = [
+    { id: 'rest-timer', label: 'Rest 5 Menit', onClick: onOpenRestTimer },
+    { id: 'pdf-report', label: 'Laporan PDF', onClick: onOpenExportPdf },
+    { id: 'clinical-notes', label: 'Catatan SOAP', onClick: onOpenClinicalNotes },
+    { id: 'fhir-inspector', label: 'Resource FHIR', onClick: onOpenFhir }
   ];
 
   return (
-    <section className="space-y-2 select-none" aria-label="Aksi Cepat Medis">
+    <section className="space-y-2.5 select-none" aria-label="Aksi cepat medis">
       <div className="flex items-center justify-between px-1">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          Aksi Cepat
+        <h3 className="text-[13px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          Favorit
         </h3>
-        <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
-          Geser <ArrowRight size={10} />
-        </span>
       </div>
 
-      {/* Smooth Horizontal Scrolling Carousel with Subtle Cards */}
-      <div className="flex items-stretch gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth snap-x snap-mandatory">
-        {actions.map((action) => {
+      <div className="grid grid-cols-2 gap-3">
+        {favorites.map((action) => {
           const Icon = action.icon;
-
           return (
             <button
               key={action.id}
@@ -170,22 +117,39 @@ export const MobileQuickActionsRow: React.FC<MobileQuickActionsRowProps> = ({
                 playClickSound();
                 action.onClick();
               }}
-              className="snap-start shrink-0 flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm active:scale-95 transition-all text-left group min-w-[135px]"
+              className="flex items-center gap-3 p-3.5 rounded-[18px] bg-[var(--ios-card)] dark:bg-[#1c1c1e] shadow-[0_1px_2px_rgba(0,0,0,0.04)] active:scale-[0.97] transition-transform text-left min-h-[64px]"
             >
-              <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${action.color}`}>
-                <Icon size={15} />
+              <div className={`w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 ${action.tint}`}>
+                <Icon size={19} className="text-white" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                <p className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 truncate">
                   {action.label}
                 </p>
-                <p className="text-[9px] text-slate-400 dark:text-slate-500 truncate">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                   {action.sublabel}
                 </p>
               </div>
             </button>
           );
         })}
+      </div>
+
+      {/* Advanced tools row */}
+      <div className="grid grid-cols-4 gap-3">
+        {advancedTools.map((tool) => (
+          <button
+            key={tool.id}
+            type="button"
+            onClick={() => {
+              playClickSound();
+              tool.onClick();
+            }}
+            className="p-2.5 rounded-[14px] bg-[var(--ios-fill)] dark:bg-white/10 text-[11px] font-semibold text-slate-600 dark:text-slate-300 active:scale-[0.96] transition-transform text-center truncate"
+          >
+            {tool.label}
+          </button>
+        ))}
       </div>
     </section>
   );

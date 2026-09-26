@@ -72,10 +72,10 @@ export const SodiumTrackerModal: React.FC<SodiumTrackerModalProps> = ({ isOpen, 
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[90vh] flex flex-col"
+          className="bg-white dark:bg-[#1c1c1e] rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden my-auto max-h-[90vh] flex flex-col"
         >
           {/* Header */}
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <div className="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/10">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white">
                 <Utensils className="w-5 h-5" />
@@ -100,7 +100,7 @@ export const SodiumTrackerModal: React.FC<SodiumTrackerModalProps> = ({ isOpen, 
           <div className="p-5 overflow-y-auto space-y-5 flex-1 text-xs">
             
             {/* Progress Bar Limit */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10 space-y-2">
               <div className="flex items-center justify-between font-bold">
                 <span className="text-slate-600 dark:text-slate-300">Asupan Natrium Hari Ini:</span>
                 <span className={`text-base ${dailySodiumMg > recommendedLimit ? 'text-rose-600 dark:text-rose-400 font-black' : 'text-teal-600 dark:text-teal-400'}`}>
@@ -145,7 +145,7 @@ export const SodiumTrackerModal: React.FC<SodiumTrackerModalProps> = ({ isOpen, 
                   <button
                     key={item.name}
                     onClick={() => handleAddSodium(item.name, item.mg)}
-                    className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-left transition-all active:scale-95 space-y-0.5 border border-slate-200/60 dark:border-slate-700"
+                    className="p-2.5 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] hover:bg-slate-200 dark:hover:bg-slate-700 text-left transition-all active:scale-95 space-y-0.5 border border-slate-200/60 dark:border-white/10"
                   >
                     <div className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{item.name}</div>
                     <div className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">+{item.mg} mg</div>
@@ -155,7 +155,7 @@ export const SodiumTrackerModal: React.FC<SodiumTrackerModalProps> = ({ isOpen, 
             </div>
 
             {/* Custom Add Form */}
-            <form onSubmit={handleAddCustom} className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <form onSubmit={handleAddCustom} className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/10">
               <label className="font-bold text-slate-700 dark:text-slate-300 block">
                 Input Makanan Custom:
               </label>
@@ -165,14 +165,14 @@ export const SodiumTrackerModal: React.FC<SodiumTrackerModalProps> = ({ isOpen, 
                   placeholder="Nama Makanan (Contoh: Sup Ayam)"
                   value={customItemName}
                   onChange={(e) => setCustomItemName(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"
+                  className="flex-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs"
                 />
                 <input
                   type="number"
                   placeholder="mg"
                   value={customItemMg}
                   onChange={(e) => setCustomItemMg(Number(e.target.value))}
-                  className="w-20 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-center"
+                  className="w-20 px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-bold text-center"
                 />
                 <button
                   type="submit"
@@ -184,13 +184,13 @@ export const SodiumTrackerModal: React.FC<SodiumTrackerModalProps> = ({ isOpen, 
             </form>
 
             {/* Log History */}
-            <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/10">
               <label className="font-bold text-slate-700 dark:text-slate-300 block">
                 Jurnal Konsumsi Hari Ini ({logHistory.length}):
               </label>
               <div className="space-y-1.5 max-h-36 overflow-y-auto">
                 {logHistory.map((item, idx) => (
-                  <div key={idx} className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 flex items-center justify-between">
+                  <div key={idx} className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-between">
                     <div>
                       <span className="font-semibold text-slate-800 dark:text-slate-200">{item.name}</span>
                       <span className="text-[10px] text-slate-400 block">{item.time}</span>

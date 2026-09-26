@@ -115,19 +115,19 @@ export const MedicationAdherencePanel: React.FC = () => {
 
         {/* Stats Grid */}
         <div className="flex-1 grid grid-cols-2 gap-2 text-xs">
-          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
             <span className="text-[9px] text-slate-400 font-bold block">Dosis Diminum</span>
             <span className="text-sm font-black text-slate-900 dark:text-slate-100">{adherence.totalTakenDoses}</span>
           </div>
-          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
             <span className="text-[9px] text-slate-400 font-bold block">Dosis Seharusnya</span>
             <span className="text-sm font-black text-slate-900 dark:text-slate-100">{adherence.totalExpectedDoses}</span>
           </div>
-          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
             <span className="text-[9px] text-slate-400 font-bold block flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Streak</span>
             <span className="text-sm font-black text-slate-900 dark:text-slate-100">{adherence.streak} hari</span>
           </div>
-          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
             <span className="text-[9px] text-slate-400 font-bold block flex items-center gap-1"><Calendar className="w-3 h-3" /> Terlewat</span>
             <span className="text-sm font-black text-slate-900 dark:text-slate-100">{adherence.missedDoses.length}</span>
           </div>
@@ -155,7 +155,7 @@ export const MedicationAdherencePanel: React.FC = () => {
           </summary>
           <div className="mt-2 space-y-1">
             {adherence.missedDoses.slice(-10).reverse().map((m, i) => (
-              <div key={i} className="flex items-center justify-between text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div key={i} className="flex items-center justify-between text-[10px] px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
                 <span className="font-bold text-slate-700 dark:text-slate-300">{m.medicationName}</span>
                 <span className="text-slate-400">{m.date} ({m.schedule})</span>
               </div>

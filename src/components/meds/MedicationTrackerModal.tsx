@@ -140,10 +140,10 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[90vh] flex flex-col"
+          className="bg-white dark:bg-[#1c1c1e] rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden my-auto max-h-[90vh] flex flex-col"
         >
           {/* Header */}
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <div className="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/10">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-teal-500 text-white shadow-md shadow-teal-500/20">
                 <Pill className="w-5 h-5" />
@@ -222,7 +222,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
                           });
                           addToast({ type: 'success', title: 'Obat Ditambahkan', message: `${tpl.name} ${tpl.dosage} masuk ke regimen.` });
                         }}
-                        className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-slate-700 dark:text-slate-300 hover:text-teal-600 text-[10px] font-bold border border-slate-200 dark:border-slate-700"
+                        className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-[#2c2c2e] hover:bg-teal-50 dark:hover:bg-teal-950/40 text-slate-700 dark:text-slate-300 hover:text-teal-600 text-[10px] font-bold border border-slate-200 dark:border-white/10"
                       >
                         + {tpl.name} {tpl.dosage}
                       </button>
@@ -239,7 +239,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
                         className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
                           taken
                             ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800'
-                            : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
+                            : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-slate-700'
                         }`}
                       >
                         <div className="flex items-start gap-3 min-w-0">
@@ -295,7 +295,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
             </div>
 
             {/* Add New Medication Form */}
-            <form onSubmit={handleAddMed} className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <form onSubmit={handleAddMed} className="space-y-3 pt-3 border-t border-slate-100 dark:border-white/10">
               <label className="font-extrabold uppercase text-[11px] tracking-wider text-slate-700 dark:text-slate-300 block">
                 Tambah Obat Baru ke Regimen:
               </label>
@@ -306,7 +306,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
                   placeholder="Nama Obat (misal: Bisoprolol)"
                   value={newMedName}
                   onChange={(e) => setNewMedName(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
+                  className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-semibold"
                   required
                 />
                 <input
@@ -314,7 +314,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
                   placeholder="Dosis (misal: 2.5 mg)"
                   value={newMedDosage}
                   onChange={(e) => setNewMedDosage(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
+                  className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-semibold"
                 />
               </div>
 
@@ -322,7 +322,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
                 <select
                   value={newMedClass}
                   onChange={(e) => setNewMedClass(e.target.value as DrugClass)}
-                  className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
+                  className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-semibold"
                 >
                   <option value="Golongan CCB">Golongan CCB (Amlodipine, Nifedipine, Diltiazem)</option>
                   <option value="Golongan ARB">Golongan ARB (Candesartan, Valsartan, Losartan)</option>
@@ -340,7 +340,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
                 <select
                   value={newMedSchedule}
                   onChange={(e) => setNewMedSchedule(e.target.value as MedicationSchedule)}
-                  className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
+                  className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-semibold"
                 >
                   <option value="pagi">Jadwal Pagi</option>
                   <option value="siang">Jadwal Siang</option>
@@ -356,7 +356,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
                 placeholder="Tujuan Klinis / Petunjuk Minum (Opsional)..."
                 value={newMedPurpose}
                 onChange={(e) => setNewMedPurpose(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"
+                className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs"
               />
 
               <button

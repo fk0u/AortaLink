@@ -217,7 +217,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenSecurityBackup
               fileInputRef.current?.click();
             }}
             disabled={isImporting}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-extrabold text-xs text-slate-700 dark:text-slate-200 shadow-sm active:scale-95 transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/10 font-extrabold text-xs text-slate-700 dark:text-slate-200 shadow-sm active:scale-95 transition-all"
           >
             <Upload className="w-4 h-4" />
             {isImporting ? 'Mengimpor...' : 'Impor Backup'}
@@ -276,7 +276,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenSecurityBackup
                   className={`flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border font-extrabold text-sm transition-all active:scale-95 ${
                     isActive
                       ? 'bg-teal-500 text-white border-teal-500 shadow-md shadow-teal-500/20'
-                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800'
+                      : 'bg-white dark:bg-[#1c1c1e] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800'
                   }`}
                 >
                   {option.icon}
@@ -299,11 +299,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenSecurityBackup
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <div className="rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+            <div className="rounded-2xl p-4 bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Mode Aplikasi</p>
               <p className="mt-1 font-extrabold text-slate-900 dark:text-slate-100">{isStandalone ? 'Terpasang' : 'Browser'}</p>
             </div>
-            <div className="rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+            <div className="rounded-2xl p-4 bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Koneksi</p>
               <p className="mt-1 font-extrabold text-slate-900 dark:text-slate-100">{isOnline ? 'Online' : 'Offline'}</p>
             </div>
@@ -322,7 +322,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenSecurityBackup
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-extrabold text-sm text-slate-700 dark:text-slate-200 active:scale-95 transition-all"
+              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-slate-200 dark:border-white/10 font-extrabold text-sm text-slate-700 dark:text-slate-200 active:scale-95 transition-all"
             >
               <RefreshCw className="w-4 h-4" />
               Muat Ulang Aplikasi
@@ -345,7 +345,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenSecurityBackup
               </div>
             </div>
 
-            <div className="flex items-center justify-between rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between rounded-2xl p-4 bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
               <div>
                 <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
                   {notificationsEnabled ? 'Notifikasi Aktif' : 'Notifikasi Mati'}
@@ -388,7 +388,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenSecurityBackup
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between rounded-2xl p-4 bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
             <div>
               <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100">{soundOn ? 'Suara Aktif' : 'Suara Senyap'}</p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
@@ -398,7 +398,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenSecurityBackup
             <button
               type="button"
               onClick={handleSoundToggle}
-              className={`relative w-14 h-8 rounded-full transition-colors focus:outline-none ${soundOn ? 'bg-teal-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+              className={`relative w-14 h-8 rounded-full transition-colors focus:outline-none ${soundOn ? 'ios-switch-on' : 'bg-slate-300 dark:bg-slate-600'}`}
               role="switch"
               aria-checked={soundOn}
               aria-label="Toggle efek suara"
@@ -422,7 +422,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenSecurityBackup
             </div>
           </div>
 
-          <div className="rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+          <div className="rounded-2xl p-4 bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
             <DevicePairingButton />
           </div>
 
@@ -458,19 +458,19 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenSecurityBackup
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-            <div className="rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+            <div className="rounded-2xl p-4 bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <FileJson className="w-3 h-3" /> Format
               </p>
               <p className="mt-1 font-extrabold text-slate-900 dark:text-slate-100">JSON backup</p>
             </div>
-            <div className="rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+            <div className="rounded-2xl p-4 bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <Wifi className="w-3 h-3" /> Sinkronisasi
               </p>
               <p className="mt-1 font-extrabold text-slate-900 dark:text-slate-100">Offline-first lokal</p>
             </div>
-            <div className="rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+            <div className="rounded-2xl p-4 bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <ShieldCheck className="w-3 h-3" /> Aksi Aman
               </p>

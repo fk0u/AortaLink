@@ -37,7 +37,7 @@ export const AppleHealthRings: React.FC<AppleHealthRingsProps> = ({ readings }) 
       transition={{ duration: 0.3 }}
       className="hallmark-card p-6 relative overflow-hidden bg-gradient-to-br from-white via-slate-50/50 to-slate-100/50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800/80"
     >
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
         <div className="flex items-center gap-2">
           <div className="p-2 rounded-xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white shadow-md shadow-rose-500/20">
             <Heart className="w-4 h-4 fill-white" />

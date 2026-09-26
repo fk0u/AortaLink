@@ -148,10 +148,10 @@ export const ReminderModal: React.FC = () => {
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto max-h-[90vh] flex flex-col"
+          className="bg-white dark:bg-[#1c1c1e] rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden my-auto max-h-[90vh] flex flex-col"
         >
           {/* Header */}
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <div className="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/10">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-amber-105 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
                 <Bell className="w-5 h-5" />
@@ -215,8 +215,8 @@ export const ReminderModal: React.FC = () => {
                       key={r.id}
                       className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${
                         r.enabled
-                          ? 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-sm'
-                          : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200/50 dark:border-slate-800 opacity-60'
+                          ? 'bg-white dark:bg-white/10 border-slate-200 dark:border-white/10 shadow-sm'
+                          : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200/50 dark:border-white/10 opacity-60'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -259,7 +259,7 @@ export const ReminderModal: React.FC = () => {
             ) : (
               /* Add New Reminder Form */
               <form onSubmit={handleCreateReminder} className="space-y-4 text-xs">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-2">
                   <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     Tambah Jadwal Pengingat Baru
                   </h4>
@@ -290,7 +290,7 @@ export const ReminderModal: React.FC = () => {
                       className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
                         type === 'measurement'
                           ? 'bg-teal-55 dark:bg-teal-950/60 border-teal-500 text-teal-600 dark:text-teal-400'
-                          : 'bg-slate-100 dark:bg-slate-800 border-transparent text-slate-500'
+                          : 'bg-slate-100 dark:bg-[#2c2c2e] border-transparent text-slate-500'
                       }`}
                     >
                       <Activity className="w-4 h-4" />
@@ -306,7 +306,7 @@ export const ReminderModal: React.FC = () => {
                       className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
                         type === 'medication'
                           ? 'bg-purple-55 dark:bg-purple-950/60 border-purple-500 text-purple-600 dark:text-purple-400'
-                          : 'bg-slate-100 dark:bg-slate-800 border-transparent text-slate-500'
+                          : 'bg-slate-100 dark:bg-[#2c2c2e] border-transparent text-slate-500'
                       }`}
                     >
                       <Pill className="w-4 h-4" />
@@ -324,7 +324,7 @@ export const ReminderModal: React.FC = () => {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Contoh: Cek Tensi Pagi Hari / Minum Obat"
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-105 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-105 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none"
                     required
                   />
                 </div>
@@ -338,7 +338,7 @@ export const ReminderModal: React.FC = () => {
                       type="time"
                       value={time}
                       onChange={(e) => setTime(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl bg-slate-105 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none"
+                      className="w-full px-3 py-2.5 rounded-xl bg-slate-105 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none"
                       required
                     />
                   </div>
@@ -353,7 +353,7 @@ export const ReminderModal: React.FC = () => {
                         value={dosage}
                         onChange={(e) => setDosage(e.target.value)}
                         placeholder="Contoh: 1 tablet (5mg)"
-                        className="w-full px-3 py-2.5 rounded-xl bg-slate-105 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
+                        className="w-full px-3 py-2.5 rounded-xl bg-slate-105 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-slate-200 focus:outline-none"
                       />
                     </div>
                   )}
@@ -375,7 +375,7 @@ export const ReminderModal: React.FC = () => {
                           className={`w-9 h-9 rounded-xl text-xs font-bold transition-all active:scale-[0.98] ${
                             isSelected
                               ? 'bg-amber-500 text-white shadow-md'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-450'
+                              : 'bg-slate-100 dark:bg-[#2c2c2e] text-slate-450'
                           }`}
                         >
                           {day}
