@@ -172,8 +172,6 @@ export function App() {
 
   // Cache & Reload Zustand Store States
   const isDataRefreshing = useAppStore((state) => state.isDataRefreshing);
-  const cacheTimestamp = useAppStore((state) => state.cacheTimestamp);
-  const setDataRefreshing = useAppStore((state) => state.setDataRefreshing);
   const setCacheDirty = useAppStore((state) => state.setCacheDirty);
   const addToast = useAppStore((state) => state.addToast);
 
@@ -339,22 +337,6 @@ export function App() {
     } finally {
       setDeletingReadingId(null);
     }
-  };
-
-  const handleManualCacheRefresh = () => {
-    playClickSound();
-    setDataRefreshing(true);
-    setCacheDirty(true);
-
-    setTimeout(() => {
-      setDataRefreshing(false);
-      playSuccessChime();
-      addToast({
-        type: 'success',
-        title: 'Cache Database Diperbarui',
-        message: 'Memuat data paling mutakhir dari IndexedDB secara real-time.'
-      });
-    }, 500);
   };
 
   if (!isDbReady) {

@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { MongoClient } from 'mongodb';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -21,12 +22,20 @@ const MONGODB_URI =
   '';
 
 const DB_NAME = process.env.PUBLIC_MONGODB_ATLAS_DB || 'aortalink_ehr_db';
-const JWT_SECRET = process.env.JWT_SECRET || 'aortalink_secret_jwt_key_2026_safe';
+
+// Signing secret: MUST come from the environment. Without it we fall back to
+// an ephemeral random key — tokens keep working but invalidate on every
+// restart, which is loud and safe instead of quiet and forgeable.
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(64).toString('hex');
+if (!process.env.JWT_SECRET) {
+  console.warn('[AortaLink Security] JWT_SECRET is not set — using an EPHEMERAL random secret. Sessions will be invalidated on restart. Set JWT_SECRET in .env (openssl rand -hex 64).');
+}
 
 const app = express();
 
-// Explicit CORS middleware for Vercel & Multi-device deployment
-app.use(cors({ origin: '*', credentials: true }));
+// Explicit CORS middleware for Vercel & Multi-device deployment.
+// Auth is Bearer-token based (no cookies), so credentials are not needed.
+app.use(cors({ origin: '*' }));
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
@@ -235,9 +244,16 @@ app.post('/api/auth/login', async (req, res) => {
     if (userDoc.passwordHash) {
       isMatch = await bcrypt.compare(password, userDoc.passwordHash);
       if (!isMatch) {
-        const crypto = await import('crypto');
-        const sha256 = crypto.createHash('sha256').update(password).digest('hex');
-        isMatch = userDoc.passwordHash === sha256 || userDoc.passwordHash === password;
+        // Legacy-account migration path: very old accounts stored an
+        // unsalted SHA-256 hex digest. If it matches, transparently upgrade
+        // the account to bcrypt. Plaintext comparison is NEVER accepted.
+        const legacySha256 = /^[a-f0-9]{64}$/i.test(userDoc.passwordHash) &&
+          crypto.createHash('sha256').update(password).digest('hex') === userDoc.passwordHash;
+        if (legacySha256) {
+          const upgradedHash = await bcrypt.hash(password, 10);
+          await usersCollection.updateOne({ _id: userDoc._id }, { $set: { passwordHash: upgradedHash } });
+          isMatch = true;
+        }
       }
     }
 
