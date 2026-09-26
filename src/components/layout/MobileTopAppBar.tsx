@@ -63,32 +63,34 @@ export const MobileTopAppBar: React.FC<MobileTopAppBarProps> = ({ onOpenSOS }) =
     <header className={`sticky top-0 z-40 ios-nav-blur ${scrolled ? 'ios-hairline-b' : ''}`}>
       {/* Compact bar row */}
       <div className="relative h-12 px-4 flex items-center justify-between">
-        {/* Centered inline title while scrolled */}
-        <span
-          aria-hidden={!scrolled}
-          className={`absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-slate-900 dark:text-white transition-opacity duration-200 ${
-            scrolled ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-        >
-          {title}
-        </span>
-
-        {/* Left: Brand mark & Profile Switcher */}
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div
-            onClick={() => {
-              playClickSound();
-              navigate({ to: '/dashboard' });
-            }}
-            className="w-8 h-8 rounded-[10px] bg-teal-600 text-white flex items-center justify-center shrink-0 cursor-pointer active:scale-95 transition-transform"
-            role="button"
-            aria-label="Ke Ringkasan"
-          >
-            <Heart size={15} className="fill-white/90" />
-          </div>
-          <div className="min-w-0">
-            <CustomProfileSelector />
-          </div>
+        {/* Left: brand + profile switcher; the brand mark gives way to a
+            leading inline title while scrolled so nothing collides with the
+            trailing action cluster. */}
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          {scrolled ? (
+            // Collapsed state: leading inline title only — the profile switcher
+            // returns with the large-title state (or lives on the Profile tab).
+            <span className="truncate text-[17px] font-semibold text-slate-900 dark:text-white">
+              {title}
+            </span>
+          ) : (
+            <>
+              <div
+                onClick={() => {
+                  playClickSound();
+                  navigate({ to: '/dashboard' });
+                }}
+                className="w-8 h-8 rounded-[10px] bg-teal-600 text-white flex items-center justify-center shrink-0 cursor-pointer active:scale-95 transition-transform"
+                role="button"
+                aria-label="Ke Ringkasan"
+              >
+                <Heart size={15} className="fill-white/90" />
+              </div>
+              <div className="min-w-0 shrink-0">
+                <CustomProfileSelector />
+              </div>
+            </>
+          )}
         </div>
 
         {/* Right: primary action + utilities */}

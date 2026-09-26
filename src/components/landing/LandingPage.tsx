@@ -209,8 +209,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
       a: 'HL7 FHIR R4 (Fast Healthcare Interoperability Resources) adalah standar baku internasional untuk pertukaran data medis rumah sakit. Semua pengukuran tekanan darah di AortaLink otomatis diformat ke panel LOINC 85354-9, sehingga dapat diimpor langsung oleh SIMRS rumah sakit modern dan platform kesehatan nasional.'
     },
     {
-      q: 'Bagaimana peran AI NVIDIA NIM (z-ai/glm-5.2) dalam evaluasi klinis?',
-      a: 'Asisten AI klinis kami menggunakan model canggih z-ai/glm-5.2 yang diinstruksikan berdasarkan panduan spesialis penyakit dalam (Sp.PD), konsensus JNC-8, AHA/ACC 2017, dan PERHI. AI membantu menerjemahkan pola diurnal dipping, sinergi obat antihipertensi, serta batas aman kadar asam urat darah.'
+      q: 'Bagaimana cara kerja analisis klinis di AortaLink?',
+      a: 'AortaLink memakai mesin analitik Machine Learning on-device buatan sendiri — regresi tren, deteksi pola (white-coat, lonjakan pagi, dipping), dan model kepatuhan obat — yang seluruhnya dihitung dari data pengukuran Anda di perangkat, mengikuti kerangka JNC-8, AHA/ACC 2017, dan PERHI. Tidak ada data yang dikirim ke server AI mana pun, dan setiap jawaban mencantumkan sumber datanya.'
     },
     {
       q: 'Apakah AortaLink dapat digunakan di smartphone tanpa instalasi app store?',
@@ -428,7 +428,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-slate-500 overflow-x-auto no-scrollbar gap-8">
           <span className="shrink-0 flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-teal-600 rounded-none" /> HL7 FHIR R4</span>
           <span className="shrink-0 flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-slate-400 rounded-none" /> LOINC 85354-9</span>
-          <span className="shrink-0 flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-purple-600 rounded-none" /> NVIDIA NIM AI (z-ai/glm-5.2)</span>
+          <span className="shrink-0 flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-purple-600 rounded-none" /> Mesin ML On-Device</span>
           <span className="shrink-0 flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-emerald-600 rounded-none" /> MongoDB Atlas Cloud</span>
           <span className="shrink-0 flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-blue-600 rounded-none" /> ACC/AHA 2017 &amp; JNC-8</span>
           <span className="shrink-0 flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-amber-600 rounded-none" /> Dexie.js Offline v4</span>
