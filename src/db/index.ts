@@ -23,6 +23,9 @@ export class AortaLinkDatabase extends Dexie {
   ascvdProfiles!: Table<AscvdProfile, number>;
   clinicalNotes!: Table<ClinicalNote, number>;
 
+  // V8: Sync bookkeeping — user deletions that must propagate to other devices
+  syncTombstones!: Table<SyncTombstone, [string, string]>;
+
   constructor() {
     super('AortaLinkDB');
     this.version(1).stores({
@@ -107,7 +110,21 @@ export class AortaLinkDatabase extends Dexie {
       ascvdProfiles: '++id, profileId, timestamp',
       clinicalNotes: '++id, profileId, timestamp'
     });
+
+    // Version 8: Sync tombstones — primary key [table+recordId] so repeated
+    // deletes of the same record stay a single row.
+    this.version(8).stores({
+      syncTombstones: '[table+recordId], deletedAt'
+    });
   }
+}
+
+export interface SyncTombstone {
+  /** Dexie table name the record was deleted from (e.g. 'readings'). */
+  table: string;
+  /** Primary key of the deleted record, stringified. */
+  recordId: string;
+  deletedAt: string;
 }
 
 // Backward compatibility alias
@@ -115,29 +132,135 @@ export const HeartSyncDatabase = AortaLinkDatabase;
 
 export const db = new AortaLinkDatabase();
 
+// ---------------------------------------------------------------------------
+// Sync metadata middleware
+// ---------------------------------------------------------------------------
+// Every record the user creates or edits gets an `updatedAt` stamp, and every
+// deletion leaves a tombstone. This is what makes multi-device sync
+// merge-by-recency possible instead of blind last-push-wins.
+// ---------------------------------------------------------------------------
+
+/** Dexie tables that participate in cloud sync (everything but tombstones). */
+export const SYNCED_TABLES = [
+  'profiles',
+  'readings',
+  'reminders',
+  'habits',
+  'gamification',
+  'sodiumLogs',
+  'sleepLogs',
+  'medications',
+  'medicationLogs',
+  'labResults',
+  'fhirPatients',
+  'fhirObservations',
+  'fhirMedicationRequests',
+  'fhirMedicationStatements',
+  'ascvdProfiles',
+  'clinicalNotes'
+] as const;
+
+let syncMetadataSuppressed = false;
+
 /**
- * Completely clears all 16 local tables in Dexie.js to prevent data leakage between accounts
+ * Runs `fn` WITHOUT stamping updatedAt or creating tombstones.
+ * Used for account switches (clearing another user's data must NOT
+ * tombstone it) and for pulling cloud records (their own updatedAt
+ * must be preserved, not replaced by "now").
+ */
+export async function withSyncMetadataSuppressed<T>(fn: () => Promise<T>): Promise<T> {
+  const previous = syncMetadataSuppressed;
+  syncMetadataSuppressed = true;
+  try {
+    return await fn();
+  } finally {
+    syncMetadataSuppressed = previous;
+  }
+}
+
+// Dexie 4 dbcore middleware: intercepts every add/put/delete on synced tables.
+db.use({
+  stack: 'dbcore',
+  name: 'sync-metadata',
+  create: (downlevelDatabase) => {
+    const tombstoneTable = downlevelDatabase.table('syncTombstones');
+    return {
+      ...downlevelDatabase,
+      table: (tableName) => {
+        const downlevelTable = downlevelDatabase.table(tableName);
+        if (!(SYNCED_TABLES as readonly string[]).includes(tableName)) {
+          return downlevelTable;
+        }
+        return {
+          ...downlevelTable,
+          mutate: (req) => {
+            if (syncMetadataSuppressed) {
+              return downlevelTable.mutate(req);
+            }
+            const now = new Date().toISOString();
+
+            if ((req.type === 'add' || req.type === 'put') && req.values && req.values.length > 0) {
+              // Only stamp records that are actually synced tables.
+              const stamped = req.values.map((value) => ({ ...value, updatedAt: now }));
+              return downlevelTable.mutate({ ...req, values: stamped });
+            }
+
+            if (req.type === 'delete' && req.keys && req.keys.length > 0) {
+              // Record tombstones in the SAME transaction so they can never
+              // diverge from the deletion itself.
+              const tombstones = req.keys.map((key) => ({
+                table: tableName,
+                recordId: String(key),
+                deletedAt: now
+              }));
+              void tombstoneTable.mutate({
+                type: 'put',
+                values: tombstones,
+                keys: tombstones.map((t) => [t.table, t.recordId]),
+                trans: req.trans,
+                criteria: undefined,
+                changeSpec: undefined
+              });
+            }
+
+            // deleteRange / clear pass through untouched: bulk wipes are
+            // account-switch or restore operations that run suppressed.
+            return downlevelTable.mutate(req);
+          }
+        };
+      }
+    };
+  }
+});
+
+/**
+ * Completely clears all 16 local tables in Dexie.js to prevent data leakage between accounts.
+ * Runs with sync metadata suppressed: wiping another account's data must not
+ * tombstone it, and local tombstones are wiped with it.
  */
 export async function clearLocalEhrDatabase() {
   try {
-    await Promise.all([
-      db.profiles.clear(),
-      db.readings.clear(),
-      db.reminders.clear(),
-      db.habits.clear(),
-      db.gamification.clear(),
-      db.sodiumLogs.clear(),
-      db.sleepLogs.clear(),
-      db.medicationLogs.clear(),
-      db.medications.clear(),
-      db.labResults.clear(),
-      db.fhirPatients.clear(),
-      db.fhirObservations.clear(),
-      db.fhirMedicationRequests.clear(),
-      db.fhirMedicationStatements.clear(),
-      db.ascvdProfiles.clear(),
-      db.clinicalNotes.clear()
-    ]);
+    await withSyncMetadataSuppressed(async () => {
+      await Promise.all([
+        db.profiles.clear(),
+        db.readings.clear(),
+        db.reminders.clear(),
+        db.habits.clear(),
+        db.gamification.clear(),
+        db.sodiumLogs.clear(),
+        db.sleepLogs.clear(),
+        db.medicationLogs.clear(),
+        db.medications.clear(),
+        db.labResults.clear(),
+        db.fhirPatients.clear(),
+        db.fhirObservations.clear(),
+        db.fhirMedicationRequests.clear(),
+        db.fhirMedicationStatements.clear(),
+        db.ascvdProfiles.clear(),
+        db.clinicalNotes.clear(),
+        db.syncTombstones.clear()
+      ]);
+    });
   } catch (err) {
     console.warn('[AortaLink DB] Clear Database Warning:', err);
   }

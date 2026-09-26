@@ -331,39 +331,104 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       fhirObservations = [],
       fhirMedicationRequests = [],
       fhirMedicationStatements = [],
+      ascvdProfiles = [],
+      clinicalNotes = [],
+      tombstones = [],
       userSettings = null
     } = req.body;
 
     let totalSynced = 0;
+    let conflictSkipped = 0;
 
+    /**
+     * updatedAt-aware upsert: the incoming record only wins when its
+     * clientUpdatedAt (stamped by the device that last modified it) is at
+     * least as new as the stored one. This prevents a stale device from
+     * silently overwriting newer edits made on another device.
+     */
     const upsertCollection = async (collName, items, keyField = 'id') => {
-      if (!Array.isArray(items) || items.length === 0) return 0;
+      if (!Array.isArray(items) || items.length === 0) return { applied: 0, skipped: 0 };
       const collection = activeDb.collection(collName);
+      let applied = 0;
+      let skipped = 0;
       for (const item of items) {
         const query = { [keyField]: item[keyField], userId };
+        const clientUpdatedAt = item.updatedAt || item.createdAt || null;
+        const existing = await collection.findOne(query, { projection: { clientUpdatedAt: 1 } });
+        if (existing && existing.clientUpdatedAt && clientUpdatedAt &&
+            new Date(existing.clientUpdatedAt).getTime() > new Date(clientUpdatedAt).getTime()) {
+          skipped++;
+          continue;
+        }
         await collection.updateOne(
           query,
-          { $set: { ...item, userId, updatedAt: new Date().toISOString() } },
+          { $set: { ...item, userId, clientUpdatedAt, serverReceivedAt: new Date().toISOString() } },
           { upsert: true }
         );
+        applied++;
       }
-      return items.length;
+      return { applied, skipped };
     };
 
-    totalSynced += await upsertCollection('observations', readings);
-    totalSynced += await upsertCollection('medications', medications);
-    totalSynced += await upsertCollection('medication_logs', medicationLogs);
-    totalSynced += await upsertCollection('lab_results', labResults);
-    totalSynced += await upsertCollection('habits', habits);
-    totalSynced += await upsertCollection('sodium_logs', sodiumLogs);
-    totalSynced += await upsertCollection('sleep_logs', sleepLogs);
-    totalSynced += await upsertCollection('gamification', gamification);
-    totalSynced += await upsertCollection('profiles', profiles);
-    totalSynced += await upsertCollection('reminders', reminders);
-    totalSynced += await upsertCollection('fhir_patients', fhirPatients);
-    totalSynced += await upsertCollection('fhir_observations', fhirObservations);
-    totalSynced += await upsertCollection('fhir_medication_requests', fhirMedicationRequests);
-    totalSynced += await upsertCollection('fhir_medication_statements', fhirMedicationStatements);
+    const syncResults = await Promise.all([
+      upsertCollection('observations', readings),
+      upsertCollection('medications', medications),
+      upsertCollection('medication_logs', medicationLogs),
+      upsertCollection('lab_results', labResults),
+      upsertCollection('habits', habits),
+      upsertCollection('sodium_logs', sodiumLogs),
+      upsertCollection('sleep_logs', sleepLogs),
+      upsertCollection('gamification', gamification),
+      upsertCollection('profiles', profiles),
+      upsertCollection('reminders', reminders),
+      upsertCollection('fhir_patients', fhirPatients),
+      upsertCollection('fhir_observations', fhirObservations),
+      upsertCollection('fhir_medication_requests', fhirMedicationRequests),
+      upsertCollection('fhir_medication_statements', fhirMedicationStatements),
+      upsertCollection('ascvd_profiles', ascvdProfiles),
+      upsertCollection('clinical_notes', clinicalNotes)
+    ]);
+    for (const result of syncResults) {
+      totalSynced += result.applied;
+      conflictSkipped += result.skipped;
+    }
+
+    // Tombstones: user deletions must propagate to every device. Store the
+    // marker and immediately remove the record from its data collection.
+    const tombstoneCollection = activeDb.collection('tombstones');
+    const TABLE_TO_COLLECTION = {
+      readings: 'observations',
+      medications: 'medications',
+      medicationLogs: 'medication_logs',
+      labResults: 'lab_results',
+      habits: 'habits',
+      sodiumLogs: 'sodium_logs',
+      sleepLogs: 'sleep_logs',
+      gamification: 'gamification',
+      profiles: 'profiles',
+      reminders: 'reminders',
+      fhirPatients: 'fhir_patients',
+      fhirObservations: 'fhir_observations',
+      fhirMedicationRequests: 'fhir_medication_requests',
+      fhirMedicationStatements: 'fhir_medication_statements',
+      ascvdProfiles: 'ascvd_profiles',
+      clinicalNotes: 'clinical_notes'
+    };
+    if (Array.isArray(tombstones) && tombstones.length > 0) {
+      for (const t of tombstones) {
+        if (!t || !t.id || !t.table) continue;
+        await tombstoneCollection.updateOne(
+          { id: String(t.id), table: String(t.table), userId },
+          { $set: { id: String(t.id), table: String(t.table), userId, deletedAt: t.deletedAt || new Date().toISOString() } },
+          { upsert: true }
+        );
+        const collName = TABLE_TO_COLLECTION[t.table];
+        if (collName) {
+          await activeDb.collection(collName).deleteOne({ id: t.id, userId });
+        }
+        totalSynced++;
+      }
+    }
 
     // Save User Settings (Theme, Active Profile, Layout)
     if (userSettings) {
@@ -378,7 +443,9 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
     return res.json({
       success: true,
       totalSynced,
-      message: `Berhasil menyinkronkan ${totalSynced} item rekam medis ke MongoDB Atlas Cloud.`,
+      conflictSkipped,
+      message: `Berhasil menyinkronkan ${totalSynced} item rekam medis ke MongoDB Atlas Cloud.` +
+        (conflictSkipped > 0 ? ` ${conflictSkipped} item dilewati karena versi di server lebih baru.` : ''),
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -415,6 +482,9 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
       fhirObservations,
       fhirMedicationRequests,
       fhirMedicationStatements,
+      ascvdProfiles,
+      clinicalNotes,
+      tombstones,
       userSettingsDoc
     ] = await Promise.all([
       activeDb.collection('observations').find({ userId }).toArray(),
@@ -431,6 +501,9 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
       activeDb.collection('fhir_observations').find({ userId }).toArray(),
       activeDb.collection('fhir_medication_requests').find({ userId }).toArray(),
       activeDb.collection('fhir_medication_statements').find({ userId }).toArray(),
+      activeDb.collection('ascvd_profiles').find({ userId }).toArray(),
+      activeDb.collection('clinical_notes').find({ userId }).toArray(),
+      activeDb.collection('tombstones').find({ userId }, { projection: { _id: 0, userId: 0 } }).toArray(),
       activeDb.collection('user_settings').findOne({ userId })
     ]);
 
@@ -449,6 +522,8 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
       fhirObservations.length +
       fhirMedicationRequests.length +
       fhirMedicationStatements.length +
+      ascvdProfiles.length +
+      clinicalNotes.length +
       (userSettingsDoc ? 1 : 0);
 
     return res.json({
@@ -468,6 +543,9 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
         fhirObservations,
         fhirMedicationRequests,
         fhirMedicationStatements,
+        ascvdProfiles,
+        clinicalNotes,
+        tombstones,
         userSettings: userSettingsDoc || null
       },
       syncedCount: totalCount,
