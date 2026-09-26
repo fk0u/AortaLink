@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, LogIn, UserPlus, Heart, Lock, Mail, ShieldCheck, CheckCircle2, RefreshCw, ArrowRight, Info } from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore, SubscriptionTier } from '../../store/useAuthStore';
+import { useFocusTrap } from '../../utils/modal-a11y';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 
 interface AuthModalProps {
@@ -17,6 +18,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   onSuccess
 }) => {
+  const trapRef = useFocusTrap<HTMLDivElement>(isOpen);
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -89,6 +91,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     <AnimatePresence>
       <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
         <motion.div
+          ref={trapRef}
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}

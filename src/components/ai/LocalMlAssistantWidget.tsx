@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BrainCircuit, X, Send, HeartPulse, Sparkles, TrendingUp, TrendingDown, Minus, CheckCircle2, AlertTriangle, Info } from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
+import { useFocusTrap } from '../../utils/modal-a11y';
 import { useProfiles } from '../../hooks/useProfiles';
 import { useReadings } from '../../hooks/useReadings';
 import { db } from '../../db';
@@ -54,6 +55,7 @@ function TrendGlyph({ direction }: { direction: 'rising' | 'falling' | 'stable' 
 
 export const LocalMlAssistantWidget: React.FC = () => {
   const isOpen = useAppStore((state) => state.isAiModalOpen);
+  const trapRef = useFocusTrap<HTMLDivElement>(isOpen);
   const closeModal = useAppStore((state) => state.closeAiModal);
   const [input, setInput] = useState('');
   const [conversation, setConversation] = useState<ConversationEntry[]>([]);
@@ -160,6 +162,7 @@ export const LocalMlAssistantWidget: React.FC = () => {
       {isOpen && (
         <div className="fixed inset-0 z-[85] flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/50 backdrop-blur-sm">
           <motion.div
+            ref={trapRef}
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}

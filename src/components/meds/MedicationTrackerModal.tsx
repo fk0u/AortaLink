@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Pill, CheckCircle2, Plus, Shield, Trash2 } from '../icons/AppIcons';
+import { useFocusTrap } from '../../utils/modal-a11y';
 import { useAppStore } from '../../store/useAppStore';
 import { useProfiles } from '../../hooks/useProfiles';
 import { db } from '../../db';
@@ -20,6 +21,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
   isOpen,
   onClose
 }) => {
+  const trapRef = useFocusTrap<HTMLDivElement>(isOpen);
   const { activeProfileId } = useProfiles();
   const addToast = useAppStore((state) => state.addToast);
 
@@ -137,6 +139,7 @@ export const MedicationTrackerModal: React.FC<MedicationTrackerModalProps> = ({
     <AnimatePresence>
       <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:pb-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto">
         <motion.div
+          ref={trapRef}
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}

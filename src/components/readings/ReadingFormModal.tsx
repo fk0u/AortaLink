@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { useProfiles } from '../../hooks/useProfiles';
 import { db, newSyncId } from '../../db';
+import { useFocusTrap } from '../../utils/modal-a11y';
 import { BodyPosition, ArmUsed, MeasurementContext, BPReading } from '../../types/blood-pressure';
 import { classifyBP, classifyAgeAdjustedBP } from '../../utils/bp-classifier';
 import { playClickSound, playSuccessChime, playAlertSound } from '../../utils/audio-fx';
@@ -29,6 +30,7 @@ import {
 
 export const ReadingFormModal: React.FC = () => {
   const isOpen = useAppStore((state) => state.isReadingModalOpen);
+  const trapRef = useFocusTrap<HTMLDivElement>(isOpen);
   const closeModal = useAppStore((state) => state.closeReadingModal);
   const editingReading = useAppStore((state) => state.editingReading);
   const addToast = useAppStore((state) => state.addToast);
@@ -269,6 +271,7 @@ export const ReadingFormModal: React.FC = () => {
 
           {/* Material 3 Bottom Sheet / Modal Card */}
           <motion.div
+            ref={trapRef}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}

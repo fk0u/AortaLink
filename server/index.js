@@ -620,6 +620,17 @@ app.delete('/api/profiles/:profileId', authenticateToken, async (req, res) => {
   }
 });
 
+// Static SPA serving (Docker / self-host mode) — the API and the frontend
+// ship together, so a single container is a complete deployment.
+if (!process.env.VERCEL) {
+  const distDir = path.resolve(__dirname, '../dist');
+  app.use(express.static(distDir));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+    res.sendFile(path.join(distDir, 'index.html'));
+  });
+}
+
 // Start Server (Standalone local mode)
 if (!process.env.VERCEL) {
   app.listen(PORT, '0.0.0.0', () => {

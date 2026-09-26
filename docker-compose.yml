@@ -8,12 +8,15 @@ services:
     container_name: aortalink-ehr-platform
     restart: always
     ports:
-      - "80:80"
-      - "8173:80"
+      - "80:8080"
     environment:
       - NODE_ENV=production
+      - PORT=8080
+      # Provide your own credentials — never bake real secrets into images.
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
