@@ -28,7 +28,7 @@
  * value = mantissa × 10^exponent
  */
 
-import { db } from '../../db';
+import { db, newSyncId } from '../../db';
 import type { BPReading } from '../../types/blood-pressure';
 
 // ---------------------------------------------------------------------------
@@ -300,6 +300,7 @@ export async function scanAndReadBP(
 
   // -- STORE --
   const bpReading: BPReading = {
+    id: newSyncId(),
     profileId,
     systolic,
     diastolic,
@@ -311,8 +312,7 @@ export async function scanAndReadBP(
   };
 
   try {
-    const id = await db.readings.add(bpReading);
-    bpReading.id = id;
+    await db.readings.add(bpReading);
   } catch {
     const msg = 'Data berhasil dibaca tetapi gagal disimpan ke database lokal.';
     onStateChange('error', msg);

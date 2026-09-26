@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { useProfiles } from '../../hooks/useProfiles';
-import { db } from '../../db';
+import { db, newSyncId } from '../../db';
 import { BodyPosition, ArmUsed, MeasurementContext, BPReading } from '../../types/blood-pressure';
 import { classifyBP, classifyAgeAdjustedBP } from '../../utils/bp-classifier';
 import { playClickSound, playSuccessChime, playAlertSound } from '../../utils/audio-fx';
@@ -227,6 +227,7 @@ export const ReadingFormModal: React.FC = () => {
         addToast({ type: 'success', title: 'Catatan Diperbarui', message: `Data ${systolic}/${diastolic} mmHg tersimpan.` });
       } else {
         await db.readings.add({
+          id: newSyncId(),
           profileId: activeProfileId,
           systolic,
           diastolic,

@@ -180,7 +180,7 @@ export function App() {
   const openReminderModal = useAppStore((state) => state.openReminderModal);
 
   // Deleting reading confirmation state
-  const [deletingReadingId, setDeletingReadingId] = useState<number | null>(null);
+  const [deletingReadingId, setDeletingReadingId] = useState<string | null>(null);
 
   const initSessionFromStorage = useAuthStore((state) => state.initSessionFromStorage);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);

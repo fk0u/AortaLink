@@ -3,7 +3,7 @@ import { Profile, BPReading, Reminder, HabitLog, GamificationState, SodiumLog, S
 
 export class AortaLinkDatabase extends Dexie {
   profiles!: Table<Profile, string>;
-  readings!: Table<BPReading, number>;
+  readings!: Table<BPReading, string>;
   reminders!: Table<Reminder, number>;
   habits!: Table<HabitLog, number>;
   gamification!: Table<GamificationState, 'current'>;
@@ -116,7 +116,50 @@ export class AortaLinkDatabase extends Dexie {
     this.version(8).stores({
       syncTombstones: '[table+recordId], deletedAt'
     });
+
+    // Version 9: readings primary key becomes a UUID (string). Auto-increment
+    // ids are device-local, so two devices creating readings offline could
+    // mint the same numeric id with different content and silently clobber
+    // each other in cloud sync. UUIDs remove the collision class entirely.
+    this.version(9)
+      .stores({
+        readings: 'id, profileId, timestamp, systolic, diastolic, pulse, measurement_context'
+      })
+      .upgrade(async (tx) => {
+        const readingsTable = tx.table('readings');
+        const notesTable = tx.table('clinicalNotes');
+        const legacy = await readingsTable.toArray();
+        const idMap = new Map<number | string, string>();
+
+        for (const reading of legacy) {
+          const oldId = reading.id;
+          const newId = typeof oldId === 'string' && oldId ? oldId : newSyncId();
+          idMap.set(oldId, newId);
+          if (oldId !== newId) {
+            await readingsTable.delete(oldId);
+            await readingsTable.put({ ...reading, id: newId });
+          }
+        }
+
+        // Remap clinical note links so they keep pointing at the rekeyed readings.
+        const notes = await notesTable.toArray();
+        for (const note of notes) {
+          if (Array.isArray(note.linkedReadingIds) && note.linkedReadingIds.length > 0) {
+            const remapped = note.linkedReadingIds.map((id: number | string) => idMap.get(id) ?? id);
+            await notesTable.update(note.id as number, { linkedReadingIds: remapped });
+          }
+        }
+      });
   }
+}
+
+/** Stable UUID for records that must merge across devices without collision. */
+export function newSyncId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // ID entropy only — never used for health data values.
+  return 'r-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
 }
 
 export interface SyncTombstone {

@@ -19,7 +19,8 @@ export interface Profile {
 }
 
 export interface BPReading {
-  id?: number;
+  /** UUID primary key. Legacy numeric ids are migrated on schema upgrade. */
+  id?: string;
   profileId: string;
   systolic: number;
   diastolic: number;
@@ -350,7 +351,7 @@ export interface ClinicalNote {
   assessment: string;       // Penilaian / Diagnosis
   plan: string;             // Rencana terapi
   tags: string[];           // e.g. 'follow-up', 'emergency', 'routine'
-  linkedReadingIds: number[];
+  linkedReadingIds: Array<number | string>; // legacy numeric ids tolerated
 }
 
 export interface SmartOnFhirConfig {

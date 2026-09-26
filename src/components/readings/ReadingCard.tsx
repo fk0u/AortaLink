@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 interface ReadingCardProps {
   reading: BPReading;
   onEdit: (reading: BPReading) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
 }
 
 export const ReadingCard: React.FC<ReadingCardProps> = ({ reading, onEdit, onDelete }) => {

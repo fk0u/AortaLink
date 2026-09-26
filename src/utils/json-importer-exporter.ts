@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { db, newSyncId } from '../db';
 import {
   BackupDataFormat,
   Profile,
@@ -70,7 +70,10 @@ export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{
       throw new Error('Backup JSON harus memiliki minimal 1 profil pasien.');
     }
 
-    const readings = Array.isArray(payload.readings) ? payload.readings : [];
+    const readings = (Array.isArray(payload.readings) ? payload.readings : []).map((r) => ({
+      ...r,
+      id: typeof r.id === 'string' && r.id ? r.id : newSyncId()
+    }));
     const reminders = Array.isArray(payload.reminders) ? payload.reminders : [];
     const habits = Array.isArray(payload.habits) ? payload.habits : [];
     let medications = Array.isArray(payload.medications) ? payload.medications : [];

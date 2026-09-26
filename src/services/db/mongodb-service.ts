@@ -1,4 +1,4 @@
-import { db, withSyncMetadataSuppressed, type SyncTombstone } from '../../db';
+import { db, newSyncId, withSyncMetadataSuppressed, type SyncTombstone } from '../../db';
 import { useAppStore } from '../../store/useAppStore';
 
 export interface MongoAtlasConfig {
@@ -175,12 +175,17 @@ export class MongoDbAtlasService {
         return Number.isFinite(t) ? t : 0;
       };
 
-      const restoreTable = async (items: any[], tableObj: any) => {
+      const restoreTable = async (items: any[], tableObj: any, tableName?: string) => {
         if (!Array.isArray(items) || items.length === 0) return 0;
         let applied = 0;
         for (const item of items) {
           delete item._id;
           delete item.userId;
+          // Cloud records created before the UUID migration carry device-local
+          // numeric ids; rekey them so they can never collide across devices.
+          if (tableName === 'readings' && (typeof item.id !== 'string' || !item.id)) {
+            item.id = newSyncId();
+          }
           if (item.id === undefined || item.id === null) continue;
           const existing = await tableObj.get(item.id);
           if (existing) {
@@ -214,7 +219,7 @@ export class MongoDbAtlasService {
         }
 
         totalRestored += await restoreTable(cloudData.profiles, db.profiles);
-        totalRestored += await restoreTable(cloudData.readings, db.readings);
+        totalRestored += await restoreTable(cloudData.readings, db.readings, 'readings');
         totalRestored += await restoreTable(cloudData.medications, db.medications);
         totalRestored += await restoreTable(cloudData.medicationLogs, db.medicationLogs);
         totalRestored += await restoreTable(cloudData.labResults, db.labResults);

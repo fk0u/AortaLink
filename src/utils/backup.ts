@@ -1,4 +1,4 @@
-import { db } from '../db';
+import { db, newSyncId } from '../db';
 import { BackupDataFormat, BPReading, HabitLog, Profile, Reminder } from '../types/blood-pressure';
 
 export function createBackupFilename(exportedAt = new Date()): string {
@@ -92,9 +92,16 @@ export async function restoreBackupPayload(payload: BackupDataFormat) {
       db.labResults.clear()
     ]);
 
+    // Rekey legacy numeric reading ids to UUIDs so restores participate in
+    // collision-free cloud sync.
+    const rekeyedReadings = (payload.readings || []).map((r) => ({
+      ...r,
+      id: typeof r.id === 'string' && r.id ? r.id : newSyncId()
+    }));
+
     await Promise.all([
       db.profiles.bulkPut(payload.profiles),
-      db.readings.bulkPut(payload.readings),
+      db.readings.bulkPut(rekeyedReadings),
       db.reminders.bulkPut(payload.reminders),
       db.habits.bulkPut(payload.habits || []),
       db.medications.bulkPut(payload.medications || []),
