@@ -60,6 +60,7 @@ import { MongoAtlasSyncBadge } from './components/dashboard/MongoAtlasSyncBadge'
 import { LocalMlAssistantWidget } from './components/ai/LocalMlAssistantWidget';
 import { useAuthStore } from './store/useAuthStore';
 import { MobileToolsSheet } from './components/layout/MobileToolsSheet';
+import { initializeNotificationService } from './services/notifications/push-service';
 
 // Bluetooth pairing
 import { DevicePairingButton } from './components/bluetooth/DevicePairingButton';
@@ -188,6 +189,12 @@ export function App() {
   useEffect(() => {
     initSessionFromStorage();
   }, [initSessionFromStorage]);
+
+  // Re-arm scheduled reminders after reload — without this, notification
+  // schedules only lived in memory and silently died on every page refresh.
+  useEffect(() => {
+    initializeNotificationService();
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated && screenKey !== 'landing' && screenKey !== 'privacy' && screenKey !== 'terms') {
@@ -352,7 +359,7 @@ export function App() {
         ) : screenKey === 'profile' ? (
           <ProfilePage />
         ) : screenKey === 'settings' ? (
-          <SettingsPage />
+          <SettingsPage onOpenSecurityBackup={() => setIsSecurityModalOpen(true)} />
         ) : (
           <>
             {/* ========================================================= */}
@@ -407,6 +414,10 @@ export function App() {
                     <span>Real-time Live EHR (Dexie v4)</span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <DashboardCustomizer
+                      preferences={dashboardPreferences}
+                      onChange={updateDashboardPreferences}
+                    />
                     <MongoAtlasSyncBadge />
                   </div>
                 </div>

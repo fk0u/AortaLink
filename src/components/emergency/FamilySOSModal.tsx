@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, AlertTriangle, Phone, Share2, Send, Heart, ShieldAlert } from '../icons/AppIcons';
 import { useProfiles } from '../../hooks/useProfiles';
@@ -11,12 +11,39 @@ interface FamilySOSModalProps {
   onClose: () => void;
 }
 
+const CONTACTS_STORAGE_KEY = 'aortalink_sos_contacts';
+
+interface SosContacts {
+  caregiverPhone: string;
+  doctorPhone: string;
+}
+
+function loadSosContacts(): SosContacts {
+  try {
+    const raw = localStorage.getItem(CONTACTS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<SosContacts>;
+      return { caregiverPhone: parsed.caregiverPhone || '', doctorPhone: parsed.doctorPhone || '' };
+    }
+  } catch {
+    // fall through to empty
+  }
+  return { caregiverPhone: '', doctorPhone: '' };
+}
+
 export const FamilySOSModal: React.FC<FamilySOSModalProps> = ({ isOpen, onClose }) => {
   const { activeProfile } = useProfiles();
   const { stats } = useReadings();
 
-  const [caregiverPhone, setCaregiverPhone] = useState('081234567890');
-  const [doctorPhone, setDoctorPhone] = useState('089988776655');
+  // Contacts start empty and persist whatever the user actually enters —
+  // no placeholder numbers that silently reset.
+  const [caregiverPhone, setCaregiverPhone] = useState<string>(() => loadSosContacts().caregiverPhone);
+  const [doctorPhone, setDoctorPhone] = useState<string>(() => loadSosContacts().doctorPhone);
+
+  useEffect(() => {
+    const contacts: SosContacts = { caregiverPhone, doctorPhone };
+    localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(contacts));
+  }, [caregiverPhone, doctorPhone]);
 
   const latest = stats.latestReading;
   const category = latest ? classifyBP(latest.systolic, latest.diastolic) : null;
@@ -88,6 +115,7 @@ export const FamilySOSModal: React.FC<FamilySOSModalProps> = ({ isOpen, onClose 
             <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 block">
               Nomor WhatsApp Keluarga / Caregiver:
             </label>
+            <p className="text-[10px] text-slate-400 -mt-1">Nomor tersimpan otomatis di perangkat ini untuk pemakaian darurat berikutnya.</p>
             <div className="flex gap-2">
               <input
                 type="tel"
@@ -104,6 +132,33 @@ export const FamilySOSModal: React.FC<FamilySOSModalProps> = ({ isOpen, onClose 
                 WhatsApp
               </button>
             </div>
+
+            {/* Doctor Direct Call (only when the user saved a number) */}
+            {doctorPhone.trim() && (
+              <div className="pt-1">
+                <a
+                  href={`tel:${doctorPhone.replace(/[^0-9+]/g, '')}`}
+                  className="w-full py-3 rounded-2xl bg-slate-900 dark:bg-slate-700 text-white font-black text-xs shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
+                >
+                  <Phone className="w-4 h-4" />
+                  Hubungi Dokter Tersimpan
+                </a>
+              </div>
+            )}
+
+            <details className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2">
+              <summary className="text-[11px] font-bold text-slate-500 dark:text-slate-400 cursor-pointer">
+                Nomor dokter (opsional)
+              </summary>
+              <input
+                type="tel"
+                value={doctorPhone}
+                onChange={(e) => setDoctorPhone(e.target.value)}
+                placeholder="Nomor WhatsApp / telepon dokter Anda"
+                className="mt-2 w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
+                aria-label="Nomor telepon dokter"
+              />
+            </details>
 
             {/* Ambulance Direct Call */}
             <div className="pt-2">

@@ -3,7 +3,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { useAppStore } from '../../store/useAppStore';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { createBackupFilename, createBackupPayload, downloadJsonFile, normalizeBackupPayload, restoreBackupPayload } from '../../utils/backup';
-import { ArrowLeft, CloudUpload, Download, Palette, RefreshCw, ShieldCheck, Smartphone, Upload, Wifi, Database, FileJson, MoonStar, SunMedium, CircleGauge, Bell, BellOff } from '../icons/AppIcons';
+import { ArrowLeft, CloudUpload, Download, Palette, RefreshCw, ShieldCheck, Smartphone, Upload, Wifi, Database, FileJson, MoonStar, SunMedium, CircleGauge, Bell, BellOff, Bluetooth, Lock } from '../icons/AppIcons';
+import { DevicePairingButton } from '../bluetooth/DevicePairingButton';
 import {
   isNotificationSupported,
   requestNotificationPermission,
@@ -19,7 +20,11 @@ type InstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 };
 
-export const SettingsPage: React.FC = () => {
+interface SettingsPageProps {
+  onOpenSecurityBackup?: () => void;
+}
+
+export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenSecurityBackup }) => {
   const navigate = useNavigate();
   const theme = useAppStore((state) => state.theme);
   const setTheme = useAppStore((state) => state.setTheme);
@@ -358,6 +363,42 @@ export const SettingsPage: React.FC = () => {
             </div>
           </article>
         )}
+
+        {/* Perangkat & Keamanan Card */}
+        <article className="hallmark-card p-6 space-y-5 lg:col-span-2">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <Bluetooth className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Tensimeter Bluetooth</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Hubungkan tensimeter BLE (profil GATT 0x1810) agar pengukuran masuk otomatis — tanpa ketik manual.</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+            <DevicePairingButton />
+          </div>
+
+          <div className="flex items-center gap-3 pt-1">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-slate-600 to-slate-800 text-white flex items-center justify-center shadow-lg shadow-slate-700/20">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-black text-slate-900 dark:text-slate-100">Backup Terenkripsi (AES-256-GCM)</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Ekspor file .albackup yang dilindungi password Anda sendiri — aman dibawa ke mana pun.</p>
+            </div>
+            {onOpenSecurityBackup && (
+              <button
+                type="button"
+                onClick={onOpenSecurityBackup}
+                className="px-4 py-3 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-extrabold text-sm active:scale-95 transition-all shrink-0"
+              >
+                Buka
+              </button>
+            )}
+          </div>
+        </article>
 
         <article className="hallmark-card p-6 space-y-4 lg:col-span-2">
           <div className="flex items-center gap-3">

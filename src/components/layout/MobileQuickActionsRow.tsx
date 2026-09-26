@@ -10,7 +10,9 @@ import {
   Stethoscope, 
   Utensils,
   BrainCircuit,
-  ArrowRight
+  ArrowRight,
+  AlertTriangle,
+  FileCode
 } from '../icons/AppIcons';
 import { playClickSound } from '../../utils/audio-fx';
 import { useAppStore } from '../../store/useAppStore';
@@ -29,6 +31,7 @@ interface MobileQuickActionsRowProps {
   onOpenFhir: () => void;
 }
 
+
 export const MobileQuickActionsRow: React.FC<MobileQuickActionsRowProps> = ({
   onOpenReading,
   onOpenRestTimer,
@@ -37,8 +40,10 @@ export const MobileQuickActionsRow: React.FC<MobileQuickActionsRowProps> = ({
   onOpenHabits,
   onOpenSodium,
   onOpenAscvd,
+  onOpenSOS,
   onOpenExportPdf,
   onOpenClinicalNotes,
+  onOpenFhir,
 }) => {
   const openAiModal = useAppStore((state) => state.openAiModal);
 
@@ -122,6 +127,22 @@ export const MobileQuickActionsRow: React.FC<MobileQuickActionsRowProps> = ({
       icon: Stethoscope,
       color: 'bg-violet-600 dark:bg-violet-500 text-white',
       onClick: onOpenClinicalNotes,
+    },
+    {
+      id: 'fhir-inspector',
+      label: 'Resource FHIR',
+      sublabel: 'HL7 R4 JSON',
+      icon: FileCode,
+      color: 'bg-cyan-700 dark:bg-cyan-600 text-white',
+      onClick: onOpenFhir,
+    },
+    {
+      id: 'sos',
+      label: 'SOS Darurat',
+      sublabel: 'Keluarga & Ambulans',
+      icon: AlertTriangle,
+      color: 'bg-rose-600 dark:bg-rose-500 text-white',
+      onClick: onOpenSOS,
     },
   ];
 

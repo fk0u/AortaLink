@@ -12,7 +12,8 @@ interface CdssAlertBannerProps {
 
 export const CdssAlertBanner: React.FC<CdssAlertBannerProps> = ({
   alerts,
-  dippingReport
+  dippingReport,
+  onOpenFhirInspector
 }) => {
   const hasValidDipping = dippingReport && dippingReport.label !== 'Data Tidak Cukup';
   const hasAlerts = alerts && alerts.length > 0;
@@ -97,6 +98,16 @@ export const CdssAlertBanner: React.FC<CdssAlertBannerProps> = ({
               </div>
             ))}
           </div>
+        )}
+
+        {onOpenFhirInspector && (
+          <button
+            type="button"
+            onClick={onOpenFhirInspector}
+            className="self-start text-[10px] font-black uppercase tracking-wider text-teal-700 dark:text-teal-300 hover:underline"
+          >
+            Lihat Resource FHIR Terkait →
+          </button>
         )}
       </motion.div>
     </AnimatePresence>

@@ -6,9 +6,14 @@ import { playClickSound } from '../../utils/audio-fx';
 import { timeService } from '../../services/time/time-service';
 import { Heart, LayoutDashboard, History, FileText, Bell, Plus, Settings, UserRound, LogOut, SunMedium, MoonStar, Clock } from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
+import { ShieldAlert } from '../icons/AppIcons';
 import { useAuthStore } from '../../store/useAuthStore';
 
-export const DesktopHeader: React.FC = () => {
+interface DesktopHeaderProps {
+  onOpenSOS?: () => void;
+}
+
+export const DesktopHeader: React.FC<DesktopHeaderProps> = ({ onOpenSOS }) => {
   const routerState = useRouterState();
   const navigate = useNavigate();
   const openReadingModal = useAppStore((state) => state.openReadingModal);
@@ -108,6 +113,22 @@ export const DesktopHeader: React.FC = () => {
             <Clock size={13} className="text-teal-600 dark:text-teal-400" />
             <span>{currentTimeStr}</span>
           </div>
+
+          {/* Emergency SOS */}
+          {onOpenSOS && (
+            <button
+              type="button"
+              onClick={() => {
+                playClickSound();
+                onOpenSOS();
+              }}
+              className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 transition-all active:scale-95"
+              title="Kirim SOS Darurat"
+              aria-label="Kirim notifikasi darurat SOS"
+            >
+              <ShieldAlert size={16} />
+            </button>
+          )}
 
           {/* Quick Theme Toggle */}
           <button

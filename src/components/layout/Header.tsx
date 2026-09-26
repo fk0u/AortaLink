@@ -15,7 +15,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenSOS }) => {
       </div>
 
       {/* Desktop Header */}
-      <DesktopHeader />
+      <DesktopHeader onOpenSOS={onOpenSOS} />
     </>
   );
 };

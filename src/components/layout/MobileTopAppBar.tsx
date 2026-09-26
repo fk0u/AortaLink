@@ -1,6 +1,6 @@
 import React from 'react';
 import { CustomProfileSelector } from '../profiles/CustomProfileSelector';
-import { Heart, Volume2, MoreVertical } from '../icons/AppIcons';
+import { Heart, Volume2, MoreVertical, ShieldAlert } from '../icons/AppIcons';
 import { playClickSound } from '../../utils/audio-fx';
 import { useNavigate } from '@tanstack/react-router';
 import { useAppStore } from '../../store/useAppStore';
@@ -15,7 +15,7 @@ interface MobileTopAppBarProps {
   onOpenSOS?: () => void;
 }
 
-export const MobileTopAppBar: React.FC<MobileTopAppBarProps> = () => {
+export const MobileTopAppBar: React.FC<MobileTopAppBarProps> = ({ onOpenSOS }) => {
   const navigate = useNavigate();
   const openMobileToolsSheet = useAppStore((state) => state.openMobileToolsSheet);
   const { stats } = useReadings();
@@ -77,6 +77,22 @@ export const MobileTopAppBar: React.FC<MobileTopAppBarProps> = () => {
         >
           <Volume2 size={16} />
         </button>
+
+        {/* Emergency SOS */}
+        {onOpenSOS && (
+          <button
+            type="button"
+            onClick={() => {
+              playClickSound();
+              onOpenSOS();
+            }}
+            className="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center active:scale-90 transition-all hover:bg-rose-200 dark:hover:bg-rose-900"
+            title="Kirim SOS Darurat"
+            aria-label="Kirim notifikasi darurat SOS"
+          >
+            <ShieldAlert size={16} />
+          </button>
+        )}
 
         {/* Tools & Menu Drawer Button */}
         <button
