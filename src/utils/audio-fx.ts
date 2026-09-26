@@ -4,7 +4,13 @@
  */
 
 let audioCtx: AudioContext | null = null;
-let soundEnabled = true;
+let soundEnabled = (() => {
+  try {
+    return localStorage.getItem('aortalink_sound_enabled') !== '0';
+  } catch {
+    return true;
+  }
+})();
 
 function getAudioContext(): AudioContext | null {
   try {
@@ -27,6 +33,11 @@ function getAudioContext(): AudioContext | null {
 
 export function setSoundEnabled(enabled: boolean) {
   soundEnabled = enabled;
+  try {
+    localStorage.setItem('aortalink_sound_enabled', enabled ? '1' : '0');
+  } catch {
+    // storage unavailable — preference stays session-only
+  }
 }
 
 export function isSoundEnabled(): boolean {

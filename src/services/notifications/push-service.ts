@@ -1,5 +1,5 @@
 /**
- * HeartSync Push Notification Service
+ * AortaLink Push Notification Service
  * Manages Web Push API local notifications for measurement & medication reminders.
  * Uses Notification API + Service Worker for offline-first local notifications.
  */
@@ -44,7 +44,7 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
   if (permission === 'granted') {
     permissionGranted = true;
     // Load persisted preference
-    const stored = localStorage.getItem('heartsync-notifications-enabled');
+    const stored = localStorage.getItem('aortalink_notifications_enabled');
     notificationEnabled = stored !== 'false'; // default true on first grant
     saveNotificationPreference();
   }
@@ -61,7 +61,7 @@ export function getNotificationPermission(): NotificationPermission {
 export function areNotificationsActive(): boolean {
   if (!isNotificationSupported()) return false;
   if (Notification.permission !== 'granted') return false;
-  const stored = localStorage.getItem('heartsync-notifications-enabled');
+  const stored = localStorage.getItem('aortalink_notifications_enabled');
   return stored !== 'false';
 }
 
@@ -78,12 +78,12 @@ export function setNotificationEnabled(enabled: boolean): void {
 }
 
 function saveNotificationPreference(): void {
-  localStorage.setItem('heartsync-notifications-enabled', String(notificationEnabled));
+  localStorage.setItem('aortalink_notifications_enabled', String(notificationEnabled));
 }
 
 /** Load notification preference from storage */
 export function loadNotificationPreference(): boolean {
-  const stored = localStorage.getItem('heartsync-notifications-enabled');
+  const stored = localStorage.getItem('aortalink_notifications_enabled');
   if (stored === null) {
     // First time: default to enabled if permission is granted
     notificationEnabled = Notification.permission === 'granted';
@@ -101,7 +101,7 @@ export async function sendLocalNotification(
   title: string,
   body: string,
   icon: string = '/favicon.svg',
-  tag: string = 'heartsync-reminder'
+  tag: string = 'aortalink-reminder'
 ): Promise<boolean> {
   if (!areNotificationsActive()) return false;
 
@@ -123,7 +123,7 @@ export async function sendLocalNotification(
       return true;
     }
   } catch (err) {
-    console.error('[HeartSync] Failed to send local notification:', err);
+    console.error('[AortaLink] Failed to send local notification:', err);
   }
 
   return false;

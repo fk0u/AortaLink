@@ -1,4 +1,4 @@
-const CACHE_NAME = 'heartsync-v3';
+const CACHE_NAME = 'aortalink-v4';
 const ASSETS = [
   '/',
   '/index.html',
@@ -37,7 +37,7 @@ self.addEventListener('push', (event) => {
     body: 'Pengingat dari HeartSync.',
     icon: '/favicon.svg',
     badge: '/favicon.svg',
-    tag: 'heartsync-reminder',
+    tag: 'aortalink-reminder',
     data: {
       url: '/',
     },

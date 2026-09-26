@@ -127,9 +127,6 @@ export interface SyncTombstone {
   deletedAt: string;
 }
 
-// Backward compatibility alias
-export const HeartSyncDatabase = AortaLinkDatabase;
-
 export const db = new AortaLinkDatabase();
 
 // ---------------------------------------------------------------------------

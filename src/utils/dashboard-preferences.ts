@@ -19,7 +19,9 @@ const sectionDefinitions: Array<{ id: DashboardSectionId; label: string }> = [
 ];
 
 export const DEFAULT_DASHBOARD_PREFERENCES: DashboardSection[] = sectionDefinitions.map((section, order) => ({ ...section, visible: true, order }));
-export const DASHBOARD_PREFERENCES_KEY = 'heartsync-dashboard-layout';
+export const DASHBOARD_PREFERENCES_KEY = 'aortalink-dashboard-layout';
+/** Legacy HeartSync-era key, migrated on first read. */
+const LEGACY_DASHBOARD_KEY = 'heartsync-dashboard-layout';
 
 export function loadDashboardPreferences(): DashboardSection[] {
   if (typeof window === 'undefined') return DEFAULT_DASHBOARD_PREFERENCES.map((section) => ({ ...section }));

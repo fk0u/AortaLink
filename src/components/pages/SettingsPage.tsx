@@ -3,6 +3,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { useAppStore } from '../../store/useAppStore';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { createBackupFilename, createBackupPayload, downloadJsonFile, normalizeBackupPayload, restoreBackupPayload } from '../../utils/backup';
+import { setSoundEnabled, isSoundEnabled } from '../../utils/audio-fx';
+import { Volume2 } from '../icons/AppIcons';
 import { ArrowLeft, CloudUpload, Download, Palette, RefreshCw, ShieldCheck, Smartphone, Upload, Wifi, Database, FileJson, MoonStar, SunMedium, CircleGauge, Bell, BellOff, Bluetooth, Lock } from '../icons/AppIcons';
 import { DevicePairingButton } from '../bluetooth/DevicePairingButton';
 import {
@@ -36,6 +38,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenSecurityBackup
   const [deferredPrompt, setDeferredPrompt] = useState<InstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+
+  // Sound effects preference (persisted by audio-fx itself)
+  const [soundOn, setSoundOn] = useState<boolean>(() => isSoundEnabled());
+
+  const handleSoundToggle = () => {
+    playClickSound();
+    const next = !soundOn;
+    setSoundEnabled(next);
+    setSoundOn(next);
+  };
 
   // Notification toggle state
   const [notificationsEnabled, setNotificationsEnabledState] = useState<boolean>(false);
@@ -363,6 +375,40 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onOpenSecurityBackup
             </div>
           </article>
         )}
+
+        {/* Efek Suara Card */}
+        <article className="hallmark-card p-6 space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-fuchsia-500 to-purple-500 text-white flex items-center justify-center shadow-lg shadow-purple-500/20">
+              <Volume2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Efek Suara</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Bunyi konfirmasi saat mencatat data dan notifikasi klinis.</p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+            <div>
+              <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100">{soundOn ? 'Suara Aktif' : 'Suara Senyap'}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                {soundOn ? 'Umpan balik audio aktif di perangkat ini.' : 'Aplikasi berjalan tanpa efek suara.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleSoundToggle}
+              className={`relative w-14 h-8 rounded-full transition-colors focus:outline-none ${soundOn ? 'bg-teal-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+              role="switch"
+              aria-checked={soundOn}
+              aria-label="Toggle efek suara"
+            >
+              <span
+                className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow-md transition-transform ${soundOn ? 'translate-x-7' : 'translate-x-1'}`}
+              />
+            </button>
+          </div>
+        </article>
 
         {/* Perangkat & Keamanan Card */}
         <article className="hallmark-card p-6 space-y-5 lg:col-span-2">

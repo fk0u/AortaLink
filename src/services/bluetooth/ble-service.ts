@@ -1,5 +1,5 @@
 /**
- * HeartSync Bluetooth LE Service
+ * AortaLink Bluetooth LE Service
  *
  * Implements Web Bluetooth API integration for auto-pairing with
  * digital blood pressure monitors (Omron, Beurer, etc.) via the

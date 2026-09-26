@@ -61,6 +61,7 @@ import { LocalMlAssistantWidget } from './components/ai/LocalMlAssistantWidget';
 import { useAuthStore } from './store/useAuthStore';
 import { MobileToolsSheet } from './components/layout/MobileToolsSheet';
 import { initializeNotificationService } from './services/notifications/push-service';
+import { OnboardingModal, ONBOARDING_DONE_KEY } from './components/onboarding/OnboardingModal';
 
 // Bluetooth pairing
 import { DevicePairingButton } from './components/bluetooth/DevicePairingButton';
@@ -204,12 +205,14 @@ export function App() {
   }, [isAuthenticated, screenKey, navigate]);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('heartsync-theme');
+    // Single canonical theme key; migrate the legacy HeartSync-era key once.
+    const savedTheme = localStorage.getItem('aortalink_theme') || localStorage.getItem('heartsync-theme');
     if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
       setTheme(savedTheme);
     } else {
       setTheme('light');
     }
+    localStorage.removeItem('heartsync-theme');
   }, [setTheme]);
 
   useEffect(() => {
@@ -220,7 +223,7 @@ export function App() {
       const resolvedTheme = theme === 'system' ? (mediaQuery.matches ? 'dark' : 'light') : theme;
       root.classList.toggle('dark', resolvedTheme === 'dark');
       root.style.colorScheme = resolvedTheme;
-      localStorage.setItem('heartsync-theme', theme);
+      localStorage.setItem('aortalink_theme', theme);
     };
 
     applyTheme();
@@ -249,6 +252,17 @@ export function App() {
     init();
   }, []);
 
+  // First-run onboarding: only for accounts without any real readings yet,
+  // and never shown again once finished.
+  const [onboardingDone, setOnboardingDone] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(ONBOARDING_DONE_KEY) !== null;
+    } catch {
+      return true;
+    }
+  });
+  const showOnboarding = isAuthenticated && !onboardingDone && !isLoading && rawReadings.length === 0;
+
   // Global Keyboard Shortcuts (Alt+N or Ctrl+N to open Reading Form)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -260,6 +274,51 @@ export function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [openReadingModal]);
+
+  // Esc closes the topmost open modal — one central handler instead of
+  // wiring every modal component individually.
+  const storeModalFlags = {
+    reading: useAppStore((state) => state.isReadingModalOpen),
+    ai: useAppStore((state) => state.isAiModalOpen),
+    toolsSheet: useAppStore((state) => state.isMobileToolsSheetOpen),
+    profile: useAppStore((state) => state.isProfileModalOpen),
+    exportPdf: useAppStore((state) => state.isExportPdfModalOpen),
+    reminder: useAppStore((state) => state.isReminderModalOpen)
+  };
+  const closeStoreModal = {
+    reading: useAppStore((state) => state.closeReadingModal),
+    ai: useAppStore((state) => state.closeAiModal),
+    toolsSheet: useAppStore((state) => state.closeMobileToolsSheet),
+    profile: useAppStore((state) => state.closeProfileModal),
+    exportPdf: useAppStore((state) => state.closeExportPdfModal),
+    reminder: useAppStore((state) => state.closeReminderModal)
+  };
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (deletingReadingId) { setDeletingReadingId(null); return; }
+      if (storeModalFlags.reading) { closeStoreModal.reading(); return; }
+      if (storeModalFlags.ai) { closeStoreModal.ai(); return; }
+      if (storeModalFlags.toolsSheet) { closeStoreModal.toolsSheet(); return; }
+      if (storeModalFlags.profile) { closeStoreModal.profile(); return; }
+      if (storeModalFlags.exportPdf) { closeStoreModal.exportPdf(); return; }
+      if (storeModalFlags.reminder) { closeStoreModal.reminder(); return; }
+      if (isRestTimerOpen) { setIsRestTimerOpen(false); return; }
+      if (isSecurityModalOpen) { setIsSecurityModalOpen(false); return; }
+      if (isSodiumModalOpen) { setIsSodiumModalOpen(false); return; }
+      if (isSOSModalOpen) { setIsSOSModalOpen(false); return; }
+      if (isMedModalOpen) { setIsMedModalOpen(false); return; }
+      if (isHabitsModalOpen) { setIsHabitsModalOpen(false); return; }
+      if (isLabModalOpen) { setIsLabModalOpen(false); return; }
+      if (isFhirModalOpen) { setIsFhirModalOpen(false); return; }
+      if (isJsonBackupModalOpen) { setIsJsonBackupModalOpen(false); return; }
+      if (isAscvdModalOpen) { setIsAscvdModalOpen(false); return; }
+      if (isClinicalNotesModalOpen) { setIsClinicalNotesModalOpen(false); }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  });
 
   const handleDeleteReading = async () => {
     if (!deletingReadingId) return;
@@ -777,6 +836,15 @@ export function App() {
         isOpen={isRestTimerOpen}
         onClose={() => setIsRestTimerOpen(false)}
         onTimerComplete={() => openReadingModal()}
+      />
+
+      {/* First-run guided onboarding */}
+      <OnboardingModal
+        open={showOnboarding}
+        onOpenProfile={() => useAppStore.getState().openProfileModal()}
+        onOpenMedication={() => setIsMedModalOpen(true)}
+        onOpenReading={() => openReadingModal()}
+        onFinish={() => setOnboardingDone(true)}
       />
 
       {/* All Subsystem Modals */}

@@ -1,5 +1,5 @@
 /**
- * DevicePairingButton — HeartSync
+ * DevicePairingButton — AortaLink
  *
  * A button that initiates Web Bluetooth scanning for blood pressure monitors,
  * connects via GATT, reads a measurement, and auto-saves to IndexedDB.

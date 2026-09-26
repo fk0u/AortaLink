@@ -1,5 +1,5 @@
 /**
- * HeartSync Gamification Service
+ * AortaLink Gamification Service
  * Tracks streaks, achievements, and calculates Heart Health Score.
  * Pure client-side computation from IndexedDB data.
  */
