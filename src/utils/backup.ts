@@ -1,4 +1,5 @@
-import { db, newSyncId } from '../db';
+import { db } from '../db';
+import { replaceAllLocalData } from '../db/local-data';
 import { BackupDataFormat, BPReading, HabitLog, Profile, Reminder } from '../types/blood-pressure';
 
 export function createBackupFilename(exportedAt = new Date()): string {
@@ -81,32 +82,17 @@ export function normalizeBackupPayload(input: unknown): BackupDataFormat {
 }
 
 export async function restoreBackupPayload(payload: BackupDataFormat) {
-  await db.transaction('rw', [db.profiles, db.readings, db.reminders, db.habits, db.medications, db.medicationLogs, db.labResults], async () => {
-    await Promise.all([
-      db.profiles.clear(),
-      db.readings.clear(),
-      db.reminders.clear(),
-      db.habits.clear(),
-      db.medications.clear(),
-      db.medicationLogs.clear(),
-      db.labResults.clear()
-    ]);
-
-    // Rekey legacy numeric reading ids to UUIDs so restores participate in
-    // collision-free cloud sync.
-    const rekeyedReadings = (payload.readings || []).map((r) => ({
-      ...r,
-      id: typeof r.id === 'string' && r.id ? r.id : newSyncId()
-    }));
-
-    await Promise.all([
-      db.profiles.bulkPut(payload.profiles),
-      db.readings.bulkPut(rekeyedReadings),
-      db.reminders.bulkPut(payload.reminders),
-      db.habits.bulkPut(payload.habits || []),
-      db.medications.bulkPut(payload.medications || []),
-      db.medicationLogs.bulkPut(payload.medicationLogs || []),
-      db.labResults.bulkPut(payload.labResults || [])
-    ]);
+  // Only tables the backup actually carries are replaced; see replaceAllLocalData
+  // for how deletions are tombstoned so the cloud doesn't resurrect them.
+  await replaceAllLocalData({
+    profiles: payload.profiles,
+    readings: payload.readings || [],
+    reminders: payload.reminders || [],
+    ...(payload.habits ? { habits: payload.habits } : {}),
+    ...(payload.medications ? { medications: payload.medications } : {}),
+    ...(payload.medicationLogs ? { medicationLogs: payload.medicationLogs } : {}),
+    ...(payload.labResults ? { labResults: payload.labResults } : {}),
+    ...(payload.fhirPatients ? { fhirPatients: payload.fhirPatients } : {}),
+    ...(payload.fhirObservations ? { fhirObservations: payload.fhirObservations } : {})
   });
 }

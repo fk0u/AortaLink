@@ -3,6 +3,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useProfiles } from '../../hooks/useProfiles';
 import { db } from '../../db';
 import { BackupDataFormat } from '../../types/blood-pressure';
+import { normalizeBackupPayload, restoreBackupPayload } from '../../utils/backup';
 import { encryptBackupData, decryptBackupData, EncryptedPayload } from '../../utils/crypto-storage';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, Key, ShieldCheck, Download, Upload, FileText, CheckCircle2, Eye, EyeOff, AlertTriangle, Database } from '../icons/AppIcons';
@@ -155,16 +156,9 @@ export const SecurityBackupModal: React.FC<SecurityBackupModalProps> = ({ isOpen
         throw new Error('Format data tidak lengkap.');
       }
 
-      // Overwrite database
-      await db.profiles.clear();
-      await db.readings.clear();
-      await db.reminders.clear();
-
-      await db.profiles.bulkAdd(dataToRestore.profiles);
-      await db.readings.bulkAdd(dataToRestore.readings);
-      if (dataToRestore.reminders) {
-        await db.reminders.bulkAdd(dataToRestore.reminders);
-      }
+      // Overwrite database through the sync-aware path: removed records are
+      // tombstoned so cloud sync doesn't bring them back.
+      await restoreBackupPayload(normalizeBackupPayload(dataToRestore));
 
       if (dataToRestore.profiles.length > 0) {
         switchProfile(dataToRestore.profiles[0].id);

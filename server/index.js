@@ -362,7 +362,7 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
      * least as new as the stored one. This prevents a stale device from
      * silently overwriting newer edits made on another device.
      */
-    const upsertCollection = async (collName, items, keyField = 'id') => {
+    const upsertCollection = async (collName, items, tableName, keyField = 'id') => {
       if (!Array.isArray(items) || items.length === 0) return { applied: 0, skipped: 0 };
       const collection = activeDb.collection(collName);
       let applied = 0;
@@ -381,28 +381,39 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
           { $set: { ...item, userId, clientUpdatedAt, serverReceivedAt: new Date().toISOString() } },
           { upsert: true }
         );
+        // A record written after its deletion (e.g. restored from a backup)
+        // retires the older tombstone, or other devices would delete it again.
+        if (clientUpdatedAt && item[keyField] !== undefined && item[keyField] !== null) {
+          const idStr = String(item[keyField]);
+          await activeDb.collection('tombstones').deleteMany({
+            userId,
+            table: tableName,
+            $or: [{ recordId: idStr }, { id: idStr }],
+            deletedAt: { $lt: clientUpdatedAt }
+          });
+        }
         applied++;
       }
       return { applied, skipped };
     };
 
     const syncResults = await Promise.all([
-      upsertCollection('observations', readings),
-      upsertCollection('medications', medications),
-      upsertCollection('medication_logs', medicationLogs),
-      upsertCollection('lab_results', labResults),
-      upsertCollection('habits', habits),
-      upsertCollection('sodium_logs', sodiumLogs),
-      upsertCollection('sleep_logs', sleepLogs),
-      upsertCollection('gamification', gamification),
-      upsertCollection('profiles', profiles),
-      upsertCollection('reminders', reminders),
-      upsertCollection('fhir_patients', fhirPatients),
-      upsertCollection('fhir_observations', fhirObservations),
-      upsertCollection('fhir_medication_requests', fhirMedicationRequests),
-      upsertCollection('fhir_medication_statements', fhirMedicationStatements),
-      upsertCollection('ascvd_profiles', ascvdProfiles),
-      upsertCollection('clinical_notes', clinicalNotes)
+      upsertCollection('observations', readings, 'readings'),
+      upsertCollection('medications', medications, 'medications'),
+      upsertCollection('medication_logs', medicationLogs, 'medicationLogs'),
+      upsertCollection('lab_results', labResults, 'labResults'),
+      upsertCollection('habits', habits, 'habits'),
+      upsertCollection('sodium_logs', sodiumLogs, 'sodiumLogs'),
+      upsertCollection('sleep_logs', sleepLogs, 'sleepLogs'),
+      upsertCollection('gamification', gamification, 'gamification'),
+      upsertCollection('profiles', profiles, 'profiles'),
+      upsertCollection('reminders', reminders, 'reminders'),
+      upsertCollection('fhir_patients', fhirPatients, 'fhirPatients'),
+      upsertCollection('fhir_observations', fhirObservations, 'fhirObservations'),
+      upsertCollection('fhir_medication_requests', fhirMedicationRequests, 'fhirMedicationRequests'),
+      upsertCollection('fhir_medication_statements', fhirMedicationStatements, 'fhirMedicationStatements'),
+      upsertCollection('ascvd_profiles', ascvdProfiles, 'ascvdProfiles'),
+      upsertCollection('clinical_notes', clinicalNotes, 'clinicalNotes')
     ]);
     for (const result of syncResults) {
       totalSynced += result.applied;
@@ -432,15 +443,25 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
     };
     if (Array.isArray(tombstones) && tombstones.length > 0) {
       for (const t of tombstones) {
-        if (!t || !t.id || !t.table) continue;
+        // Clients send `recordId` (see SyncTombstone); `id` is accepted for
+        // older builds. Checking only `t.id` used to drop every deletion.
+        const recordId = t?.recordId ?? t?.id;
+        if (recordId === undefined || recordId === null || recordId === '' || !t.table) continue;
+        const idStr = String(recordId);
+        const table = String(t.table);
         await tombstoneCollection.updateOne(
-          { id: String(t.id), table: String(t.table), userId },
-          { $set: { id: String(t.id), table: String(t.table), userId, deletedAt: t.deletedAt || new Date().toISOString() } },
+          { recordId: idStr, table, userId },
+          { $set: { recordId: idStr, table, userId, deletedAt: t.deletedAt || new Date().toISOString() } },
           { upsert: true }
         );
-        const collName = TABLE_TO_COLLECTION[t.table];
+        const collName = TABLE_TO_COLLECTION[table];
         if (collName) {
-          await activeDb.collection(collName).deleteOne({ id: t.id, userId });
+          // Auto-increment tables store numeric ids, UUID tables strings.
+          const asNum = Number(idStr);
+          await activeDb.collection(collName).deleteOne({
+            userId,
+            $or: [{ id: idStr }, ...(Number.isFinite(asNum) ? [{ id: asNum }] : [])]
+          });
         }
         totalSynced++;
       }

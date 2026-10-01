@@ -43,9 +43,18 @@ export const DesktopHeader: React.FC<DesktopHeaderProps> = ({ onOpenSOS }) => {
     navigate({ to: toPath });
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     playClickSound();
-    logout();
+    const result = await logout();
+    if (!result.loggedOut) {
+      // The cloud hasn't got these changes yet; logging out wipes this device.
+      const proceed = window.confirm(
+        `Ada ${result.unsyncedCount} perubahan yang belum tersinkron ke cloud (${result.message}). ` +
+        'Jika keluar sekarang, perubahan tersebut akan hilang dari perangkat ini. Tetap keluar?'
+      );
+      if (!proceed) return;
+      await logout({ force: true });
+    }
     navigate({ to: '/' });
   };
 

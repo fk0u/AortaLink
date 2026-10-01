@@ -1,10 +1,11 @@
 /* Hallmark · Light Mode Minimalist Auth Modal with Real MongoDB Atlas Auth & Skip Login Option */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, LogIn, UserPlus, Heart, Lock, Mail, ShieldCheck, CheckCircle2, RefreshCw, ArrowRight, Info } from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore, SubscriptionTier } from '../../store/useAuthStore';
 import { useFocusTrap } from '../../utils/modal-a11y';
+import { hasGuestDataToMigrate } from '../../db/local-data';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 
 interface AuthModalProps {
@@ -24,6 +25,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>('pro_ehr');
+  // Mode Lokal data on this device: offer to carry it into the account
+  // instead of silently discarding it.
+  const [hasGuestData, setHasGuestData] = useState(false);
+  const [migrateLocalData, setMigrateLocalData] = useState(true);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    hasGuestDataToMigrate()
+      .then((found) => { if (!cancelled) setHasGuestData(found); })
+      .catch(() => { if (!cancelled) setHasGuestData(false); });
+    return () => { cancelled = true; };
+  }, [isOpen]);
 
   const addToast = useAppStore((state) => state.addToast);
   const loginWithEmail = useAuthStore((state) => state.loginWithEmail);
@@ -45,7 +59,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           return;
         }
 
-        await registerWithEmail(name, email, password, selectedTier);
+        await registerWithEmail(name, email, password, selectedTier, { migrateLocalData: hasGuestData && migrateLocalData });
         playSuccessChime();
         addToast({
           type: 'success',
@@ -53,7 +67,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           message: `Selamat datang ${name}, akun Cloud EHR Anda berhasil dibuat.`
         });
       } else {
-        await loginWithEmail(email, password);
+        await loginWithEmail(email, password, { migrateLocalData: hasGuestData && migrateLocalData });
         playSuccessChime();
         addToast({
           type: 'success',
@@ -202,6 +216,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <Lock size={15} className="absolute left-3 top-3 text-slate-400" />
                 </div>
               </div>
+
+              {hasGuestData && (
+                <label className="flex items-start gap-2.5 p-3 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 text-left cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={migrateLocalData}
+                    onChange={(e) => setMigrateLocalData(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-teal-600"
+                  />
+                  <span className="text-[11px] leading-relaxed text-slate-700 dark:text-slate-200">
+                    <span className="font-bold">Pindahkan data Mode Lokal ke akun ini.</span>{' '}
+                    {migrateLocalData
+                      ? 'Catatan yang sudah tersimpan di perangkat ini akan ikut tersinkron ke akun.'
+                      : 'Data Mode Lokal di perangkat ini akan dihapus setelah berhasil masuk.'}
+                  </span>
+                </label>
+              )}
 
               <button
                 type="submit"
