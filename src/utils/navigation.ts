@@ -9,15 +9,6 @@ export const primaryTabPaths: Record<PrimaryTab, string> = {
   reminders: '/reminders'
 };
 
-export const utilityPagePaths: Record<UtilityPage, string> = {
-  profile: '/profile',
-  settings: '/settings',
-  landing: '/',
-  backup: '/backup',
-  privacy: '/privacy',
-  terms: '/terms'
-};
-
 export function getScreenKey(pathname: string): ScreenKey {
   if (pathname === '/dashboard') return 'dashboard';
   if (pathname === '/history') return 'history';

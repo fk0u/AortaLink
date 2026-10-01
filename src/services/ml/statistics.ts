@@ -66,26 +66,6 @@ export function olsFit(points: Array<{ x: number; y: number }>): RegressionResul
   return { slope, intercept, r2, standardError, n };
 }
 
-/** Pearson correlation coefficient; 0 when undefined. */
-export function pearson(xs: number[], ys: number[]): number {
-  const n = Math.min(xs.length, ys.length);
-  if (n < 2) return 0;
-  const mx = mean(xs.slice(0, n));
-  const my = mean(ys.slice(0, n));
-  let sxy = 0;
-  let sxx = 0;
-  let syy = 0;
-  for (let i = 0; i < n; i++) {
-    const dx = xs[i] - mx;
-    const dy = ys[i] - my;
-    sxy += dx * dy;
-    sxx += dx * dx;
-    syy += dy * dy;
-  }
-  if (sxx === 0 || syy === 0) return 0;
-  return sxy / Math.sqrt(sxx * syy);
-}
-
 export function sigmoid(z: number): number {
   // Numerically stable logistic function.
   if (z >= 0) return 1 / (1 + Math.exp(-z));

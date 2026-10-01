@@ -347,24 +347,6 @@ export function generateClinicalReportPDF({
   doc.save(fileName);
 }
 
-// Backward compatibility helpers
-export function generateDoctorPDF(
-  profile: Profile,
-  readings: BPReading[],
-  stats: BPSummaryStats,
-  medications: MedicationItem[] = [],
-  labResults: LabResult[] = []
-) {
-  return generateClinicalReportPDF({
-    profile,
-    readings,
-    stats,
-    medications,
-    labResults,
-    version: 'comprehensive'
-  });
-}
-
 export async function generateWeeklyReportPDF(profile: Profile, report: WeeklyReport) {
   return generateClinicalReportPDF({
     profile,

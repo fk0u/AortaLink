@@ -6,17 +6,11 @@
 import { db } from '../../db';
 import { format, parseISO, startOfDay, differenceInCalendarDays, subDays, isToday } from 'date-fns';
 import { classifyBP } from '../../utils/bp-classifier';
+import type { GamificationState } from '../../types/blood-pressure';
+
+export type { GamificationState };
 
 // ---- Types ----
-
-export interface GamificationState {
-  id: 'current';
-  streak: number;
-  longestStreak: number;
-  lastMeasurementDate: string | null; // YYYY-MM-DD
-  score: number; // 0-100
-  earnedBadges: string[]; // badge keys
-}
 
 export interface Badge {
   key: string;
