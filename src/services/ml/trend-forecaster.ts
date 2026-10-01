@@ -183,15 +183,3 @@ function buildConfidenceNote(r2: number, n: number, spanDays: number): string {
   }
   return `Keyakinan baik (R² ${r2.toFixed(2)}) dari ${n} pengukuran selama ${Math.round(spanDays)} hari.`;
 }
-
-/** Average of the most recent `days` days of readings; null when none exist in that window. */
-export function recentAverage(readings: BPReading[], days: number): { systolic: number; diastolic: number } | null {
-  if (readings.length === 0) return null;
-  const cutoff = Date.now() - days * 86_400_000;
-  const recent = readings.filter((r) => new Date(r.timestamp).getTime() >= cutoff);
-  if (recent.length === 0) return null;
-  return {
-    systolic: mean(recent.map((r) => r.systolic)),
-    diastolic: mean(recent.map((r) => r.diastolic))
-  };
-}

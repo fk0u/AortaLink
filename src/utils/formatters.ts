@@ -55,14 +55,6 @@ export function getLocalDateTimeForInput(d?: Date | string): string {
 }
 
 /**
- * Format a Date object or ISO string into a local 'YYYY-MM-DD' string
- * for <input type="date" /> in WITA / GMT+8.
- */
-export function getLocalDateForInput(d?: Date | string): string {
-  return timeService.getLocalDateString(d);
-}
-
-/**
  * Parses a 'YYYY-MM-DDTHH:mm' input value into a valid ISO string with timezone.
  */
 export function parseLocalDateTimeInput(val: string): string {
