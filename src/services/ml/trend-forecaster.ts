@@ -3,12 +3,12 @@
  * --------------------------------------------------
  * OLS regression over the user's real readings to model the systolic /
  * diastolic trajectory, quantify the weekly change, and project the next
- * days with a 95% confidence band. The model is fitted on-device from the
+ * days with a t-based 95% prediction interval. The model is fitted on-device from the
  * user's own data only — nothing is uploaded and nothing is invented.
  */
 
 import { BPReading } from '../../types/blood-pressure';
-import { olsFit, mean, type RegressionResult } from './statistics';
+import { olsFit, predictionHalfWidth, type RegressionResult } from './statistics';
 
 export type TrendDirection = 'rising' | 'falling' | 'stable';
 
@@ -16,8 +16,8 @@ export interface TrendForecastPoint {
   date: string; // ISO
   systolic: number;
   diastolic: number;
-  low: number; // 95% CI lower bound (systolic)
-  high: number; // 95% CI upper bound (systolic)
+  low: number; // 95% prediction interval lower bound (systolic)
+  high: number; // 95% prediction interval upper bound (systolic)
 }
 
 export interface BpTrendForecast {
@@ -31,7 +31,7 @@ export interface BpTrendForecast {
   slopePerWeekSystolic: number | null;
   slopePerWeekDiastolic: number | null;
   direction: TrendDirection;
-  /** True when the fitted slope is both large enough and well-supported enough to matter clinically. */
+  /** True when the slope is large enough to matter AND distinguishable from zero (slope t-test p < 0.05). */
   isClinicallySignificant: boolean;
   forecast: TrendForecastPoint[];
   assessment: string;
@@ -41,9 +41,9 @@ export interface BpTrendForecast {
 /** Minimum data for the regression to be reported at all. */
 const MIN_READINGS = 5;
 const MIN_SPAN_DAYS = 7;
-/** A slope must exceed this (mmHg/week) AND fit decently to be called clinically significant. */
+/** A slope must exceed this (mmHg/week) AND pass the slope t-test to be called significant. */
 const SIGNIFICANT_SLOPE_PER_WEEK = 1.5;
-const MIN_R2 = 0.15;
+const ALPHA = 0.05;
 /** |slope| below this (mmHg/week) is treated as flat. */
 const STABLE_SLOPE_EPSILON = 1.0;
 
@@ -115,17 +115,16 @@ export function forecastBpTrend(readings: BPReading[], horizonDays = 7): BpTrend
         : 'stable';
 
   const isClinicallySignificant =
-    Math.abs(slopePerWeekSystolic) >= SIGNIFICANT_SLOPE_PER_WEEK && sysFit.r2 >= MIN_R2;
+    Math.abs(slopePerWeekSystolic) >= SIGNIFICANT_SLOPE_PER_WEEK && sysFit.slopePValue < ALPHA;
 
-  // Project the next `horizonDays` days with a 95% band from the residual SE.
-  const horizonEnd = lastTime + horizonDays * 86_400_000;
+  // Project the next `horizonDays` days with a 95% prediction interval.
   const forecast: TrendForecastPoint[] = [];
   for (let day = 1; day <= horizonDays; day++) {
     const t = lastTime + day * 86_400_000;
     const x = (t - firstTime) / 86_400_000;
     const sys = sysFit.intercept + sysFit.slope * x;
     const dia = diaFit ? diaFit.intercept + diaFit.slope * x : sorted[nReadings - 1].diastolic;
-    const band = 1.96 * sysFit.standardError;
+    const band = predictionHalfWidth(sysFit, x);
     forecast.push({
       date: new Date(t).toISOString(),
       systolic: Math.round(sys),
@@ -166,12 +165,16 @@ function buildAssessment(
     if (direction === 'stable') {
       return `Tren tekanan darah Anda stabil (${slopeText}) berdasarkan ${n} pengukuran terakhir. Pertahankan rutinitas pengukuran.`;
     }
-    return `Tren cenderung ${direction === 'rising' ? 'naik' : 'turun'} ${slopeText}, namun variasi antar-pengukuran masih tinggi (R² ${fit.r2.toFixed(2)}) sehingga belum dapat disimpulkan secara meyakinkan.`;
+    return `Tren cenderung ${direction === 'rising' ? 'naik' : 'turun'} ${slopeText}, namun belum bermakna secara statistik (p=${fmtP(fit.slopePValue)}, R² ${fit.r2.toFixed(2)}) sehingga belum dapat disimpulkan.`;
   }
   if (direction === 'rising') {
-    return `Model mendeteksi kenaikan bermakna ${slopeText} (R² ${fit.r2.toFixed(2)}, n=${n}).Diskusikan dengan dokter — bawa catatan tren ini ke kunjungan berikutnya.`;
+    return `Tren naik ${slopeText}, bermakna secara statistik (p=${fmtP(fit.slopePValue)}, R² ${fit.r2.toFixed(2)}, n=${n}). Bawa catatan tren ini ke kunjungan dokter berikutnya.`;
   }
-  return `Model mendeteksi penurunan bermakna ${slopeText} (R² ${fit.r2.toFixed(2)}, n=${n}). Ini pertanda terapi/gaya hidup Anda bekerja — pertahankan.`;
+  return `Tren turun ${slopeText}, bermakna secara statistik (p=${fmtP(fit.slopePValue)}, R² ${fit.r2.toFixed(2)}, n=${n}). Ini gambaran data Anda, bukan bukti sebab-akibat.`;
+}
+
+export function fmtP(p: number): string {
+  return p < 0.001 ? '<0,001' : p.toFixed(3).replace('.', ',');
 }
 
 function buildConfidenceNote(r2: number, n: number, spanDays: number): string {

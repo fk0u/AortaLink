@@ -181,12 +181,12 @@ export function calculateNocturnalDipping(readings: BPReading[]): import('../typ
     pattern = 'riser';
     label = 'Riser / Reverse Dipper (Risiko Tinggi)';
     description = 'PERINGATAN: Tekanan darah malam hari justru LEBIH TINGGI daripada siang hari.';
-    clinicalAdvice = 'Sangat disarankan evaluasi Spesialis Penyakit Dalam! Risiko penyakit serebrovaskular/stroke nocturnal meningkat signifikan. Diskusikan evaluasi dosis atau kronoterapi obat malam dengan dokter.';
+    clinicalAdvice = 'Tunjukkan pola ini ke dokter Anda. Pola tekanan darah malam yang lebih tinggi berkaitan dengan risiko kardiovaskular yang lebih besar dan perlu dinilai langsung oleh dokter.';
   } else if (sysDipping < 10) {
     pattern = 'non_dipper';
     label = 'Non-Dipper (Risiko Kardiovaskular)';
     description = 'Penurunan tekanan darah saat tidur kurang dari 10%. Organ target tetap menerima tekanan tinggi di malam hari.';
-    clinicalAdvice = 'Diskusikan dengan dokter mengenai penyesuaian waktu minum obat (kronoterapi) menjelang tidur untuk perlindungan organ target.';
+    clinicalAdvice = 'Tunjukkan pola ini ke dokter saat kontrol. Jangan mengubah jadwal atau dosis obat sendiri.';
   } else if (sysDipping > 20) {
     pattern = 'extreme_dipper';
     label = 'Extreme Dipper';
@@ -244,7 +244,7 @@ export function evaluateClinicalAlerts(
         category: 'renal_impairment',
         severity: latestLab.serumCreatinine > 2.0 ? 'critical' : 'warning',
         message: `Kreatinin Serum: ${latestLab.serumCreatinine} mg/dL, Ureum Darah: ${latestLab.bloodUrea} mg/dL.`,
-        recommendation: 'Diperlukan pemantauan berkala fungsi ginjal (eGFR) oleh dokter Spesialis Penyakit Dalam untuk penyesuaian dosis obat.',
+        recommendation: 'Tunjukkan hasil ini ke dokter untuk pemantauan fungsi ginjal (eGFR).',
         valueString: `Creatinine ${latestLab.serumCreatinine} mg/dL`,
         timestamp: latestLab.timestamp
       });
@@ -264,7 +264,7 @@ export function evaluateClinicalAlerts(
         category: 'hypertension_stage',
         severity: 'critical',
         message: `Hasil pengukuran terbaru mencatat ${sys}/${dia} mmHg.`,
-        recommendation: 'SEGERA HUBUNGI FASILITAS KESEHATAN TERDEKAT (IGD)! Istirahat total dan hindari kepanikan.',
+        recommendation: 'Jika ada nyeri dada/punggung, sesak, sakit kepala hebat, gangguan penglihatan, lemah sesisi, atau bicara pelo: telepon 119 sekarang. Tanpa keluhan: istirahat 5 menit, ukur ulang, dan hubungi dokter hari ini bila tetap tinggi.',
         valueString: `${sys}/${dia} mmHg`,
         timestamp: latestReading.timestamp
       });

@@ -5,10 +5,15 @@
  * morning vs evening, weekday vs weekend) to surface behavioural BP patterns.
  * Every finding reports the group sizes behind it and degrades honestly to
  * "not_enough_data" when a comparison cannot be made.
+ *
+ * Group differences are only called 'significant' when the effect is large
+ * enough to matter AND Welch's t-test gives p < 0.05. A large effect without
+ * statistical support is reported as 'mild' (indicative). Thresholds-only
+ * findings (masked hypertension, variability) carry pValue = null.
  */
 
 import { BPReading } from '../../types/blood-pressure';
-import { mean, stdDev } from './statistics';
+import { mean, stdDev, welchTTest } from './statistics';
 
 export type BpPatternKey =
   | 'white_coat'
@@ -28,10 +33,27 @@ export interface BpPatternFinding {
   effectSize: number | null;
   /** Sizes of the two groups being compared, e.g. [clinicN, homeN]. */
   groupSizes: [number, number];
+  /** Welch t-test p-value for group comparisons; null for threshold-based findings. */
+  pValue: number | null;
   interpretation: string;
 }
 
 const MIN_GROUP = 3;
+const ALPHA = 0.05;
+
+/** Effect + Welch test → strength. 'significant' needs both a large effect and p < ALPHA. */
+function grade(a: number[], b: number[], strongEffect: number, mildEffect: number, absolute = false) {
+  const diff = mean(a) - mean(b);
+  const effect = absolute ? Math.abs(diff) : diff;
+  const pValue = welchTTest(a, b)?.pValue ?? 1;
+  const strength: PatternStrength =
+    effect >= strongEffect && pValue < ALPHA ? 'significant' : effect >= mildEffect ? 'mild' : 'none';
+  return { diff, pValue, strength };
+}
+
+function pText(p: number): string {
+  return p < 0.001 ? 'p<0,001' : `p=${p.toFixed(3).replace('.', ',')}`;
+}
 
 export function detectBpPatterns(readings: BPReading[]): BpPatternFinding[] {
   return [
@@ -60,13 +82,14 @@ function detectWhiteCoat(readings: BPReading[]): BpPatternFinding {
       strength: 'not_enough_data',
       effectSize: null,
       groupSizes: [clinic.length, home.length],
+      pValue: null,
       interpretation:
         'Butuh minimal 3 pengukuran di klinik/rumah sakit dan 3 di rumah untuk mendeteksi efek white-coat. Tandai konteks pengukuran saat mencatat.'
     };
   }
 
-  const diff = mean(clinic.map((r) => r.systolic)) - mean(home.map((r) => r.systolic));
-  if (diff >= 10) {
+  const { diff, pValue, strength } = grade(clinic.map((r) => r.systolic), home.map((r) => r.systolic), 10, 5);
+  if (strength === 'significant') {
     return {
       key: 'white_coat',
       label: 'Efek White-Coat',
@@ -74,10 +97,11 @@ function detectWhiteCoat(readings: BPReading[]): BpPatternFinding {
       strength: 'significant',
       effectSize: Math.round(diff),
       groupSizes: [clinic.length, home.length],
-      interpretation: `Tekanan darah di fasilitas kesehatan rata-rata ${Math.round(diff)} mmHg lebih tinggi daripada di rumah. Ini pola khas white-coat hypertension — data rumah Anda lebih mewakili kondisi sehari-hari, namun seretakan kedua angka ini saat konsultasi.`
+      pValue,
+      interpretation: `Tekanan darah di fasilitas kesehatan rata-rata ${Math.round(diff)} mmHg lebih tinggi daripada di rumah. Ini pola khas white-coat hypertension — data rumah Anda lebih mewakili kondisi sehari-hari, namun sertakan kedua angka ini saat konsultasi (${pText(pValue)}).`
     };
   }
-  if (diff >= 5) {
+  if (strength === 'mild') {
     return {
       key: 'white_coat',
       label: 'Efek White-Coat',
@@ -85,7 +109,8 @@ function detectWhiteCoat(readings: BPReading[]): BpPatternFinding {
       strength: 'mild',
       effectSize: Math.round(diff),
       groupSizes: [clinic.length, home.length],
-      interpretation: `Terdapat kecenderungan kenaikan ${Math.round(diff)} mmHg saat pengukuran di fasilitas kesehatan. Perbanyak pengukuran rumah untuk konfirmasi.`
+      pValue,
+      interpretation: `Ada kecenderungan kenaikan ${Math.round(diff)} mmHg saat pengukuran di fasilitas kesehatan, tetapi belum bermakna secara statistik (${pText(pValue)}). Perbanyak pengukuran untuk konfirmasi.`
     };
   }
   return {
@@ -95,6 +120,7 @@ function detectWhiteCoat(readings: BPReading[]): BpPatternFinding {
     strength: 'none',
     effectSize: Math.round(diff),
     groupSizes: [clinic.length, home.length],
+    pValue,
     interpretation: 'Tidak ada perbedaan bermakna antara pengukuran di klinik dan di rumah.'
   };
 }
@@ -112,6 +138,7 @@ function detectMaskedHypertension(readings: BPReading[]): BpPatternFinding {
       strength: 'not_enough_data',
       effectSize: null,
       groupSizes: [clinic.length, home.length],
+      pValue: null,
       interpretation: 'Tidak dapat dievaluasi — butuh minimal 3 pengukuran di klinik dan 3 di rumah.'
     };
   }
@@ -119,9 +146,11 @@ function detectMaskedHypertension(readings: BPReading[]): BpPatternFinding {
   const avgHomeSys = mean(home.map((r) => r.systolic));
   const avgHomeDia = mean(home.map((r) => r.diastolic));
   const avgClinicSys = mean(clinic.map((r) => r.systolic));
+  const avgClinicDia = mean(clinic.map((r) => r.diastolic));
 
+  // ESH 2023: home hypertension ≥135/85, office normal <140/90.
   const homeHigh = avgHomeSys >= 135 || avgHomeDia >= 85;
-  const clinicNormal = avgClinicSys < 130;
+  const clinicNormal = avgClinicSys < 140 && avgClinicDia < 90;
 
   if (homeHigh && clinicNormal) {
     return {
@@ -131,6 +160,7 @@ function detectMaskedHypertension(readings: BPReading[]): BpPatternFinding {
       strength: 'significant',
       effectSize: Math.round(avgHomeSys - avgClinicSys),
       groupSizes: [clinic.length, home.length],
+      pValue: null,
       interpretation: `Kebalikan white-coat: di rumah rata-rata ${Math.round(avgHomeSys)}/${Math.round(avgHomeDia)} mmHg (di atas batas), namun di klinik normal. Pola ini sering terlewat — sampaikan temuan ini kepada dokter Anda beserta data rumahnya.`
     };
   }
@@ -141,6 +171,7 @@ function detectMaskedHypertension(readings: BPReading[]): BpPatternFinding {
     strength: 'none',
     effectSize: Math.round(avgHomeSys - avgClinicSys),
     groupSizes: [clinic.length, home.length],
+    pValue: null,
     interpretation: 'Tidak ada indikasi tekanan tersembunyi — pengukuran rumah dan klinik Anda konsisten.'
   };
 }
@@ -164,13 +195,14 @@ function detectMorningSurge(readings: BPReading[]): BpPatternFinding {
       strength: 'not_enough_data',
       effectSize: null,
       groupSizes: [morning.length, evening.length],
+      pValue: null,
       interpretation:
         'Butuh minimal 3 pengukuran pagi (05–10) dan 3 pengukuran malam (18–23). Ukur di kedua waktu secara bergantian.'
     };
   }
 
-  const diff = mean(morning.map((r) => r.systolic)) - mean(evening.map((r) => r.systolic));
-  if (diff >= 8) {
+  const { diff, pValue, strength } = grade(morning.map((r) => r.systolic), evening.map((r) => r.systolic), 8, 4);
+  if (strength === 'significant') {
     return {
       key: 'morning_surge',
       label: 'Lonjakan Pagi (Morning Surge)',
@@ -178,10 +210,11 @@ function detectMorningSurge(readings: BPReading[]): BpPatternFinding {
       strength: 'significant',
       effectSize: Math.round(diff),
       groupSizes: [morning.length, evening.length],
-      interpretation: `Pengukuran pagi rata-rata ${Math.round(diff)} mmHg lebih tinggi daripada malam. Lonjakan pagi adalah faktor risiko kardiovaskular yang penting — pastikan obat pagi diminum tepat waktu dan ceritakan pola ini ke dokter.`
+      pValue,
+      interpretation: `Pengukuran pagi rata-rata ${Math.round(diff)} mmHg lebih tinggi daripada malam. Selisih ini bermakna secara statistik (${pText(pValue)}). Ceritakan pola ini ke dokter dan bawa catatan pengukuran pagi/malam Anda.`
     };
   }
-  if (diff >= 4) {
+  if (strength === 'mild') {
     return {
       key: 'morning_surge',
       label: 'Lonjakan Pagi (Morning Surge)',
@@ -189,7 +222,8 @@ function detectMorningSurge(readings: BPReading[]): BpPatternFinding {
       strength: 'mild',
       effectSize: Math.round(diff),
       groupSizes: [morning.length, evening.length],
-      interpretation: `Ada kecenderungan kenaikan ${Math.round(diff)} mmHg di pagi hari. Lanjutkan pemantauan pagi/malam untuk konfirmasi.`
+      pValue,
+      interpretation: `Ada kecenderungan kenaikan ${Math.round(diff)} mmHg di pagi hari, belum bermakna secara statistik (${pText(pValue)}). Lanjutkan pemantauan pagi/malam untuk konfirmasi.`
     };
   }
   return {
@@ -199,6 +233,7 @@ function detectMorningSurge(readings: BPReading[]): BpPatternFinding {
     strength: 'none',
     effectSize: Math.round(diff),
     groupSizes: [morning.length, evening.length],
+    pValue,
     interpretation: 'Tidak ada lonjakan pagi yang bermakna — variasi pagi-malam Anda dalam batas wajar.'
   };
 }
@@ -216,6 +251,7 @@ function detectVariability(readings: BPReading[]): BpPatternFinding {
       strength: 'not_enough_data',
       effectSize: null,
       groupSizes: [recent.length, 0],
+      pValue: null,
       interpretation: 'Butuh minimal 3 pengukuran dalam 14 hari terakhir untuk menilai variabilitas.'
     };
   }
@@ -229,6 +265,7 @@ function detectVariability(readings: BPReading[]): BpPatternFinding {
       strength: 'significant',
       effectSize: Math.round(sd),
       groupSizes: [recent.length, 0],
+      pValue: null,
       interpretation: `Tekanan darah Anda berfluktuasi lebar (simpangan baku ${Math.round(sd)} mmHg dalam 14 hari). Variabilitas tinggi berkaitan dengan risiko kardiovaskular — periksa konsistensi waktu ukur, posisi duduk, dan kepatuhan obat.`
     };
   }
@@ -240,6 +277,7 @@ function detectVariability(readings: BPReading[]): BpPatternFinding {
       strength: 'mild',
       effectSize: Math.round(sd),
       groupSizes: [recent.length, 0],
+      pValue: null,
       interpretation: `Fluktuasi antar-pengukuran cukup besar (simpangan baku ${Math.round(sd)} mmHg). Ukur pada jam yang sama setiap hari untuk hasil yang lebih dapat dibandingkan.`
     };
   }
@@ -250,6 +288,7 @@ function detectVariability(readings: BPReading[]): BpPatternFinding {
     strength: 'none',
     effectSize: Math.round(sd),
     groupSizes: [recent.length, 0],
+    pValue: null,
     interpretation: `Pengukuran Anda konsisten (simpangan baku ${Math.round(sd)} mmHg) — kondisi ini ideal untuk memantau efek terapi.`
   };
 }
@@ -272,21 +311,23 @@ function detectWeekendEffect(readings: BPReading[]): BpPatternFinding {
       strength: 'not_enough_data',
       effectSize: null,
       groupSizes: [weekday.length, weekend.length],
+      pValue: null,
       interpretation: 'Butuh minimal 3 pengukuran pada hari kerja dan 3 pada akhir pekan.'
     };
   }
 
-  const diff = mean(weekend.map((r) => r.systolic)) - mean(weekday.map((r) => r.systolic));
-  if (Math.abs(diff) >= 5) {
+  const { diff, pValue, strength } = grade(weekend.map((r) => r.systolic), weekday.map((r) => r.systolic), 5, 5, true);
+  if (strength !== 'none') {
     const worse = diff > 0 ? 'akhir pekan' : 'hari kerja';
     return {
       key: 'weekend_effect',
       label: 'Pola Akhir Pekan',
       detected: true,
-      strength: 'mild',
+      strength,
       effectSize: Math.round(diff),
       groupSizes: [weekday.length, weekend.length],
-      interpretation: `Tekanan darah cenderung lebih tinggi pada ${worse} (selisih ${Math.round(Math.abs(diff))} mmHg). Cek pola makan, tidur, dan jadwal obat di waktu tersebut.`
+      pValue,
+      interpretation: `Tekanan darah cenderung lebih tinggi pada ${worse} (selisih ${Math.round(Math.abs(diff))} mmHg, ${pText(pValue)}). Cek pola makan, tidur, dan jadwal obat di waktu tersebut.`
     };
   }
   return {
@@ -296,6 +337,7 @@ function detectWeekendEffect(readings: BPReading[]): BpPatternFinding {
     strength: 'none',
     effectSize: Math.round(diff),
     groupSizes: [weekday.length, weekend.length],
+    pValue,
     interpretation: 'Tidak ada perbedaan bermakna antara hari kerja dan akhir pekan.'
   };
 }

@@ -130,7 +130,7 @@ export function convertLabResultToFHIR(lab: LabResult, profile?: Profile): FhirO
       profileId: lab.profileId,
       status: 'final',
       category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '3084-1', display: 'Urate [Mass/volume] in Blood' }], text: 'Asam Urat' },
+      code: { coding: [{ system: 'http://loinc.org', code: '3084-1', display: 'Urate [Mass/volume] in Serum or Plasma' }], text: 'Asam Urat' },
       subject: subjectRef,
       effectiveDateTime: lab.timestamp,
       valueQuantity: { value: lab.uricAcid, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }
@@ -158,7 +158,7 @@ export function convertLabResultToFHIR(lab: LabResult, profile?: Profile): FhirO
       profileId: lab.profileId,
       status: 'final',
       category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '14927-8', display: 'Urea nitrogen [Mass/volume] in Blood' }], text: 'Ureum Darah' },
+      code: { coding: [{ system: 'http://loinc.org', code: '3091-6', display: 'Urea [Mass/volume] in Serum or Plasma' }], text: 'Ureum Darah' },
       subject: subjectRef,
       effectiveDateTime: lab.timestamp,
       valueQuantity: { value: lab.bloodUrea, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }

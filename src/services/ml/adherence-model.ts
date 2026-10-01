@@ -4,20 +4,23 @@
  * A logistic regression trained on-device with full-batch gradient descent
  * on the user's OWN daily records. Each labelled day is one training example:
  *
- *   features = [1, adherence, sodium, sleep, measurement-frequency]
+ *   features = [1, adherence, sodium, sleep]
  *   label    = 1 when that day's average BP met the personal target
  *
- * The learned weights are interpreted as odds ratios ("hari dengan kepatuhan
- * penuh punya odds terkontrol Xx lebih tinggi"). Deterministic — same data
- * always yields the same model. No randomness, no server, no fabrication:
+ * The learned weights are reported as odds ratios with 95% bootstrap
+ * confidence intervals; only ratios whose interval excludes 1 are
+ * interpreted, and always as association, not causation. Measurement
+ * frequency was dropped as a feature: people measure more often when their
+ * BP is high (reverse causality). Deterministic — seeded bootstrap, so the
+ * same data always yields the same model. No randomness, no server, no fabrication:
  * when there are fewer than MIN_LABELED_DAYS labelled days the analysis says
  * so instead of guessing.
  */
 
 import { BPReading, MedicationItem, MedicationLog, SleepLog, SodiumLog } from '../../types/blood-pressure';
-import { sigmoid, mean, round } from './statistics';
+import { sigmoid, mean, round, seededRandom, quantile } from './statistics';
 
-export type AdherenceFeature = 'kepatuhan_obat' | 'natrium' | 'tidur' | 'frekuensi_ukur';
+export type AdherenceFeature = 'kepatuhan_obat' | 'natrium' | 'tidur';
 
 export interface FeatureWeight {
   feature: AdherenceFeature;
@@ -28,6 +31,8 @@ export interface FeatureWeight {
 export interface OddsRatioInterpretation {
   feature: AdherenceFeature;
   oddsRatio: number;
+  /** 95% percentile-bootstrap confidence interval of the odds ratio. */
+  ci95: [number, number];
   interpretation: string;
 }
 
@@ -52,6 +57,7 @@ export interface AdherenceAnalysis {
     learningRate: number;
     epochs: number;
     l2Regularization: number;
+    bootstrapResamples: number;
     trainedAt: string;
   } | null;
   oddsRatios: OddsRatioInterpretation[] | null;
@@ -69,13 +75,13 @@ const TRAIN_WINDOW_DAYS = 60;
 const LEARNING_RATE = 0.1;
 const EPOCHS = 300;
 const L2 = 0.01;
+const BOOTSTRAP_RESAMPLES = 200;
 
 interface LabeledDay {
   dateKey: string; // YYYY-MM-DD
   adherence: number; // 0..1, logged doses / scheduled doses
   sodiumNorm: number; // 0..1.5, grams-ish scale (mg / 2000)
   sleepNorm: number; // hours / 8
-  freqNorm: number; // min(readings, 3) / 3
   label: 0 | 1;
 }
 
@@ -166,7 +172,6 @@ export function analyzeAdherenceImpact(input: {
       adherence,
       sodiumNorm: sodiumMg !== undefined ? Math.min(1.5, sodiumMg / 2000) : 1.0, // neutral prior at the DASH upper bound
       sleepNorm: sleepHours !== undefined ? Math.min(1.2, sleepHours / 8) : 1.0, // neutral prior at 8h
-      freqNorm: Math.min(3, dayReadings.length) / 3,
       label: avgSys <= targetSystolic && avgDia <= targetDiastolic ? 1 : 0
     });
   }
@@ -196,35 +201,31 @@ export function analyzeAdherenceImpact(input: {
 
   if (nLabeledDays < MIN_LABELED_DAYS) return base;
 
-  // --- Train logistic regression (full-batch gradient descent, deterministic) ---
-  const weights = [0, 0, 0, 0, 0]; // [bias, adherence, sodium, sleep, frequency]
+  const weights = trainLogistic(labelledDays);
   const epochs = EPOCHS;
-  for (let epoch = 0; epoch < epochs; epoch++) {
-    const gradient = [0, 0, 0, 0, 0];
-    for (const day of labelledDays) {
-      const features = [1, day.adherence, day.sodiumNorm, day.sleepNorm, day.freqNorm];
-      const z = features.reduce((sum, f, i) => sum + f * weights[i], 0);
-      const error = sigmoid(z) - day.label;
-      for (let i = 0; i < features.length; i++) {
-        gradient[i] += error * features[i];
-      }
-    }
-    for (let i = 0; i < weights.length; i++) {
-      // L2 regularization on non-bias terms.
-      const reg = i === 0 ? 0 : L2 * weights[i];
-      weights[i] -= (LEARNING_RATE / nLabeledDays) * gradient[i] + LEARNING_RATE * reg;
-    }
+
+  // Percentile bootstrap: refit on resampled days (seeded → reproducible).
+  const rand = seededRandom(nLabeledDays * 7919 + controlledCount);
+  const bootWeights: number[][] = [];
+  for (let b = 0; b < BOOTSTRAP_RESAMPLES; b++) {
+    const sample = labelledDays.map(() => labelledDays[Math.floor(rand() * nLabeledDays)]);
+    bootWeights.push(trainLogistic(sample));
   }
 
-  const featureNames: AdherenceFeature[] = ['kepatuhan_obat', 'natrium', 'tidur', 'frekuensi_ukur'];
+  const featureNames: AdherenceFeature[] = ['kepatuhan_obat', 'natrium', 'tidur'];
   const featureWeights: FeatureWeight[] = featureNames.map((name, i) => ({ feature: name, weight: weights[i + 1] }));
 
   const oddsRatios: OddsRatioInterpretation[] = featureWeights
-    .map((fw) => ({
-      feature: fw.feature,
-      oddsRatio: Math.exp(fw.weight),
-      interpretation: interpretOddsRatio(fw.feature, fw.weight)
-    }))
+    .map((fw, i) => {
+      const boot = bootWeights.map((w) => w[i + 1]);
+      const ci95: [number, number] = [Math.exp(quantile(boot, 0.025)), Math.exp(quantile(boot, 0.975))];
+      return {
+        feature: fw.feature,
+        oddsRatio: Math.exp(fw.weight),
+        ci95,
+        interpretation: interpretOddsRatio(fw.feature, fw.weight, ci95)
+      };
+    })
     .filter((o) => o.interpretation.length > 0);
 
   // Probability estimate for today given the most recent behaviour (yesterday's actuals).
@@ -234,8 +235,7 @@ export function analyzeAdherenceImpact(input: {
     1,
     yesterdayDay ? yesterdayDay.adherence : mean(labelledDays.map((d) => d.adherence)),
     yesterdayDay ? yesterdayDay.sodiumNorm : mean(labelledDays.map((d) => d.sodiumNorm)),
-    yesterdayDay ? yesterdayDay.sleepNorm : mean(labelledDays.map((d) => d.sleepNorm)),
-    yesterdayDay ? yesterdayDay.freqNorm : mean(labelledDays.map((d) => d.freqNorm))
+    yesterdayDay ? yesterdayDay.sleepNorm : mean(labelledDays.map((d) => d.sleepNorm))
   ];
   const controlProbabilityToday = sigmoid(probFeatures.reduce((sum, f, i) => sum + f * weights[i], 0));
 
@@ -247,7 +247,9 @@ export function analyzeAdherenceImpact(input: {
     lowAdherenceDays: dayStats(low, readingsByDay)
   };
 
-  const dominant = [...featureWeights].sort((a, b) => Math.abs(b.weight) - Math.abs(a.weight))[0];
+  // Only a factor whose CI excludes 1 can be called dominant.
+  const supported = oddsRatios.map((o) => featureWeights.find((fw) => fw.feature === o.feature)!);
+  const dominant = [...supported].sort((a, b) => Math.abs(b.weight) - Math.abs(a.weight))[0] ?? null;
 
   return {
     sufficientData: true,
@@ -261,6 +263,7 @@ export function analyzeAdherenceImpact(input: {
       learningRate: LEARNING_RATE,
       epochs,
       l2Regularization: L2,
+      bootstrapResamples: BOOTSTRAP_RESAMPLES,
       trainedAt: new Date().toISOString()
     },
     oddsRatios,
@@ -277,6 +280,26 @@ export function analyzeAdherenceImpact(input: {
   };
 }
 
+/** Full-batch gradient-descent logistic regression with L2 on non-bias terms. Deterministic. */
+function trainLogistic(days: LabeledDay[]): number[] {
+  const weights = [0, 0, 0, 0]; // [bias, adherence, sodium, sleep]
+  const n = days.length;
+  for (let epoch = 0; epoch < EPOCHS; epoch++) {
+    const gradient = [0, 0, 0, 0];
+    for (const day of days) {
+      const features = [1, day.adherence, day.sodiumNorm, day.sleepNorm];
+      const z = features.reduce((sum, f, i) => sum + f * weights[i], 0);
+      const error = sigmoid(z) - day.label;
+      for (let i = 0; i < features.length; i++) gradient[i] += error * features[i];
+    }
+    for (let i = 0; i < weights.length; i++) {
+      const reg = i === 0 ? 0 : L2 * weights[i];
+      weights[i] -= (LEARNING_RATE / n) * gradient[i] + LEARNING_RATE * reg;
+    }
+  }
+  return weights;
+}
+
 function dayStats(days: LabeledDay[], readingsByDay: Map<string, BPReading[]>,): DayGroupStats {
   if (days.length === 0) return { n: 0, avgSystolic: null, avgDiastolic: null };
   const allReadings = days.flatMap((d) => readingsByDay.get(d.dateKey) || []);
@@ -288,17 +311,17 @@ function dayStats(days: LabeledDay[], readingsByDay: Map<string, BPReading[]>,):
   };
 }
 
-function interpretOddsRatio(feature: AdherenceFeature, weight: number): string {
+function interpretOddsRatio(feature: AdherenceFeature, weight: number, ci95: [number, number]): string {
   if (Math.abs(weight) < 0.1) return ''; // negligible contribution — do not overinterpret
+  if (ci95[0] <= 1 && ci95[1] >= 1) return ''; // CI includes 1 — no supported association
   const or = Math.exp(weight);
   const featureLabel: Record<AdherenceFeature, string> = {
     kepatuhan_obat: 'Kepatuhan minum obat',
     natrium: 'Asupan natrium',
-    tidur: 'Durasi tidur',
-    frekuensi_ukur: 'Frekuensi pengukuran'
+    tidur: 'Durasi tidur'
   };
-  const direction = weight > 0 ? 'meningkatkan' : 'menurunkan';
-  return `${featureLabel[feature]} ${direction} peluang hari terkontrol sekitar ${or.toFixed(1)}x per unit perubahannya (model belajar dari data Anda).`;
+  const direction = weight > 0 ? 'lebih tinggi' : 'lebih rendah';
+  return `${featureLabel[feature]} berasosiasi dengan peluang hari terkontrol yang ${direction} (OR ${or.toFixed(1)}, CI 95% ${ci95[0].toFixed(1)}–${ci95[1].toFixed(1)}). Ini asosiasi dari data Anda, bukan bukti sebab-akibat.`;
 }
 
 function buildInsufficientAssessment(nLabeledDays: number, required: number, scheduledMedCount: number): string {
@@ -315,7 +338,7 @@ function buildInsufficientAssessment(nLabeledDays: number, required: number, sch
 function buildAssessment(
   adherence: number | null,
   controlledShare: number,
-  dominant: FeatureWeight,
+  dominant: FeatureWeight | null,
   probabilityToday: number,
   nDays: number,
   controlledDays: number
@@ -325,21 +348,18 @@ function buildAssessment(
       ? 'Tidak ada obat terjadwal'
       : `Kepatuhan obat Anda ${Math.round(adherence * 100)}%`;
   const controlText = `${controlledDays} dari ${nDays} hari terkontrol (${Math.round(controlledShare * 100)}%)`;
-  const probText = `Estimasi model untuk hari ini: ${Math.round(probabilityToday * 100)}% peluang terkontrol.`;
+  const probText = ` Estimasi model untuk hari ini: ${Math.round(probabilityToday * 100)}% peluang terkontrol (perkiraan statistik, bukan jaminan).`;
 
-  const dominantText =
-    Math.abs(dominant.weight) < 0.1
-      ? 'Belum ada faktor gaya hidup yang dominan memengaruhi kontrol Anda.'
-      : dominant.feature === 'kepatuhan_obat' && dominant.weight > 0
-        ? 'Faktor paling berpengaruh pada kontrol tekanan darah Anda adalah kepatuhan minum obat.'
-        : dominant.feature === 'natrium' && dominant.weight < 0
-          ? 'Faktor paling berpengaruh pada kontrol Anda adalah asupan natrium — hari dengan garam lebih rendah cenderung lebih terkontrol.'
-          : dominant.feature === 'tidur'
-            ? 'Durasi tidur tampak paling berkaitan dengan kontrol tekanan darah Anda.'
-            : 'Frekuensi pengukuran berkaitan dengan kontrol — hari dengan pengukuran lengkap cenderung lebih terkendali.';
+  const dominantText = !dominant
+    ? 'Belum ada faktor yang asosiasinya didukung data (interval kepercayaan masih mencakup 1).'
+    : dominant.feature === 'kepatuhan_obat'
+      ? 'Kepatuhan minum obat paling berasosiasi dengan kontrol tekanan darah Anda.'
+      : dominant.feature === 'natrium'
+        ? 'Asupan natrium paling berasosiasi dengan kontrol tekanan darah Anda.'
+        : 'Durasi tidur paling berasosiasi dengan kontrol tekanan darah Anda.';
 
   if (adherence !== null && adherence < 0.7) {
-    return `${adherenceText} dan ${controlText}. Kepatuhan di bawah 70% — kehilangan dosis rutin adalah penyebab paling umum tekanan tidak terkontrol.${probText}`;
+    return `${adherenceText} dan ${controlText}. Kepatuhan di bawah 70%: dosis yang terlewat adalah penyebab umum tekanan darah tidak terkontrol.${probText}`;
   }
   return `${adherenceText}, ${controlText}. ${dominantText}${probText}`;
 }

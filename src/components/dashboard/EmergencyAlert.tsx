@@ -45,8 +45,8 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ latestReading })
           </div>
           <p className="text-xs text-slate-200 leading-relaxed max-w-2xl">
             {isCrisis
-              ? 'Tekanan darah Anda berada di atas 180/120 mmHg. Duduk tenang, hindari aktivitas fisik berlebih, dan SEGERA hubungi atau kunjungi fasilitas kesehatan terdekat (IGD).'
-              : 'Tekanan darah Anda cukup tinggi (≥ 140/90 mmHg). Sangat disarankan untuk beristirahat, minum air putih, dan berkonsultasi dengan dokter untuk evaluasi dosis obat.'}
+              ? 'Tekanan darah Anda sangat tinggi. Jika ada nyeri dada atau punggung, sesak napas, sakit kepala hebat, gangguan penglihatan, lemah sesisi, atau bicara pelo: telepon 119 sekarang. Tanpa keluhan: duduk tenang 5 menit lalu ukur ulang; jika tetap setinggi ini, hubungi dokter hari ini. Jangan menambah obat sendiri.'
+              : 'Tekanan darah Anda cukup tinggi (≥ 140/90 mmHg). Istirahat duduk 5 menit lalu ukur ulang, dan tunjukkan hasilnya ke dokter. Jangan mengubah obat sendiri.'}
           </p>
         </div>
       </div>
