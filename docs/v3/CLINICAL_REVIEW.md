@@ -2,13 +2,13 @@
 
 > **Tanggal:** 2026-10-01 · **Metode:** panel multi-persona ala MiroFish, empat reviewer AI independen yang masing-masing membaca [`RESEARCH_ANALYSIS.md`](./RESEARCH_ANALYSIS.md), kode `master` dan issue terkait, lalu memverifikasi lewat pencarian web.
 >
-> ⚠️ **Ini pre-review, bukan validasi klinis.** v3.0 akan didaftarkan sebagai SaMD (Kepmenkes HK.01.07/MENKES/951/2026). Pendaftaran membutuhkan validasi klinis di populasi Indonesia dengan klinisi berlisensi sebagai PI, persetujuan KEPK, dan produsen berbadan hukum. Review AI tidak dapat menggantikan atau menandatangani bagian mana pun dari itu. Butir bertanda *perlu verifikasi* belum boleh dikodekan.
+> ⚠️ **Ini pre-review, bukan validasi klinis.** Bila nanti didaftarkan sebagai SaMD (Kepmenkes HK.01.07/MENKES/951/2026). Pendaftaran membutuhkan validasi klinis di populasi Indonesia dengan klinisi berlisensi sebagai PI, persetujuan KEPK, dan produsen berbadan hukum. Review AI tidak dapat menggantikan atau menandatangani bagian mana pun dari itu. Butir bertanda *perlu verifikasi* belum boleh dikodekan.
 
 ## 1. Keputusan yang sudah diambil
 
 | # | Keputusan | Oleh |
 |---|---|---|
-| D1 | v3.0 didaftarkan sebagai **SaMD** | Ghani, 2026-10-01 |
+| D1 | v3.0 **dibangun dengan standar SaMD** tapi belum didaftarkan: rilis publik = **non-alkes**; fitur SaMD hanya di **mode riset/akademik** (KEPK + dokter PI) untuk jurnal/tesis/skripsi ([#28](https://github.com/fk0u/AortaLink/issues/28)) | Ghani, 2026-10-01 |
 | D2 | Guideline default **ESH 2023 / PERHI** (≥140/90); ACC/AHA 2025 dan ESC 2024 bisa dipilih | Ghani, 2026-10-01 |
 | D3 | Pre-review klinis lewat panel persona AI sampai ada klinisi | Ghani, 2026-10-01 |
 
@@ -26,7 +26,7 @@
 ### 2.2 Konflik yang perlu keputusan
 | Isu | Panel IGD | Panel regulatory | Rekomendasi |
 |---|---|---|---|
-| Triage gejala dinamis (R1–R14) | Wajib, 14 aturan berurutan | Membuat fungsi menjadi IMDRF kategori III → kemungkinan **Kelas C** | **v3.0: layar darurat statis** (tombol 119/112 + daftar gejala yang dibaca pasien sendiri, selalu terlihat) → target **Kelas B**. Mesin aturan R1–R14 dibangun dan diuji, tapi dirilis di v3.x setelah QMS jalan. *Perlu keputusan Ghani.* |
+| Triage gejala dinamis (R1–R14) | Wajib, 14 aturan berurutan | Membuat fungsi menjadi IMDRF kategori III → kemungkinan **Kelas C** | **Terselesaikan oleh D1:** mode publik = layar darurat statis; R1–R14 hanya di mode riset. Semula: **v3.0: layar darurat statis** (tombol 119/112 + daftar gejala yang dibaca pasien sendiri, selalu terlihat) → target **Kelas B**. Mesin aturan R1–R14 dibangun dan diuji, tapi dirilis di v3.x setelah QMS jalan. *Perlu keputusan Ghani.* |
 | Tampilkan target BP akut aorta (sistolik <120, HR 60–80) | — | — | Panel aorta: **jangan** tampilkan ke pasien di rumah; target rumah <130/80. |
 
 ### 2.3 Bug kode yang ditemukan panel (master `9dbfcaa`)

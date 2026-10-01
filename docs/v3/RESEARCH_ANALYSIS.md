@@ -2,7 +2,7 @@
 
 > **Tanggal:** 2026-10-01 · **Basis:** [`FLOW_NOTES.md`](./FLOW_NOTES.md) (notulensi v3.0) + [`../AUDIT_LOGOS_AORTA.md`](../AUDIT_LOGOS_AORTA.md) + kode `master` (`9dbfcaa`).
 > **Status:** draft riset untuk perencanaan. Semua angka klinis di sini wajib diverifikasi ulang oleh reviewer klinis sebelum masuk kode.
-> **Update 2026-10-01:** v3.0 akan didaftarkan sebagai SaMD dan default guideline ESH/PERHI. Koreksi klinis atas dokumen ini ada di [`CLINICAL_REVIEW.md`](./CLINICAL_REVIEW.md) (mis. ambang darurat ≥180/≥110, ambang HBPM 135/85).
+> **Update 2026-10-01:** v3.0 dibangun dengan standar SaMD, dirilis publik sebagai non-alkes + mode riset/akademik (#28), default guideline ESH/PERHI. Koreksi klinis atas dokumen ini ada di [`CLINICAL_REVIEW.md`](./CLINICAL_REVIEW.md) (mis. ambang darurat ≥180/≥110, ambang HBPM 135/85).
 
 ---
 
