@@ -1,4 +1,4 @@
-import { db, withSyncMetadataSuppressed, type SyncTombstone } from '../../db';
+import { db, NOTES_ENCODING_RAW, withSyncMetadataSuppressed, type SyncTombstone } from '../../db';
 import { decodeLegacyEscapedText } from '../../security/sanitizer';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -194,9 +194,11 @@ export class MongoDbAtlasService {
           if (pendingDeletes.has(`${tableName}:${String(item.id)}`)) continue;
 
           if (tableName === 'readings') {
-            if (typeof item.notes === 'string') {
-              // Notes HTML-escaped by the old form sanitizer on another device.
-              item.notes = decodeLegacyEscapedText(item.notes);
+            if (item.notesEncoding !== NOTES_ENCODING_RAW) {
+              // Written by an old build that HTML-escaped notes. Decode once
+              // and mark it, so text typed as `&lt;` today is never touched.
+              if (typeof item.notes === 'string') item.notes = decodeLegacyEscapedText(item.notes);
+              item.notesEncoding = NOTES_ENCODING_RAW;
             }
             if (typeof item.id !== 'string' || !item.id) {
               // Cloud reading created before the UUID migration. Rekey it
@@ -243,6 +245,10 @@ export class MongoDbAtlasService {
             if (!tableObj) continue;
             const key = /^[0-9]+$/.test(String(recordId)) ? Number(recordId) : recordId;
             try {
+              // A local copy written after the deletion (e.g. restored from a
+              // backup) wins; the push below retires the cloud tombstone.
+              const local = await tableObj.get(key);
+              if (local && recordTime(local.updatedAt) > recordTime(t.deletedAt)) continue;
               await tableObj.delete(key);
             } catch {
               // record already absent — fine
@@ -251,7 +257,17 @@ export class MongoDbAtlasService {
         }
 
         totalRestored += await restoreTable(cloudData.profiles, db.profiles, 'profiles');
-        totalRestored += await restoreTable(cloudData.readings, db.readings, 'readings');
+        // UUID readings first, so a legacy numeric copy finds its migrated
+        // twin locally instead of being rekeyed into a duplicate.
+        const cloudReadings: any[] = Array.isArray(cloudData.readings) ? cloudData.readings : [];
+        totalRestored += await restoreTable(
+          [
+            ...cloudReadings.filter((r) => typeof r?.id === 'string'),
+            ...cloudReadings.filter((r) => typeof r?.id !== 'string')
+          ],
+          db.readings,
+          'readings'
+        );
         totalRestored += await restoreTable(cloudData.medications, db.medications, 'medications');
         totalRestored += await restoreTable(cloudData.medicationLogs, db.medicationLogs, 'medicationLogs');
         totalRestored += await restoreTable(cloudData.labResults, db.labResults, 'labResults');
@@ -341,7 +357,7 @@ export class MongoDbAtlasService {
 }
 
 /** Dexie table name → Dexie table, for applying cloud tombstones. */
-const TABLE_NAME_TO_DB: Record<string, { delete: (key: any) => Promise<void> }> = {
+const TABLE_NAME_TO_DB: Record<string, { get: (key: any) => Promise<any>; delete: (key: any) => Promise<void> }> = {
   profiles: db.profiles,
   readings: db.readings,
   medications: db.medications,

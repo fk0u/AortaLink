@@ -157,17 +157,23 @@ export class AortaLinkDatabase extends Dexie {
     // record is re-stamped so the repaired text wins the next cloud sync.
     this.version(10).upgrade(async (tx) => {
       const now = new Date().toISOString();
-      await tx.table('readings').toCollection().modify((reading: BPReading & { updatedAt?: string }) => {
-        if (typeof reading.notes !== 'string') return;
-        const decoded = decodeLegacyEscapedText(reading.notes);
-        if (decoded !== reading.notes) {
-          reading.notes = decoded;
-          reading.updatedAt = now;
+      await tx.table('readings').toCollection().modify((reading: BPReading & { updatedAt?: string; notesEncoding?: string }) => {
+        if (reading.notesEncoding === NOTES_ENCODING_RAW) return;
+        reading.notesEncoding = NOTES_ENCODING_RAW;
+        reading.updatedAt = now;
+        if (typeof reading.notes === 'string') {
+          reading.notes = decodeLegacyEscapedText(reading.notes);
         }
       });
     });
   }
 }
+
+/**
+ * Marks a reading whose `notes` are stored as typed. Readings without it were
+ * written by the old HTML-escaping sanitizer and still need decoding.
+ */
+export const NOTES_ENCODING_RAW = 'raw';
 
 /** Stable UUID for records that must merge across devices without collision. */
 export function newSyncId(): string {
@@ -267,7 +273,13 @@ db.use({
 
             if ((req.type === 'add' || req.type === 'put') && req.values && req.values.length > 0) {
               // Only stamp records that are actually synced tables.
-              const stamped = req.values.map((value) => ({ ...value, updatedAt: now }));
+              // Readings written by this build store notes as typed (see
+              // normalizeClinicalText); the marker tells pull not to decode them.
+              const stamped = req.values.map((value) =>
+                tableName === 'readings'
+                  ? { ...value, updatedAt: now, notesEncoding: NOTES_ENCODING_RAW }
+                  : { ...value, updatedAt: now }
+              );
               return downlevelTable.mutate({ ...req, values: stamped });
             }
 

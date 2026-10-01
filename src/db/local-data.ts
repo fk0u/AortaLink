@@ -1,4 +1,5 @@
-import { db, newSyncId, SYNCED_TABLES, withSyncMetadataSuppressed, type SyncTombstone } from './index';
+import { decodeLegacyEscapedText } from '../security/sanitizer';
+import { db, newSyncId, NOTES_ENCODING_RAW, SYNCED_TABLES, withSyncMetadataSuppressed, type SyncTombstone } from './index';
 
 // ---------------------------------------------------------------------------
 // Whole-database operations: account switches, guest → account migration,
@@ -183,7 +184,11 @@ export async function replaceAllLocalData(data: LocalDataSnapshot): Promise<void
 
   if (input.readings) {
     const idMap = new Map<unknown, string>();
-    input.readings = input.readings.map((r) => {
+    input.readings = input.readings.map((reading) => {
+      // Backups made by older builds carry HTML-escaped notes.
+      const r = reading.notesEncoding === NOTES_ENCODING_RAW || typeof reading.notes !== 'string'
+        ? reading
+        : { ...reading, notes: decodeLegacyEscapedText(reading.notes) };
       if (typeof r.id === 'string' && r.id) return r;
       const id = newSyncId();
       if (r.id !== undefined && r.id !== null) idMap.set(r.id, id);
