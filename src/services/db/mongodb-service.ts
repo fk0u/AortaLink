@@ -1,4 +1,5 @@
-import { db, newSyncId, withSyncMetadataSuppressed, type SyncTombstone } from '../../db';
+import { db, withSyncMetadataSuppressed, type SyncTombstone } from '../../db';
+import { decodeLegacyEscapedText } from '../../security/sanitizer';
 import { useAppStore } from '../../store/useAppStore';
 
 export interface MongoAtlasConfig {
@@ -175,18 +176,47 @@ export class MongoDbAtlasService {
         return Number.isFinite(t) ? t : 0;
       };
 
-      const restoreTable = async (items: any[], tableObj: any, tableName?: string) => {
+      // Deletions made on this device that the cloud hasn't seen yet. A cloud
+      // copy of such a record must not be restored, or pull-before-push would
+      // resurrect everything the user just deleted.
+      const pendingDeletes = new Set(
+        (await db.syncTombstones.toArray()).map((t) => `${t.table}:${t.recordId}`)
+      );
+      const legacyReadingTombstones: SyncTombstone[] = [];
+
+      const restoreTable = async (items: any[], tableObj: any, tableName: string) => {
         if (!Array.isArray(items) || items.length === 0) return 0;
         let applied = 0;
         for (const item of items) {
           delete item._id;
           delete item.userId;
-          // Cloud records created before the UUID migration carry device-local
-          // numeric ids; rekey them so they can never collide across devices.
-          if (tableName === 'readings' && (typeof item.id !== 'string' || !item.id)) {
-            item.id = newSyncId();
-          }
           if (item.id === undefined || item.id === null) continue;
+          if (pendingDeletes.has(`${tableName}:${String(item.id)}`)) continue;
+
+          if (tableName === 'readings') {
+            if (typeof item.notes === 'string') {
+              // Notes HTML-escaped by the old form sanitizer on another device.
+              item.notes = decodeLegacyEscapedText(item.notes);
+            }
+            if (typeof item.id !== 'string' || !item.id) {
+              // Cloud reading created before the UUID migration. Rekey it
+              // deterministically (a random id here minted a NEW duplicate on
+              // every pull) and tombstone the numeric id so the cloud copy is
+              // retired once this device pushes.
+              const legacyId = String(item.id);
+              legacyReadingTombstones.push({ table: 'readings', recordId: legacyId, deletedAt: new Date().toISOString() });
+              const twin = typeof item.timestamp === 'string'
+                ? await db.readings
+                    .where('timestamp')
+                    .equals(item.timestamp)
+                    .filter((r) => r.profileId === item.profileId && r.systolic === item.systolic && r.diastolic === item.diastolic)
+                    .first()
+                : undefined;
+              if (twin) continue; // already migrated locally (v9) under another id
+              item.id = `legacy-reading-${legacyId}`;
+            }
+          }
+
           const existing = await tableObj.get(item.id);
           if (existing) {
             const localTime = Math.max(recordTime(existing.updatedAt), recordTime(existing.createdAt));
@@ -205,11 +235,13 @@ export class MongoDbAtlasService {
       await withSyncMetadataSuppressed(async () => {
         // 1. Apply deletions from other devices BEFORE restoring records.
         if (Array.isArray(cloudData.tombstones)) {
-          for (const t of cloudData.tombstones as Array<SyncTombstone>) {
-            if (!t || !t.table || t.recordId === undefined) continue;
+          for (const t of cloudData.tombstones as Array<SyncTombstone & { id?: string }>) {
+            // Older server builds stored the record id under `id`.
+            const recordId = t?.recordId ?? t?.id;
+            if (!t || !t.table || recordId === undefined || recordId === null) continue;
             const tableObj = TABLE_NAME_TO_DB[t.table];
             if (!tableObj) continue;
-            const key = /^[0-9]+$/.test(String(t.recordId)) ? Number(t.recordId) : t.recordId;
+            const key = /^[0-9]+$/.test(String(recordId)) ? Number(recordId) : recordId;
             try {
               await tableObj.delete(key);
             } catch {
@@ -218,22 +250,26 @@ export class MongoDbAtlasService {
           }
         }
 
-        totalRestored += await restoreTable(cloudData.profiles, db.profiles);
+        totalRestored += await restoreTable(cloudData.profiles, db.profiles, 'profiles');
         totalRestored += await restoreTable(cloudData.readings, db.readings, 'readings');
-        totalRestored += await restoreTable(cloudData.medications, db.medications);
-        totalRestored += await restoreTable(cloudData.medicationLogs, db.medicationLogs);
-        totalRestored += await restoreTable(cloudData.labResults, db.labResults);
-        totalRestored += await restoreTable(cloudData.habits, db.habits);
-        totalRestored += await restoreTable(cloudData.sodiumLogs, db.sodiumLogs);
-        totalRestored += await restoreTable(cloudData.sleepLogs, db.sleepLogs);
-        totalRestored += await restoreTable(cloudData.gamification, db.gamification);
-        totalRestored += await restoreTable(cloudData.reminders, db.reminders);
-        totalRestored += await restoreTable(cloudData.fhirPatients, db.fhirPatients);
-        totalRestored += await restoreTable(cloudData.fhirObservations, db.fhirObservations);
-        totalRestored += await restoreTable(cloudData.fhirMedicationRequests, db.fhirMedicationRequests);
-        totalRestored += await restoreTable(cloudData.fhirMedicationStatements, db.fhirMedicationStatements);
-        totalRestored += await restoreTable(cloudData.ascvdProfiles, db.ascvdProfiles);
-        totalRestored += await restoreTable(cloudData.clinicalNotes, db.clinicalNotes);
+        totalRestored += await restoreTable(cloudData.medications, db.medications, 'medications');
+        totalRestored += await restoreTable(cloudData.medicationLogs, db.medicationLogs, 'medicationLogs');
+        totalRestored += await restoreTable(cloudData.labResults, db.labResults, 'labResults');
+        totalRestored += await restoreTable(cloudData.habits, db.habits, 'habits');
+        totalRestored += await restoreTable(cloudData.sodiumLogs, db.sodiumLogs, 'sodiumLogs');
+        totalRestored += await restoreTable(cloudData.sleepLogs, db.sleepLogs, 'sleepLogs');
+        totalRestored += await restoreTable(cloudData.gamification, db.gamification, 'gamification');
+        totalRestored += await restoreTable(cloudData.reminders, db.reminders, 'reminders');
+        totalRestored += await restoreTable(cloudData.fhirPatients, db.fhirPatients, 'fhirPatients');
+        totalRestored += await restoreTable(cloudData.fhirObservations, db.fhirObservations, 'fhirObservations');
+        totalRestored += await restoreTable(cloudData.fhirMedicationRequests, db.fhirMedicationRequests, 'fhirMedicationRequests');
+        totalRestored += await restoreTable(cloudData.fhirMedicationStatements, db.fhirMedicationStatements, 'fhirMedicationStatements');
+        totalRestored += await restoreTable(cloudData.ascvdProfiles, db.ascvdProfiles, 'ascvdProfiles');
+        totalRestored += await restoreTable(cloudData.clinicalNotes, db.clinicalNotes, 'clinicalNotes');
+
+        if (legacyReadingTombstones.length > 0) {
+          await db.syncTombstones.bulkPut(legacyReadingTombstones);
+        }
       });
 
       // Restore User Settings (Theme & Profile)

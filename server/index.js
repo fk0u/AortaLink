@@ -432,15 +432,25 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
     };
     if (Array.isArray(tombstones) && tombstones.length > 0) {
       for (const t of tombstones) {
-        if (!t || !t.id || !t.table) continue;
+        // Clients send `recordId` (see SyncTombstone); `id` is accepted for
+        // older builds. Checking only `t.id` used to drop every deletion.
+        const recordId = t?.recordId ?? t?.id;
+        if (recordId === undefined || recordId === null || recordId === '' || !t.table) continue;
+        const idStr = String(recordId);
+        const table = String(t.table);
         await tombstoneCollection.updateOne(
-          { id: String(t.id), table: String(t.table), userId },
-          { $set: { id: String(t.id), table: String(t.table), userId, deletedAt: t.deletedAt || new Date().toISOString() } },
+          { recordId: idStr, table, userId },
+          { $set: { recordId: idStr, table, userId, deletedAt: t.deletedAt || new Date().toISOString() } },
           { upsert: true }
         );
-        const collName = TABLE_TO_COLLECTION[t.table];
+        const collName = TABLE_TO_COLLECTION[table];
         if (collName) {
-          await activeDb.collection(collName).deleteOne({ id: t.id, userId });
+          // Auto-increment tables store numeric ids, UUID tables strings.
+          const asNum = Number(idStr);
+          await activeDb.collection(collName).deleteOne({
+            userId,
+            $or: [{ id: idStr }, ...(Number.isFinite(asNum) ? [{ id: asNum }] : [])]
+          });
         }
         totalSynced++;
       }

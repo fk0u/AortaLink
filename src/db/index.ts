@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie';
+import { decodeLegacyEscapedText } from '../security/sanitizer';
 import { Profile, BPReading, Reminder, HabitLog, GamificationState, SodiumLog, SleepLog, MedicationLog, MedicationItem, LabResult, FhirPatient, FhirObservation, FhirMedicationRequest, FhirMedicationStatement, AscvdProfile, ClinicalNote } from '../types/blood-pressure';
 
 export class AortaLinkDatabase extends Dexie {
@@ -150,6 +151,21 @@ export class AortaLinkDatabase extends Dexie {
           }
         }
       });
+
+    // Version 10: undo the HTML-escaping the old form sanitizer baked into
+    // stored reading notes (`kopi &amp;amp; jalan` → `kopi & jalan`). The
+    // record is re-stamped so the repaired text wins the next cloud sync.
+    this.version(10).upgrade(async (tx) => {
+      const now = new Date().toISOString();
+      await tx.table('readings').toCollection().modify((reading: BPReading & { updatedAt?: string }) => {
+        if (typeof reading.notes !== 'string') return;
+        const decoded = decodeLegacyEscapedText(reading.notes);
+        if (decoded !== reading.notes) {
+          reading.notes = decoded;
+          reading.updatedAt = now;
+        }
+      });
+    });
   }
 }
 
@@ -226,6 +242,16 @@ db.use({
     const tombstoneTable = downlevelDatabase.table('syncTombstones');
     return {
       ...downlevelDatabase,
+      // A plain `db.readings.delete(id)` opens a transaction on `readings`
+      // only, where the tombstone store is unreachable. Widen every write
+      // transaction on a synced table to include it.
+      transaction: (stores, mode, options) => {
+        const needsTombstones =
+          mode === 'readwrite' &&
+          !stores.includes('syncTombstones') &&
+          stores.some((name) => (SYNCED_TABLES as readonly string[]).includes(name));
+        return downlevelDatabase.transaction(needsTombstones ? [...stores, 'syncTombstones'] : stores, mode, options);
+      },
       table: (tableName) => {
         const downlevelTable = downlevelDatabase.table(tableName);
         if (!(SYNCED_TABLES as readonly string[]).includes(tableName)) {
@@ -253,14 +279,19 @@ db.use({
                 recordId: String(key),
                 deletedAt: now
               }));
-              void tombstoneTable.mutate({
-                type: 'put',
-                values: tombstones,
-                keys: tombstones.map((t) => [t.table, t.recordId]),
-                trans: req.trans,
-                criteria: undefined,
-                changeSpec: undefined
-              });
+              // Awaited: if the tombstone write fails, the delete must fail
+              // with it (and abort the transaction) instead of silently
+              // producing a deletion that never reaches other devices.
+              return tombstoneTable
+                .mutate({
+                  type: 'put',
+                  values: tombstones,
+                  keys: tombstones.map((t) => [t.table, t.recordId]),
+                  trans: req.trans,
+                  criteria: undefined,
+                  changeSpec: undefined
+                })
+                .then(() => downlevelTable.mutate(req));
             }
 
             // deleteRange / clear pass through untouched: bulk wipes are

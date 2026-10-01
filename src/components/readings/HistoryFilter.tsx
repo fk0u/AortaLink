@@ -4,6 +4,7 @@ import { useProfiles } from '../../hooks/useProfiles';
 import { db } from '../../db';
 import { BPCategoryKey, DateFilterRange, BPReading, BackupDataFormat } from '../../types/blood-pressure';
 import { Search, Filter, Download, Upload, X, Database } from '../icons/AppIcons';
+import { normalizeBackupPayload, restoreBackupPayload } from '../../utils/backup';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 
 export const HistoryFilter: React.FC = () => {
@@ -101,15 +102,9 @@ export const HistoryFilter: React.FC = () => {
           throw new Error('Format JSON cadangan tidak valid');
         }
 
-        await db.profiles.clear();
-        await db.readings.clear();
-        await db.reminders.clear();
-
-        await db.profiles.bulkAdd(backupData.profiles);
-        await db.readings.bulkAdd(backupData.readings);
-        if (backupData.reminders) {
-          await db.reminders.bulkAdd(backupData.reminders);
-        }
+        // Full replace through the sync-aware path: removed records are
+        // tombstoned so cloud sync doesn't bring them back.
+        await restoreBackupPayload(normalizeBackupPayload(backupData));
 
         if (backupData.profiles.length > 0) {
           switchProfile(backupData.profiles[0].id);

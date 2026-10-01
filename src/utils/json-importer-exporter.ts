@@ -1,4 +1,5 @@
 import { db, newSyncId } from '../db';
+import { replaceAllLocalData } from '../db/local-data';
 import {
   BackupDataFormat,
   Profile,
@@ -136,45 +137,19 @@ export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{
       }));
     }
 
-    await db.transaction(
-      'rw',
-      [
-        db.profiles,
-        db.readings,
-        db.reminders,
-        db.habits,
-        db.medications,
-        db.medicationLogs,
-        db.labResults,
-        db.fhirPatients,
-        db.fhirObservations
-      ],
-      async () => {
-        await Promise.all([
-          db.profiles.clear(),
-          db.readings.clear(),
-          db.reminders.clear(),
-          db.habits.clear(),
-          db.medications.clear(),
-          db.medicationLogs.clear(),
-          db.labResults.clear(),
-          db.fhirPatients.clear(),
-          db.fhirObservations.clear()
-        ]);
-
-        await Promise.all([
-          db.profiles.bulkPut(profiles),
-          db.readings.bulkPut(readings),
-          db.reminders.bulkPut(reminders),
-          db.habits.bulkPut(habits),
-          db.medications.bulkPut(medications),
-          db.medicationLogs.bulkPut(medicationLogs),
-          db.labResults.bulkPut(labResults),
-          db.fhirPatients.bulkPut(fhirPatients),
-          db.fhirObservations.bulkPut(fhirObservations)
-        ]);
-      }
-    );
+    // Replaces exactly the tables this backup format carries; deletions are
+    // tombstoned so the cloud doesn't resurrect them on the next sync.
+    await replaceAllLocalData({
+      profiles,
+      readings,
+      reminders,
+      habits,
+      medications,
+      medicationLogs,
+      labResults,
+      fhirPatients,
+      fhirObservations
+    });
 
     const totalRecords = profiles.length + readings.length + reminders.length;
     return {

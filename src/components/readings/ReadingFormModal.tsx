@@ -6,7 +6,7 @@ import { useFocusTrap } from '../../utils/modal-a11y';
 import { BodyPosition, ArmUsed, MeasurementContext, BPReading } from '../../types/blood-pressure';
 import { classifyBP, classifyAgeAdjustedBP } from '../../utils/bp-classifier';
 import { playClickSound, playSuccessChime, playAlertSound } from '../../utils/audio-fx';
-import { sanitizeText } from '../../security/sanitizer';
+import { normalizeClinicalText } from '../../security/sanitizer';
 import { getLocalDateTimeForInput, parseLocalDateTimeInput } from '../../utils/formatters';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -209,7 +209,7 @@ export const ReadingFormModal: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const sanitized = sanitizeText(notes);
+      const sanitized = normalizeClinicalText(notes);
 
       const finalIsoTimestamp = parseLocalDateTimeInput(timestamp);
 
