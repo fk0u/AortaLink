@@ -22,6 +22,7 @@ import {
   isBluetoothAvailable,
   scanAndReadBP,
   cleanup,
+  getBLEErrorMessage,
   type BLEConnectionState,
 } from '../../services/bluetooth/ble-service';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
@@ -83,7 +84,7 @@ export const DevicePairingButton: React.FC = () => {
         message: `${reading.systolic}/${reading.diastolic} mmHg · Nadi ${reading.pulse} BPM · ${reading.tags?.join(', ') || 'Bluetooth'}`,
       });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Gagal menghubungkan ke tensimeter.';
+      const message = getBLEErrorMessage(err);
       setErrorMessage(message);
       setConnectionState('error');
 

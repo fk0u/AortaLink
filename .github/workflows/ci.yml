@@ -1,4 +1,4 @@
-name: HeartSync CI Pipeline
+name: AortaLink CI
 
 on:
   push:
@@ -22,8 +22,11 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Build Verification
-        run: npx vite build
+      - name: Typecheck
+        run: npm run lint
+
+      - name: Build (rsbuild)
+        run: npm run build
 
       - name: Audit Dependencies for Vulnerabilities
         run: npm audit --audit-level=high --production
