@@ -1,6 +1,6 @@
 {
   "name": "aortalink",
-  "description": "AortaLink — Open-Source AI-Powered EHR Platform (HL7 FHIR R4 Compliant)",
+  "description": "AortaLink — open-source cardiovascular & aorta health companion (HL7 FHIR R4)",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -11,6 +11,7 @@
     "client": "rsbuild dev",
     "build": "rsbuild build",
     "lint": "tsc --noEmit",
+    "test:ml": "node --experimental-strip-types --no-warnings scripts/ml-selfcheck.ts",
     "preview": "rsbuild preview"
   },
   "dependencies": {

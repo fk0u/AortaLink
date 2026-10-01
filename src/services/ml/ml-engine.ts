@@ -13,7 +13,17 @@ import { forecastBpTrend, type BpTrendForecast } from './trend-forecaster';
 import { detectBpPatterns, type BpPatternFinding } from './pattern-detector';
 import { analyzeAdherenceImpact, type AdherenceAnalysis } from './adherence-model';
 
-export const ML_ENGINE_VERSION = '1.0.0';
+export const ML_ENGINE_VERSION = '2.0.0';
+
+/** Guideline the engine's thresholds follow (v3.0 default for Indonesian users). */
+export const ML_GUIDELINE = 'ESH 2023 / PERHI';
+
+/** ESH 2023 grade 3: ≥180 systolic OR ≥110 diastolic. */
+const SEVERE_SYSTOLIC = 180;
+const SEVERE_DIASTOLIC = 110;
+/** ESH 2023 treated target when tolerated: <130/80. Used only when the profile has no own target. */
+const DEFAULT_TARGET_SYSTOLIC = 130;
+const DEFAULT_TARGET_DIASTOLIC = 80;
 
 export type InsightPriority = 'critical' | 'warning' | 'positive' | 'info';
 
@@ -27,6 +37,7 @@ export interface MlInsight {
 export interface ClinicalMlReport {
   generatedAt: string;
   engineVersion: string;
+  guideline: string;
   dataSummary: {
     profileName: string;
     totalReadings: number;
@@ -53,7 +64,7 @@ export interface ClinicalMlInput {
 }
 
 export const ML_DISCLAIMER =
-  'Analisis dihasilkan mesin statistik on-device dari data Anda sendiri — bukan diagnosis. Keputusan terapi selalu bersama dokter.';
+  'Analisis statistik on-device dari data Anda sendiri. Bukan alat kesehatan, bukan diagnosis, dan tidak menggantikan dokter. Keputusan terapi selalu bersama dokter.';
 
 export function runClinicalMlAnalysis(input: ClinicalMlInput): ClinicalMlReport {
   const { profile, readings, medications, medicationLogs, sodiumLogs, sleepLogs, labResults } = input;
@@ -67,8 +78,8 @@ export function runClinicalMlAnalysis(input: ClinicalMlInput): ClinicalMlReport 
     readings,
     sodiumLogs,
     sleepLogs,
-    targetSystolic: profile?.targetSystolic || 120,
-    targetDiastolic: profile?.targetDiastolic || 80
+    targetSystolic: profile?.targetSystolic || DEFAULT_TARGET_SYSTOLIC,
+    targetDiastolic: profile?.targetDiastolic || DEFAULT_TARGET_DIASTOLIC
   });
 
   const insights = buildInsights({ profile, readings, trend, patterns, dipping, adherence, labResults });
@@ -80,6 +91,7 @@ export function runClinicalMlAnalysis(input: ClinicalMlInput): ClinicalMlReport 
   return {
     generatedAt: new Date().toISOString(),
     engineVersion: ML_ENGINE_VERSION,
+    guideline: ML_GUIDELINE,
     dataSummary: {
       profileName: profile?.name || 'Profil',
       totalReadings: readings.length,
@@ -121,16 +133,16 @@ function buildInsights(ctx: InsightContext): MlInsight[] {
     return insights;
   }
 
-  // 1. Crisis — latest reading in hypertensive crisis range.
+  // 1. Severe reading (ESH grade 3). Symptoms decide urgency, not the number alone.
   const latest = [...readings].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   )[0];
-  if (latest.systolic >= 180 || latest.diastolic >= 120) {
+  if (latest.systolic >= SEVERE_SYSTOLIC || latest.diastolic >= SEVERE_DIASTOLIC) {
     insights.push({
       id: 'crisis',
       priority: 'critical',
-      title: 'Pengukuran terakhir berada di zona krisis',
-      body: `Terukur ${latest.systolic}/${latest.diastolic} mmHg. Angka ini berada di ambang krisis hipertensi (≥180/120). Jika disertai gejala seperti nyeri dada, sesak napas, penglihatan kabur, atau bicara pelan, segera cari pertolongan medis — jangan menunggu pengukuran berikutnya.`
+      title: 'Pengukuran terakhir sangat tinggi',
+      body: `Terukur ${latest.systolic}/${latest.diastolic} mmHg (≥${SEVERE_SYSTOLIC}/${SEVERE_DIASTOLIC}). Jika ada nyeri dada atau punggung, sesak napas, sakit kepala hebat, gangguan penglihatan, lemah sesisi, atau bicara pelo: telepon 119 atau segera ke IGD, jangan ukur ulang. Tanpa keluhan: istirahat duduk 5 menit lalu ukur ulang; jika tetap setinggi ini, hubungi dokter hari ini. Jangan menambah obat sendiri.`
     });
   }
 
@@ -185,8 +197,8 @@ function buildInsights(ctx: InsightContext): MlInsight[] {
   }
 
   // 6. Positive reinforcement when genuinely controlled.
-  const targetSys = profile?.targetSystolic || 120;
-  const targetDia = profile?.targetDiastolic || 80;
+  const targetSys = profile?.targetSystolic || DEFAULT_TARGET_SYSTOLIC;
+  const targetDia = profile?.targetDiastolic || DEFAULT_TARGET_DIASTOLIC;
   const controlledShare = adherence.controlledDaysShare;
   if (
     controlledShare !== null &&
