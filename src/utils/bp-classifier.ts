@@ -1,4 +1,4 @@
-import { BPCategory, BPCategoryKey } from '../types/blood-pressure';
+import type { BPCategory, BPCategoryKey } from '../types/blood-pressure.ts';
 
 export const BP_CATEGORIES: Record<BPCategoryKey, BPCategory> = {
   normal: {

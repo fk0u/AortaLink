@@ -1,5 +1,5 @@
-import { BPReading } from '../types/blood-pressure';
-import { calculateMAP, calculatePulsePressure } from './bp-classifier';
+import type { BPReading } from '../types/blood-pressure.ts';
+import { calculateMAP, calculatePulsePressure } from './bp-classifier.ts';
 import { parseISO, getHours } from 'date-fns';
 
 export interface AdvancedMedicalMetrics {

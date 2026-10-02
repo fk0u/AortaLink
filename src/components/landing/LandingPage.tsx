@@ -164,10 +164,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
         diastolic: 84,
         pulse: 76,
         dippingPercent: '+12.1%',
-        status: 'Morning Surge (Jadwal Konsumsi CCB)',
+        status: 'Morning Surge (Fase Pagi Hari)',
         icon: Sun,
         themeBadge: 'bg-amber-50 text-amber-800 border-amber-200',
-        note: 'Lonjakan kortisol & tonus simpatis fisiologis saat bangun tidur. Waktu optimal pemberian Amlodipine 5mg untuk mengontrol tekanan darah 24 jam.'
+        note: 'Lonjakan kortisol & tonus simpatis fisiologis saat bangun tidur. Waktu pencatatan tensi rutin sebelum memulai aktivitas.'
       };
     } else if (hour >= 10 && hour <= 17) {
       return {
@@ -210,7 +210,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
     },
     {
       q: 'Bagaimana cara kerja analisis klinis di AortaLink?',
-      a: 'AortaLink memakai mesin analitik Machine Learning on-device buatan sendiri — regresi tren, deteksi pola (white-coat, lonjakan pagi, dipping), dan model kepatuhan obat — yang seluruhnya dihitung dari data pengukuran Anda di perangkat, mengikuti kerangka JNC-8, AHA/ACC 2017, dan PERHI. Tidak ada data yang dikirim ke server AI mana pun, dan setiap jawaban mencantumkan sumber datanya.'
+      a: 'Untuk pengguna umum, AortaLink beroperasi sebagai rekam data mandiri (Personal EHR) non-alkes dengan visualisasi tren deterministik. Modul inferensi klinis dan Machine Learning on-device (seperti deteksi pola white-coat, dipping, dan lonjakan pagi) dikhususkan untuk Mode Riset/Akademik dengan persetujuan Komisi Etik Penelitian Kesehatan (KEPK) dan informed consent. Seluruh komputasi berjalan 100% di perangkat tanpa mengirim data ke model AI eksternal pihak ketiga.'
     },
     {
       q: 'Apakah AortaLink dapat digunakan di smartphone tanpa instalasi app store?',
@@ -293,7 +293,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
 
             {/* Body */}
             <p className="gsap-hero-item text-sm sm:text-base text-slate-600 font-normal leading-relaxed max-w-2xl">
-              Platform Personal EHR yang menghubungkan data vital harian dengan evaluasi ritme sirkadian (<em>nocturnal dipping</em>), protokol kombinasi terapi CCB + ARB, serta asisten klinis spesialis penyakit dalam berstandar rumah sakit.
+              Platform Personal EHR terbuka untuk pencatatan mandiri tekanan darah harian, visualisasi tren vital offline-first, dan ekspor interoperabilitas standar HL7 FHIR R4 tanpa ketergantungan cloud.
             </p>
 
             {/* Actions */}
@@ -370,8 +370,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
                     <span className="text-xs font-bold text-slate-900">Contoh Pengguna (62 Tahun)</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Regimen</span>
-                    <span className="text-xs font-bold text-purple-700">CCB Pagi + ARB Malam</span>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Jadwal</span>
+                    <span className="text-xs font-bold text-purple-700">Pencatatan Terjadwal</span>
                   </div>
                 </div>
 
@@ -961,38 +961,43 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
 
       {/* Architectural Studio Footer */}
       <footer className="mt-auto border-t border-slate-200 bg-white py-8 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-5 h-5 rounded-md bg-teal-700 text-white flex items-center justify-center text-[10px]">
-              <Heart size={12} className="fill-white" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-5 h-5 rounded-md bg-teal-700 text-white flex items-center justify-center text-[10px]">
+                <Heart size={12} className="fill-white" />
+              </div>
+              <span className="font-bold text-slate-800">
+                © 2026 AortaLink — Personal Electronic Health Record (EHR)
+              </span>
             </div>
-            <span className="font-bold text-slate-800">
-              © 2026 AortaLink — Personal Electronic Health Record (EHR)
-            </span>
-          </div>
 
-          <div className="flex items-center gap-4 text-slate-600 font-mono text-[11px]">
-            <button
-              type="button"
-              onClick={() => {
-                playClickSound();
-                navigate({ to: '/privacy' });
-              }}
-              className="hover:text-teal-700 transition-colors"
-            >
-              Kebijakan Privasi
-            </button>
-            <span>/</span>
-            <button
-              type="button"
-              onClick={() => {
-                playClickSound();
-                navigate({ to: '/terms' });
-              }}
-              className="hover:text-teal-700 transition-colors"
-            >
-              Syarat Ketentuan
-            </button>
+            <div className="flex items-center gap-4 text-slate-600 font-mono text-[11px]">
+              <button
+                type="button"
+                onClick={() => {
+                  playClickSound();
+                  navigate({ to: '/privacy' });
+                }}
+                className="hover:text-teal-700 transition-colors"
+              >
+                Kebijakan Privasi
+              </button>
+              <span>/</span>
+              <button
+                type="button"
+                onClick={() => {
+                  playClickSound();
+                  navigate({ to: '/terms' });
+                }}
+                className="hover:text-teal-700 transition-colors"
+              >
+                Syarat Ketentuan
+              </button>
+            </div>
+          </div>
+          <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-500 leading-relaxed text-center sm:text-left">
+            <strong className="text-slate-700 font-semibold">Pernyataan Medis &amp; Regulasi:</strong> AortaLink dirilis sebagai sarana pencatatan mandiri dan rekam data pribadi (Personal EHR) non-alkes. Aplikasi ini tidak memberikan diagnosis medis, tidak menetapkan rencana terapi, dan bukan pengganti pemeriksaan tenaga medis profesional. Fitur analisis lanjutan dan inferensi model klinis dikhususkan untuk Mode Riset/Akademik dengan persetujuan Komisi Etik Penelitian Kesehatan (KEPK).
           </div>
         </div>
       </footer>

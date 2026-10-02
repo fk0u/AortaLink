@@ -17,8 +17,8 @@
  * so instead of guessing.
  */
 
-import { BPReading, MedicationItem, MedicationLog, SleepLog, SodiumLog } from '../../types/blood-pressure';
-import { sigmoid, mean, round, seededRandom, quantile } from './statistics';
+import type { BPReading, MedicationItem, MedicationLog, SleepLog, SodiumLog } from '../../types/blood-pressure.ts';
+import { sigmoid, mean, round, seededRandom, quantile } from './statistics.ts';
 
 export type AdherenceFeature = 'kepatuhan_obat' | 'natrium' | 'tidur';
 

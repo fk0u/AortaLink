@@ -11,9 +11,12 @@ import {
   ShieldCheck, 
   Plus,
   BrainCircuit,
-  Sparkles
+  Sparkles,
+  FlaskConical,
+  ChevronRight
 } from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
+import { useResearchStore } from '../../store/useResearchStore';
 import { playClickSound } from '../../utils/audio-fx';
 
 export const MobileToolsSheet: React.FC = () => {
@@ -24,6 +27,8 @@ export const MobileToolsSheet: React.FC = () => {
   const openProfileModal = useAppStore((state) => state.openProfileModal);
   const openReminderModal = useAppStore((state) => state.openReminderModal);
   const openExportPdfModal = useAppStore((state) => state.openExportPdfModal);
+  const openConsentModal = useResearchStore((state) => state.openConsentModal);
+  const isResearchActive = useResearchStore((state) => state.isActive);
 
   const goTo = (to: '/profile' | '/settings' | '/reports' | '/reminders' | '/backup' | '/') => {
     playClickSound();
@@ -235,6 +240,41 @@ export const MobileToolsSheet: React.FC = () => {
                     </div>
                   </button>
                 </div>
+              </div>
+
+              {/* Category 4: Mode Riset / Akademik */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400 px-2 flex items-center gap-1.5">
+                  <FlaskConical size={12} />
+                  <span>Penelitian &amp; Akademik</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClickSound();
+                    closeSheet();
+                    openConsentModal();
+                  }}
+                  className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-left active:scale-[0.98] transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-amber-500 text-slate-950 font-bold shrink-0">
+                      <FlaskConical size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                        <span>Mode Riset / Akademik (SaMD)</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 uppercase font-mono font-bold">
+                          {isResearchActive ? 'Aktif' : 'Terkunci'}
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                        Informed consent partisipan, log algoritma, dan dataset riset
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                </button>
               </div>
 
               {/* Big Direct Action */}

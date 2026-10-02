@@ -6,6 +6,7 @@
 import { db } from '../../db';
 import { format, parseISO, startOfDay, differenceInCalendarDays, subDays, isToday } from 'date-fns';
 import { classifyBP } from '../../utils/bp-classifier';
+import { isResearchModeActive } from '../config/release-mode';
 import type { GamificationState } from '../../types/blood-pressure';
 
 export type { GamificationState };
@@ -167,8 +168,12 @@ export async function recalculateGamification(profileId: string): Promise<Gamifi
   return newState;
 }
 
-/** Calculate Heart Health Score (0-100) */
+/** Calculate Heart Health Score (0-100) — Gated for Research Mode */
 export async function calculateHeartHealthScore(profileId: string): Promise<number> {
+  if (!isResearchModeActive()) {
+    return 0;
+  }
+
   const readings = await db.readings
     .where('profileId')
     .equals(profileId)

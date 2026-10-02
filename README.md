@@ -19,7 +19,8 @@ AortaLink v3.0 is **engineered to Software-as-a-Medical-Device (SaMD) discipline
 | **Public** (default) | Everyone | Education, BP / medication / lab tracking, FHIR export, reminders, a static emergency screen (119 / 112). No diagnostic or treatment claims. |
 | **Research / Academic** | Researchers with ethics approval (KEPK) and a physician as PI or clinical supervisor | SaMD-grade features: guideline classification, Health Score, red-flag routing, ML analytics, de-identified data export, algorithm-version logging for reproducible papers, theses and *skripsi*. |
 
-> Research mode is on the v3.0 roadmap and not implemented yet. Until it lands, the on-device ML below is presented as descriptive statistics with non-diagnostic wording.
+> [!TIP]
+> **Syarat Penggunaan Mode Riset:** Wajib mengantongi persetujuan Komisi Etik Penelitian Kesehatan (KEPK) terakreditasi dan memiliki dokter spesialis berlisensi sebagai Principal Investigator (PI) atau pembimbing klinis. Diaktifkan di dalam aplikasi menggunakan Study ID resmi protokol penelitian dan informed consent partisipan ter-pseudonimisasi.
 
 **Default guideline:** ESH 2023 / PERHI (hypertension ≥140/90 office, ≥135/85 home). ACC/AHA 2025 and ESC 2024 will be selectable ([#15](https://github.com/fk0u/AortaLink/issues/15)).
 

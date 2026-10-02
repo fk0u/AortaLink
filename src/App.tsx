@@ -58,6 +58,8 @@ import { AuthModal } from './components/auth/AuthModal';
 import { JsonImportExportModal } from './components/backup/JsonImportExportModal';
 import { MongoAtlasSyncBadge } from './components/dashboard/MongoAtlasSyncBadge';
 import { LocalMlAssistantWidget } from './components/ai/LocalMlAssistantWidget';
+import { ResearchModeBanner } from './components/layout/ResearchModeBanner';
+import { ResearchConsentModal } from './components/research/ResearchConsentModal';
 import { useAuthStore } from './store/useAuthStore';
 import { MobileToolsSheet } from './components/layout/MobileToolsSheet';
 import { initializeNotificationService } from './services/notifications/push-service';
@@ -375,7 +377,7 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-[#f2f2f7] dark:bg-black text-slate-900 dark:text-slate-100 flex flex-col pb-28 md:pb-12 transition-colors">
-      
+      <ResearchModeBanner />
       {/* Toast Notifications */}
       <ToastContainer />
 
@@ -879,6 +881,7 @@ export function App() {
         onClose={() => setIsClinicalNotesModalOpen(false)}
       />
       <LocalMlAssistantWidget />
+      <ResearchConsentModal />
 
       {/* Delete Reading Confirmation Modal */}
       <ConfirmModal
@@ -892,11 +895,14 @@ export function App() {
       />
 
       {/* Mobile Footer */}
-      <footer className="mt-8 border-t border-slate-200/80 dark:border-white/10 py-4 text-center text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5">
+      <footer className="mt-8 border-t border-slate-200/80 dark:border-white/10 py-5 text-center text-[10px] text-slate-500 dark:text-slate-400 space-y-1 px-4">
         <p className="font-bold text-slate-700 dark:text-slate-300">
-          AortaLink — Open-Source AI Personal EHR
+          AortaLink — Open-Source Personal Electronic Health Record (EHR)
         </p>
-        <p className="text-[10px] font-medium text-slate-400">
+        <p className="text-[10px] text-slate-400 max-w-md mx-auto leading-relaxed">
+          AortaLink adalah sarana pencatatan mandiri (Personal EHR), bukan alat kesehatan (SaMD), tidak memberikan diagnosis medis, dan tidak menggantikan konsultasi dokter.
+        </p>
+        <p className="text-[10px] font-medium text-slate-400 pt-0.5">
           HL7 FHIR R4 • Offline-First Dexie v4 • Cloud MongoDB Atlas
         </p>
       </footer>

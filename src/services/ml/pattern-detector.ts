@@ -12,8 +12,8 @@
  * findings (masked hypertension, variability) carry pValue = null.
  */
 
-import { BPReading } from '../../types/blood-pressure';
-import { mean, stdDev, welchTTest } from './statistics';
+import type { BPReading } from '../../types/blood-pressure.ts';
+import { mean, stdDev, welchTTest } from './statistics.ts';
 
 export type BpPatternKey =
   | 'white_coat'
