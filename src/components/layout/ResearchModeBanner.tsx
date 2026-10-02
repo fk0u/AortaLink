@@ -1,6 +1,6 @@
 import React from 'react';
 import { useResearchStore } from '../../store/useResearchStore';
-import { FlaskConical, AlertTriangle, LogOut } from 'lucide-react';
+import { FlaskConical, AlertTriangle, LogOut } from '../icons/AppIcons';
 
 export const ResearchModeBanner: React.FC = () => {
   const { isActive, studyId, consentRecord, withdraw } = useResearchStore();

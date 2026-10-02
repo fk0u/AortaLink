@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useResearchStore } from '../../store/useResearchStore';
-import { FlaskConical, ShieldCheck, AlertCircle, X, Download } from 'lucide-react';
+import { FlaskConical, ShieldCheck, AlertCircle, X, Download } from '../icons/AppIcons';
 import { ALGORITHM_VERSIONS } from '../../services/config/release-mode';
 import { exportPseudonymizedCSV, exportPseudonymizedFHIRBundle } from '../../services/research/pseudonymized-exporter';
 import { useLiveQuery } from 'dexie-react-hooks';

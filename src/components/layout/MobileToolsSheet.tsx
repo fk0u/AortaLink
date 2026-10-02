@@ -11,11 +11,12 @@ import {
   ShieldCheck, 
   Plus,
   BrainCircuit,
-  Sparkles
+  Sparkles,
+  FlaskConical,
+  ChevronRight
 } from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
 import { useResearchStore } from '../../store/useResearchStore';
-import { FlaskConical, ChevronRight } from 'lucide-react';
 import { playClickSound } from '../../utils/audio-fx';
 
 export const MobileToolsSheet: React.FC = () => {

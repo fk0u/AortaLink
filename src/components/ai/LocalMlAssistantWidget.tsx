@@ -1,7 +1,7 @@
 /* Hallmark & Minimalist UI · On-Device Clinical ML Assistant Modal */
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BrainCircuit, X, Send, HeartPulse, Sparkles, TrendingUp, TrendingDown, Minus, CheckCircle2, AlertTriangle, Info } from '../icons/AppIcons';
+import { BrainCircuit, X, Send, HeartPulse, Sparkles, TrendingUp, TrendingDown, Minus, CheckCircle2, AlertTriangle, Info, FlaskConical } from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
 import { useFocusTrap } from '../../utils/modal-a11y';
 import { useProfiles } from '../../hooks/useProfiles';
@@ -11,7 +11,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { playClickSound } from '../../utils/audio-fx';
 import { runClinicalMlAnalysis, ML_DISCLAIMER, ML_ENGINE_VERSION, type MlInsight } from '../../services/ml/ml-engine';
 import { useResearchStore } from '../../store/useResearchStore';
-import { FlaskConical } from 'lucide-react';
 import {
   getCuratedQuestions,
   answerLocalQuestion,
