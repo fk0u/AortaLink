@@ -223,7 +223,7 @@ export interface FhirCoding {
 }
 
 export interface FhirCodeableConcept {
-  coding: FhirCoding[];
+  coding?: FhirCoding[];
   text?: string;
 }
 
@@ -263,6 +263,12 @@ export interface FhirPatient {
 export interface FhirObservation {
   resourceType: 'Observation';
   id?: string;
+  meta?: {
+    versionId?: string;
+    lastUpdated?: string;
+    profile?: string[];
+  };
+  /** Internal Dexie indexing only; stripped on FHIR R4 export */
   profileId?: string;
   status: 'final' | 'amended' | 'preliminary';
   category?: FhirCodeableConcept[];
@@ -290,12 +296,19 @@ export interface FhirObservation {
 export interface FhirMedicationRequest {
   resourceType: 'MedicationRequest';
   id?: string;
+  meta?: {
+    versionId?: string;
+    lastUpdated?: string;
+    profile?: string[];
+  };
+  /** Internal Dexie indexing only; stripped on FHIR R4 export */
   profileId?: string;
   status: 'active' | 'completed' | 'cancelled';
   intent: 'order' | 'plan';
   medicationCodeableConcept: FhirCodeableConcept;
   subject: {
     reference: string;
+    display?: string;
   };
   dosageInstruction?: Array<{
     text: string;
@@ -312,11 +325,18 @@ export interface FhirMedicationRequest {
 export interface FhirMedicationStatement {
   resourceType: 'MedicationStatement';
   id?: string;
+  meta?: {
+    versionId?: string;
+    lastUpdated?: string;
+    profile?: string[];
+  };
+  /** Internal Dexie indexing only; stripped on FHIR R4 export */
   profileId?: string;
   status: 'active' | 'completed';
   medicationCodeableConcept: FhirCodeableConcept;
   subject: {
     reference: string;
+    display?: string;
   };
   effectiveDateTime: string;
   dateAsserted?: string;
