@@ -359,8 +359,9 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
     /**
      * updatedAt-aware upsert: the incoming record only wins when its
      * clientUpdatedAt (stamped by the device that last modified it) is at
-     * least as new as the stored one. This prevents a stale device from
-     * silently overwriting newer edits made on another device.
+     * least as new as the stored one, AND the record does not have a newer
+     * tombstone. This prevents a stale device from silently resurrecting
+     * deleted records or overwriting newer edits made on another device (A3).
      */
     const upsertCollection = async (collName, items, tableName, keyField = 'id') => {
       if (!Array.isArray(items) || items.length === 0) return { applied: 0, skipped: 0 };
@@ -368,8 +369,35 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       let applied = 0;
       let skipped = 0;
       for (const item of items) {
+        if (item[keyField] === undefined || item[keyField] === null) continue;
+        const idStr = String(item[keyField]);
+        const idNum = Number(idStr);
         const query = { [keyField]: item[keyField], userId };
         const clientUpdatedAt = item.updatedAt || item.createdAt || null;
+        const editTime = clientUpdatedAt ? new Date(clientUpdatedAt).getTime() : 0;
+
+        // A3: Check if this record already has a tombstone.
+        // If a tombstone exists and tombstone.deletedAt >= clientUpdatedAt, the record was
+        // deleted at or after this edit. Reject the stale upsert so dead records don't resurrect.
+        const idQuery = [
+          { recordId: idStr },
+          { id: idStr },
+          ...(Number.isFinite(idNum) ? [{ recordId: idNum }, { id: idNum }] : [])
+        ];
+        const tombstone = await activeDb.collection('tombstones').findOne({
+          userId,
+          table: tableName,
+          $or: idQuery
+        });
+
+        if (tombstone && tombstone.deletedAt) {
+          const tombstoneTime = new Date(tombstone.deletedAt).getTime();
+          if (tombstoneTime >= editTime) {
+            skipped++;
+            continue;
+          }
+        }
+
         const existing = await collection.findOne(query, { projection: { clientUpdatedAt: 1 } });
         if (existing && existing.clientUpdatedAt && clientUpdatedAt &&
             new Date(existing.clientUpdatedAt).getTime() > new Date(clientUpdatedAt).getTime()) {
@@ -383,12 +411,11 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
         );
         // A record written after its deletion (e.g. restored from a backup)
         // retires the older tombstone, or other devices would delete it again.
-        if (clientUpdatedAt && item[keyField] !== undefined && item[keyField] !== null) {
-          const idStr = String(item[keyField]);
+        if (clientUpdatedAt) {
           await activeDb.collection('tombstones').deleteMany({
             userId,
             table: tableName,
-            $or: [{ recordId: idStr }, { id: idStr }],
+            $or: idQuery,
             deletedAt: { $lt: clientUpdatedAt }
           });
         }
@@ -482,7 +509,7 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       totalSynced,
       conflictSkipped,
       message: `Berhasil menyinkronkan ${totalSynced} item rekam medis ke MongoDB Atlas Cloud.` +
-        (conflictSkipped > 0 ? ` ${conflictSkipped} item dilewati karena versi di server lebih baru.` : ''),
+        (conflictSkipped > 0 ? ` ${conflictSkipped} item dilewati karena versi di server lebih baru atau telah dihapus.` : ''),
       timestamp: new Date().toISOString()
     });
   } catch (error) {

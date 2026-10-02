@@ -12,6 +12,8 @@
     "build": "rsbuild build",
     "lint": "tsc --noEmit",
     "test:ml": "node --experimental-strip-types --no-warnings scripts/ml-selfcheck.ts",
+    "test:cleanup": "node --experimental-strip-types --no-warnings scripts/cleanup-selfcheck.ts",
+    "cleanup:duplicates": "node scripts/cleanup-legacy-duplicate-readings.js",
     "preview": "rsbuild preview"
   },
   "dependencies": {
