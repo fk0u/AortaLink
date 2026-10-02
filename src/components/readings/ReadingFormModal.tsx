@@ -6,7 +6,7 @@ import { useFocusTrap } from '../../utils/modal-a11y';
 import { BodyPosition, ArmUsed, MeasurementContext, BPReading } from '../../types/blood-pressure';
 import { classifyBP, classifyAgeAdjustedBP } from '../../utils/bp-classifier';
 import { playClickSound, playSuccessChime, playAlertSound } from '../../utils/audio-fx';
-import { normalizeClinicalText } from '../../security/sanitizer';
+import { normalizeClinicalText, validateBPRange } from '../../security/sanitizer';
 import { getLocalDateTimeForInput, parseLocalDateTimeInput } from '../../utils/formatters';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -39,7 +39,7 @@ export const ReadingFormModal: React.FC = () => {
   // Form inputs state
   const [systolic, setSystolic] = useState<number>(120);
   const [diastolic, setDiastolic] = useState<number>(80);
-  const [pulse, setPulse] = useState<number>(72);
+  const [pulse, setPulse] = useState<number | undefined>(72);
   const [timestamp, setTimestamp] = useState<string>(() => getLocalDateTimeForInput());
   const [position, setPosition] = useState<BodyPosition>('duduk');
   const [arm, setArm] = useState<ArmUsed>('kiri');
@@ -201,9 +201,14 @@ export const ReadingFormModal: React.FC = () => {
       return;
     }
 
-    if (systolic < 60 || systolic > 260 || diastolic < 40 || diastolic > 180) {
+    const bpValidation = validateBPRange(systolic, diastolic, pulse);
+    if (!bpValidation.valid) {
       playAlertSound();
-      addToast({ type: 'error', title: 'Nilai Tidak Valid', message: 'Periksa kembali nilai sistolik & diastolik Anda.' });
+      addToast({
+        type: 'error',
+        title: 'Nilai Tidak Valid',
+        message: bpValidation.error || 'Periksa kembali nilai sistolik, diastolik, atau nadi Anda.'
+      });
       return;
     }
 
@@ -563,14 +568,14 @@ export const ReadingFormModal: React.FC = () => {
                     Nadi / BPM
                   </span>
                   <div className="text-2xl font-black font-mono text-rose-900 dark:text-rose-100">
-                    {pulse}
+                    {pulse !== undefined ? pulse : '--'}
                   </div>
                   <div className="flex items-center justify-center gap-1">
                     <button
                       type="button"
                       onClick={() => {
                         playClickSound();
-                        setPulse((v) => Math.max(40, v - 1));
+                        setPulse((v) => Math.max(40, (v ?? 72) - 1));
                       }}
                       className="w-7 h-7 rounded-lg bg-white dark:bg-[#2c2c2e] text-rose-700 dark:text-rose-300 font-black shadow-sm flex items-center justify-center active:scale-90"
                     >
@@ -580,13 +585,23 @@ export const ReadingFormModal: React.FC = () => {
                       type="button"
                       onClick={() => {
                         playClickSound();
-                        setPulse((v) => Math.min(200, v + 1));
+                        setPulse((v) => Math.min(200, (v ?? 72) + 1));
                       }}
                       className="w-7 h-7 rounded-lg bg-rose-600 text-white font-black shadow-sm flex items-center justify-center active:scale-90"
                     >
                       <Plus size={14} />
                     </button>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setPulse((prev) => (prev !== undefined ? undefined : 72));
+                    }}
+                    className="text-[9px] font-semibold text-rose-600 dark:text-rose-400 hover:underline pt-0.5 block mx-auto"
+                  >
+                    {pulse !== undefined ? 'Kosongkan Nadi' : 'Isi Nadi (72 BPM)'}
+                  </button>
                 </div>
 
               </div>

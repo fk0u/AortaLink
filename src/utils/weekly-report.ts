@@ -27,19 +27,29 @@ export function createWeeklyReport(readings: BPReading[], sodiumLogs: SodiumLog[
   const morning = current.filter(r => new Date(r.timestamp).getHours() < 12).length;
   const evening = current.filter(r => new Date(r.timestamp).getHours() >= 17).length;
   const insights: string[] = [];
+  const currentValid = current.filter(r => !r.isExcludedFromAverages);
+  const previousValid = previous.filter(r => !r.isExcludedFromAverages);
+  const avgReadings = currentValid;
+  const prevAvgReadings = previousValid;
+  const currentPulses = avgReadings.map(r=>r.pulse).filter((p): p is number => typeof p === 'number' && !isNaN(p));
+
   if (!current.length) insights.push('Belum ada cukup data untuk menyusun ringkasan minggu ini. Mulai catat tekanan darah secara rutin.');
   else {
-    if (previous.length) { const delta = avg(current.map(r=>r.systolic)) - avg(previous.map(r=>r.systolic)); if (Math.abs(delta) >= 3) insights.push(`Rata-rata sistolik ${delta > 0 ? 'naik' : 'turun'} ${Math.abs(delta)} mmHg dibanding minggu lalu.`); else insights.push('Rata-rata sistolik relatif stabil dibanding minggu lalu.'); }
+    if (avgReadings.length && prevAvgReadings.length) {
+      const delta = avg(avgReadings.map(r=>r.systolic)) - avg(prevAvgReadings.map(r=>r.systolic));
+      if (Math.abs(delta) >= 3) insights.push(`Rata-rata sistolik ${delta > 0 ? 'naik' : 'turun'} ${Math.abs(delta)} mmHg dibanding minggu lalu.`);
+      else insights.push('Rata-rata sistolik relatif stabil dibanding minggu lalu.');
+    }
     const normalDays = new Set(current.filter(r => classifyBP(r.systolic,r.diastolic).key === 'normal').map(r => dayKey(new Date(r.timestamp)))).size;
     insights.push(`Tekanan darah kategori normal tercatat pada ${normalDays} dari 7 hari.`);
     if (days.size < 7) insights.push(`Konsistensi pengukuran ${days.size} dari 7 hari; usahakan mencatat setiap hari.`); else insights.push('Pengukuran tercatat setiap hari minggu ini. Pertahankan kebiasaan baik!');
-    const best = [...days].map(d => ({ d, value: avg(current.filter(r=>dayKey(new Date(r.timestamp))===d).map(r=>r.systolic)) })).sort((a,b)=>a.value-b.value)[0];
+    const best = [...days].map(d => ({ d, value: avg(avgReadings.filter(r=>dayKey(new Date(r.timestamp))===d).map(r=>r.systolic)) })).filter(x => x.value > 0).sort((a,b)=>a.value-b.value)[0];
     if (best) insights.push(`Hari dengan rata-rata sistolik terendah: ${format(new Date(best.d), 'EEEE', {locale: idLocale})}.`);
     if (morning && evening) insights.push(`Terbagi ${morning} pengukuran pagi dan ${evening} pengukuran sore/malam.`);
     const highSodium = new Set(sodiumLogs.filter(s => s.sodiumMg >= 2300 && s.date >= dayKey(startDate) && s.date <= dayKey(endDate)).map(s=>s.date));
     const highReadings = current.filter(r => highSodium.has(dayKey(new Date(r.timestamp))));
     if (highReadings.length && highSodium.size) insights.push(`Pada ${highSodium.size} hari dengan sodium tinggi, tercatat ${highReadings.length} pengukuran; hubungan ini bukan diagnosis.`);
   }
-  return { startDate,endDate,previousStartDate,previousEndDate,readings:current,previousReadings:previous,count:current.length,avgSystolic:avg(current.map(r=>r.systolic)),avgDiastolic:avg(current.map(r=>r.diastolic)),minSystolic:current.length?Math.min(...current.map(r=>r.systolic)):0,maxSystolic:current.length?Math.max(...current.map(r=>r.systolic)):0,avgPulse:avg(current.map(r=>r.pulse).filter(Boolean)),categories,morning,evening,adherence:Math.round(days.size/7*100),insights };
+  return { startDate,endDate,previousStartDate,previousEndDate,readings:current,previousReadings:previous,count:current.length,avgSystolic:avg(avgReadings.map(r=>r.systolic)),avgDiastolic:avg(avgReadings.map(r=>r.diastolic)),minSystolic:avgReadings.length?Math.min(...avgReadings.map(r=>r.systolic)):0,maxSystolic:avgReadings.length?Math.max(...avgReadings.map(r=>r.systolic)):0,avgPulse:avg(currentPulses),categories,morning,evening,adherence:Math.round(days.size/7*100),insights };
 }
 export const formatWeeklyRange = (r: WeeklyReport) => `${format(r.startDate,'d MMM',{locale:idLocale})} – ${format(r.endDate,'d MMM yyyy',{locale:idLocale})}`;

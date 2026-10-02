@@ -62,7 +62,8 @@ export const StatCards: React.FC<StatCardsProps> = ({
       return;
     }
     const catLabel = latestCategory ? latestCategory.label : '';
-    const text = `Tekanan darah ${activeProfile?.name || 'Pasien'} adalah ${latest.systolic} per ${latest.diastolic} milimeter raksa, dengan denyut nadi ${latest.pulse} detak per menit. Kategori ${catLabel}.`;
+    const pulseDesc = typeof latest.pulse === 'number' ? `, dengan denyut nadi ${latest.pulse} detak per menit` : '';
+    const text = `Tekanan darah ${activeProfile?.name || 'Pasien'} adalah ${latest.systolic} per ${latest.diastolic} milimeter raksa${pulseDesc}. Kategori ${catLabel}.`;
     speakTextIndonesian(text);
   };
 
@@ -136,10 +137,12 @@ export const StatCards: React.FC<StatCardsProps> = ({
 
                     <div className="flex items-center gap-2.5 mt-1.5 flex-wrap">
                       {/* Pulse BPM */}
-                      <span className="inline-flex items-center gap-1 text-xs font-bold text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-lg border border-rose-200 dark:border-rose-900/60">
-                        <Heart size={14} className="text-rose-500 fill-rose-500 animate-pulse" />
-                        {latest.pulse} BPM
-                      </span>
+                      {typeof latest.pulse === 'number' && (
+                        <span className="inline-flex items-center gap-1 text-xs font-bold text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-lg border border-rose-200 dark:border-rose-900/60">
+                          <Heart size={14} className="text-rose-500 fill-rose-500 animate-pulse" />
+                          {latest.pulse} BPM
+                        </span>
+                      )}
 
                       {/* Position & Arm */}
                       {latest.position && (

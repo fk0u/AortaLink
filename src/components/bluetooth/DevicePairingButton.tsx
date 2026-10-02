@@ -78,10 +78,11 @@ export const DevicePairingButton: React.FC = () => {
       setCacheDirty(true);
       playSuccessChime();
 
+      const pulseInfo = reading.pulse !== undefined ? ` · Nadi ${reading.pulse} BPM` : '';
       addToast({
         type: 'success',
         title: 'Tensi Tersimpan via Bluetooth',
-        message: `${reading.systolic}/${reading.diastolic} mmHg · Nadi ${reading.pulse} BPM · ${reading.tags?.join(', ') || 'Bluetooth'}`,
+        message: `${reading.systolic}/${reading.diastolic} mmHg${pulseInfo} · ${reading.tags?.join(', ') || 'Bluetooth'}`,
       });
     } catch (err: unknown) {
       const message = getBLEErrorMessage(err);
@@ -99,9 +100,35 @@ export const DevicePairingButton: React.FC = () => {
     }
   }, [activeProfileId, connectionState, addToast, setCacheDirty]);
 
-  // Not supported state — hidden entirely
+  const openReadingModal = useAppStore((state) => state.openReadingModal);
+
+  // Not supported state — provide direct manual entry fallback
   if (bluetoothSupported === false) {
-    return null;
+    return (
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => {
+            playClickSound();
+            openReadingModal();
+          }}
+          className="hallmark-card p-4 text-left active:scale-[0.98] transition-all space-y-2 flex flex-col justify-between cursor-pointer min-h-32 border border-slate-200/80 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-[#2c2c2e]"
+          title="Input Manual (Safari iOS / browser ini tidak mendukung Web Bluetooth)"
+        >
+          <div className="p-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 w-fit">
+            <BluetoothOff className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="font-extrabold text-xs text-slate-900 dark:text-slate-100">
+              Input Tensi Manual
+            </h4>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+              Safari/iOS: fallback input manual setara
+            </p>
+          </div>
+        </button>
+      </div>
+    );
   }
 
   // Still determining support — show nothing until we know

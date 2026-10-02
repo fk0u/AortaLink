@@ -55,7 +55,8 @@ export const MobileTopAppBar: React.FC<MobileTopAppBarProps> = ({ onOpenSOS }) =
       return;
     }
     const categoryText = category ? category.label : '';
-    const speechMsg = `Tekanan darah ${activeProfile?.name || 'Pasien'} saat ini adalah ${latest.systolic} per ${latest.diastolic} milimeter raksa, dengan denyut nadi ${latest.pulse} detak per menit. Kategori klinis ${categoryText}.`;
+    const pulseSpeech = typeof latest.pulse === 'number' ? `, dengan denyut nadi ${latest.pulse} detak per menit` : '';
+    const speechMsg = `Tekanan darah ${activeProfile?.name || 'Pasien'} saat ini adalah ${latest.systolic} per ${latest.diastolic} milimeter raksa${pulseSpeech}. Kategori klinis ${categoryText}.`;
     speakTextIndonesian(speechMsg);
   };
 

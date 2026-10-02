@@ -28,8 +28,15 @@
  * value = mantissa × 10^exponent
  */
 
-import { db, newSyncId } from '../../db';
-import type { BPReading } from '../../types/blood-pressure';
+import { db, newSyncId } from '../../db/index.ts';
+import type {
+  BPReading,
+  BodyPosition,
+  ArmUsed,
+  MeasurementContext,
+  BleMeasurementStatus
+} from '../../types/blood-pressure.ts';
+import { validateBPRange } from '../../security/sanitizer.ts';
 
 // ---------------------------------------------------------------------------
 // BLE UUIDs
@@ -37,6 +44,49 @@ import type { BPReading } from '../../types/blood-pressure';
 export const BLOOD_PRESSURE_SERVICE_UUID = 0x1810;
 export const BP_MEASUREMENT_CHAR_UUID = 0x2A35;
 export const BP_FEATURE_CHAR_UUID = 0x2A36;
+
+// ---------------------------------------------------------------------------
+// Tested Devices Registry (GATT 0x1810 standard compliance)
+// ---------------------------------------------------------------------------
+export interface TestedBLEDevice {
+  brand: string;
+  model: string;
+  standardGatt1810: boolean;
+  notes: string;
+}
+
+export const TESTED_BLE_DEVICES: TestedBLEDevice[] = [
+  {
+    brand: 'Omron',
+    model: 'HEM-7361T / HEM-7156T',
+    standardGatt1810: true,
+    notes: 'Mendukung standar Bluetooth GATT 0x1810 / 0x2A35.'
+  },
+  {
+    brand: 'Omron',
+    model: 'HEM-7600T (Evolv)',
+    standardGatt1810: true,
+    notes: 'Desain tubeless tanpa selang, standard GATT 0x1810.'
+  },
+  {
+    brand: 'Beurer',
+    model: 'BM 57 / BM 85',
+    standardGatt1810: true,
+    notes: 'Koneksi Bluetooth Smart standar IEEE 11073-20601.'
+  },
+  {
+    brand: 'Yuwell',
+    model: 'YE680B',
+    standardGatt1810: true,
+    notes: 'GATT Blood Pressure Service 0x1810 terverifikasi.'
+  },
+  {
+    brand: 'A&D Medical',
+    model: 'UA-651BLE',
+    standardGatt1810: true,
+    notes: 'Kompatibilitas penuh profil GATT Blood Pressure standar.'
+  }
+];
 
 // ---------------------------------------------------------------------------
 // Connection / pairing state
@@ -53,17 +103,28 @@ export interface BLEStateChangeCallback {
   (state: BLEConnectionState, message?: string): void;
 }
 
+export interface BLEPairingOptions {
+  position?: BodyPosition;
+  arm?: ArmUsed;
+  measurementContext?: MeasurementContext;
+  tags?: string[];
+}
+
 // ---------------------------------------------------------------------------
 // Parsed measurement result
 // ---------------------------------------------------------------------------
 export interface ParsedBPMeasurement {
-  systolic: number;
-  diastolic: number;
-  map: number; // Mean Arterial Pressure
+  systolic: number; // in mmHg
+  diastolic: number; // in mmHg
+  map: number; // Mean Arterial Pressure in mmHg
   pulse?: number;
   timestamp?: Date;
-  unit: 'mmHg' | 'kPa';
+  unit: 'mmHg';
+  rawUnit?: 'mmHg' | 'kPa';
   userId?: number;
+  measurementStatus?: BleMeasurementStatus;
+  isFlaggedMeasurement?: boolean;
+  isExcludedFromAverages?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -73,11 +134,37 @@ export interface ParsedBPMeasurement {
 /**
  * Decode a 16-bit SFLOAT (IEEE 11073-20601) from two bytes.
  * Format: 4-bit signed exponent (bits 12-15) + 12-bit signed mantissa (bits 0-11).
+ *
+ * Rejects IEEE 11073-20601 special values:
+ * - 0x07FF: NaN (Not a Number)
+ * - 0x0800: NRes (Not at this Resolution)
+ * - 0x07FE: +INFINITY
+ * - 0x0802: -INFINITY
+ * - 0x0801: Reserved
  */
-function decodeSFloat(dataView: DataView, offset: number): number {
+export function decodeSFloat(dataView: DataView, offset: number): number {
   const word = dataView.getUint16(offset, true); // little-endian
-  const mantissa = (word & 0x0fff) << 20 >> 20; // sign-extend 12-bit mantissa
-  const exponent = (word >> 12) << 28 >> 28;     // sign-extend 4-bit exponent
+
+  // IEEE 11073-20601 section A.1.1: Special values are defined when exponent is 0
+  if (word === 0x07ff) {
+    throw new Error('SFLOAT decode error: NaN (Not a Number, 0x07FF)');
+  }
+  if (word === 0x0800) {
+    throw new Error('SFLOAT decode error: NRes (Not at this Resolution, 0x0800)');
+  }
+  if (word === 0x07fe) {
+    throw new Error('SFLOAT decode error: +INFINITY (0x07FE)');
+  }
+  if (word === 0x0802) {
+    throw new Error('SFLOAT decode error: -INFINITY (0x0802)');
+  }
+  if (word === 0x0801) {
+    throw new Error('SFLOAT decode error: Reserved (0x0801)');
+  }
+
+  const rawMantissa = word & 0x0fff;
+  const mantissa = (rawMantissa << 20) >> 20; // sign-extend 12-bit mantissa
+  const exponent = (word >> 12) << 28 >> 28;  // sign-extend 4-bit exponent
   return mantissa * Math.pow(10, exponent);
 }
 
@@ -104,6 +191,13 @@ function parseFlags(flagsByte: number): MeasurementFlags {
 }
 
 // ---------------------------------------------------------------------------
+// Convert kPa to mmHg
+// ---------------------------------------------------------------------------
+export function kPaToMmHg(kPa: number): number {
+  return Math.round(kPa * 7.50062);
+}
+
+// ---------------------------------------------------------------------------
 // BP Measurement parser
 // ---------------------------------------------------------------------------
 
@@ -112,20 +206,32 @@ function parseFlags(flagsByte: number): MeasurementFlags {
  * according to IEEE 11073-20601.
  */
 export function parseBPMeasurement(data: DataView): ParsedBPMeasurement {
+  if (data.byteLength < 7) {
+    throw new Error(`Truncated BLE packet: packet length ${data.byteLength} bytes is less than minimum 7 bytes`);
+  }
+
   const flags = parseFlags(data.getUint8(0));
   let offset = 1;
 
-  const systolic = decodeSFloat(data, offset);
+  const rawSys = decodeSFloat(data, offset);
   offset += 2;
 
-  const diastolic = decodeSFloat(data, offset);
+  const rawDia = decodeSFloat(data, offset);
   offset += 2;
 
-  const map = decodeSFloat(data, offset);
+  const rawMap = decodeSFloat(data, offset);
   offset += 2;
+
+  const isKpa = flags.unit === 'kPa';
+  const systolic = isKpa ? kPaToMmHg(rawSys) : Math.round(rawSys);
+  const diastolic = isKpa ? kPaToMmHg(rawDia) : Math.round(rawDia);
+  const map = isKpa ? kPaToMmHg(rawMap) : Math.round(rawMap * 10) / 10;
 
   let timestamp: Date | undefined;
   if (flags.timestampPresent) {
+    if (offset + 7 > data.byteLength) {
+      throw new Error('Truncated BLE packet: timestamp flag set but insufficient bytes in payload');
+    }
     const year = data.getUint16(offset, true);
     const month = data.getUint8(offset + 2) - 1; // JS Date months are 0-indexed
     const day = data.getUint8(offset + 3);
@@ -140,36 +246,67 @@ export function parseBPMeasurement(data: DataView): ParsedBPMeasurement {
 
   let pulse: number | undefined;
   if (flags.pulsePresent) {
-    pulse = decodeSFloat(data, offset);
-    pulse = Math.round(pulse); // pulse is typically an integer
+    if (offset + 2 > data.byteLength) {
+      throw new Error('Truncated BLE packet: pulse flag set but insufficient bytes in payload');
+    }
+    const rawPulse = decodeSFloat(data, offset);
+    const roundedPulse = Math.round(rawPulse);
+    pulse = roundedPulse > 0 ? roundedPulse : undefined;
     offset += 2;
   }
 
   let userId: number | undefined;
   if (flags.userIdPresent) {
+    if (offset + 1 > data.byteLength) {
+      throw new Error('Truncated BLE packet: userId flag set but insufficient bytes in payload');
+    }
     userId = data.getUint8(offset);
     offset += 1;
   }
 
-  // measurementStatusPresent — we read but don't use currently
-  // Could be used for body movement detection, cuff fit, irregular pulse, etc.
+  let measurementStatus: BleMeasurementStatus | undefined;
+  let isFlaggedMeasurement = false;
+  let isExcludedFromAverages = false;
+
+  if (flags.measurementStatusPresent) {
+    if (offset + 2 > data.byteLength) {
+      throw new Error('Truncated BLE packet: measurement status flag set but insufficient bytes in payload');
+    }
+    const statusWord = data.getUint16(offset, true);
+    offset += 2;
+    const bodyMovement = !!(statusWord & 0x0001);
+    const cuffLoose = !!(statusWord & 0x0002);
+    const irregularPulse = !!(statusWord & 0x0004);
+    const pulseRateFlag = (statusWord >> 3) & 0x0003;
+    const improperPosition = !!(statusWord & 0x0020);
+
+    measurementStatus = {
+      bodyMovement,
+      cuffLoose,
+      irregularPulse,
+      pulseRangeExceeded: pulseRateFlag === 1 ? 'upper' : pulseRateFlag === 2 ? 'lower' : undefined,
+      improperPosition
+    };
+
+    if (bodyMovement || cuffLoose || improperPosition) {
+      isFlaggedMeasurement = true;
+      isExcludedFromAverages = true;
+    }
+  }
 
   return {
-    systolic: Math.round(systolic),
-    diastolic: Math.round(diastolic),
-    map: Math.round(map * 10) / 10,
+    systolic,
+    diastolic,
+    map,
     pulse,
     timestamp,
-    unit: flags.unit,
+    unit: 'mmHg',
+    rawUnit: flags.unit,
     userId,
+    measurementStatus,
+    isFlaggedMeasurement,
+    isExcludedFromAverages
   };
-}
-
-// ---------------------------------------------------------------------------
-// Convert kPa to mmHg
-// ---------------------------------------------------------------------------
-function kPaToMmHg(kPa: number): number {
-  return Math.round(kPa * 7.50062);
 }
 
 // ---------------------------------------------------------------------------
@@ -195,7 +332,8 @@ export function isBluetoothAvailable(): boolean {
  */
 export async function scanAndReadBP(
   profileId: string,
-  onStateChange: BLEStateChangeCallback
+  onStateChange: BLEStateChangeCallback,
+  options?: BLEPairingOptions
 ): Promise<BPReading> {
   if (!isBluetoothAvailable()) {
     const msg = 'Browser tidak mendukung Web Bluetooth. Gunakan Chrome/Edge di desktop atau Android.';
@@ -293,10 +431,29 @@ export async function scanAndReadBP(
   // -- PARSE --
   const parsed = parseBPMeasurement(dataView);
 
-  // Convert kPa to mmHg if needed
-  const systolic = parsed.unit === 'kPa' ? kPaToMmHg(parsed.systolic) : parsed.systolic;
-  const diastolic = parsed.unit === 'kPa' ? kPaToMmHg(parsed.diastolic) : parsed.diastolic;
-  const pulse = parsed.pulse ?? 0;
+  const systolic = parsed.systolic;
+  const diastolic = parsed.diastolic;
+  const pulse = parsed.pulse;
+
+  // Single-door validation
+  const validation = validateBPRange(systolic, diastolic, pulse);
+  if (!validation.valid) {
+    const msg = `Data tensi dari perangkat tidak valid: ${validation.error}`;
+    onStateChange('error', msg);
+    throw new Error(msg);
+  }
+
+  // Tags assembly
+  const tags = options?.tags ? [...options.tags] : [];
+  if (!tags.includes('Bluetooth')) {
+    tags.push('Bluetooth');
+  }
+  if (parsed.measurementStatus?.irregularPulse && !tags.includes('Aritmia')) {
+    tags.push('Aritmia');
+  }
+  if (parsed.isFlaggedMeasurement && !tags.includes('Perlu Ukur Ulang')) {
+    tags.push('Perlu Ukur Ulang');
+  }
 
   // -- STORE --
   const bpReading: BPReading = {
@@ -306,9 +463,13 @@ export async function scanAndReadBP(
     diastolic,
     pulse,
     timestamp: (parsed.timestamp ?? new Date()).toISOString(),
-    position: 'duduk',
-    arm: 'kiri',
-    tags: ['Bluetooth'],
+    position: options?.position,
+    arm: options?.arm,
+    measurement_context: options?.measurementContext,
+    measurementStatus: parsed.measurementStatus,
+    isFlaggedMeasurement: parsed.isFlaggedMeasurement,
+    isExcludedFromAverages: parsed.isExcludedFromAverages,
+    tags,
   };
 
   try {
@@ -320,9 +481,11 @@ export async function scanAndReadBP(
   }
 
   // -- DONE --
+  const pulseText = pulse !== undefined ? `, Nadi ${pulse} BPM` : '';
+  const warningText = parsed.isFlaggedMeasurement ? ' (Perhatian: terdeteksi gerakan/posisi manset)' : '';
   onStateChange(
     'done',
-    `Berhasil: ${systolic}/${diastolic} mmHg, Nadi ${pulse} BPM`
+    `Berhasil: ${systolic}/${diastolic} mmHg${pulseText}${warningText}`
   );
 
   // Clean up connection

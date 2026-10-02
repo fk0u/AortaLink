@@ -1,11 +1,12 @@
 import React, { useRef } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { useProfiles } from '../../hooks/useProfiles';
-import { db } from '../../db';
+import { db, newSyncId } from '../../db';
 import { BPCategoryKey, DateFilterRange, BPReading, BackupDataFormat } from '../../types/blood-pressure';
 import { Search, Filter, Download, Upload, X, Database } from '../icons/AppIcons';
 import { normalizeBackupPayload, restoreBackupPayload } from '../../utils/backup';
-import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
+import { playClickSound, playSuccessChime, playAlertSound } from '../../utils/audio-fx';
+import { validateBPRange } from '../../security/sanitizer';
 
 export const HistoryFilter: React.FC = () => {
   const searchQuery = useAppStore((state) => state.searchQuery);
@@ -136,34 +137,64 @@ export const HistoryFilter: React.FC = () => {
         if (lines.length <= 1) return;
 
         const newReadings: BPReading[] = [];
+        let skippedCount = 0;
+
         for (let i = 1; i < lines.length; i++) {
           const cols = lines[i].split(',');
-          if (cols.length >= 4) {
-            newReadings.push({
-              profileId: activeProfileId,
-              systolic: parseInt(cols[1]),
-              diastolic: parseInt(cols[2]),
-              pulse: parseInt(cols[3]),
-              timestamp: cols[4] || new Date().toISOString(),
-              position: (cols[5] as any) || 'duduk',
-              arm: (cols[6] as any) || 'kiri',
-              tags: cols[7] ? cols[7].split(';') : [],
-              notes: cols[8] ? cols[8].replace(/^"|"$/g, '').replace(/""/g, '"') : ''
-            });
+          if (cols.length < 4) {
+            skippedCount++;
+            continue;
           }
+
+          const rawSysStr = cols[1]?.trim() ?? '';
+          const rawDiaStr = cols[2]?.trim() ?? '';
+          const rawPulseStr = cols[3]?.trim() ?? '';
+
+          const systolic = rawSysStr !== '' ? Number(rawSysStr) : NaN;
+          const diastolic = rawDiaStr !== '' ? Number(rawDiaStr) : NaN;
+          const pulse = rawPulseStr !== '' ? Number(rawPulseStr) : undefined;
+
+          const validation = validateBPRange(systolic, diastolic, pulse);
+          if (!validation.valid) {
+            skippedCount++;
+            continue;
+          }
+
+          newReadings.push({
+            id: (cols[0] && cols[0].trim().length > 0) ? cols[0].trim() : newSyncId(),
+            profileId: activeProfileId,
+            systolic,
+            diastolic,
+            pulse,
+            timestamp: cols[4]?.trim() || new Date().toISOString(),
+            position: (cols[5]?.trim() as any) || undefined,
+            arm: (cols[6]?.trim() as any) || undefined,
+            tags: cols[7] ? cols[7].split(';').map((t) => t.trim()).filter(Boolean) : [],
+            notes: cols[8] ? cols[8].replace(/^"|"$/g, '').replace(/""/g, '"') : ''
+          });
         }
 
         if (newReadings.length > 0) {
-          await db.readings.bulkAdd(newReadings);
+          await db.readings.bulkPut(newReadings);
           playSuccessChime();
+          const skipMsg = skippedCount > 0 ? ` (${skippedCount} baris tidak valid dilewati)` : '';
           addToast({
             type: 'success',
             title: 'Impor CSV Berhasil',
-            message: `${newReadings.length} data tensi telah ditambahkan.`
+            message: `${newReadings.length} data tensi telah ditambahkan${skipMsg}.`
+          });
+        } else {
+          playAlertSound();
+          addToast({
+            type: 'error',
+            title: 'Gagal Impor CSV',
+            message: skippedCount > 0 ? `Semua baris (${skippedCount}) memiliki nilai tensi atau format di luar batas valid.` : 'Tidak ada data valid yang ditemukan.'
           });
         }
       } catch (err) {
         addToast({ type: 'error', title: 'Gagal Impor CSV', message: 'Format file CSV tidak valid.' });
+      } finally {
+        e.target.value = '';
       }
     };
     reader.readAsText(file);

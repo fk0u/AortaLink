@@ -1,6 +1,7 @@
 import { db } from '../db';
 import { replaceAllLocalData } from '../db/local-data';
 import { BackupDataFormat, BPReading, HabitLog, Profile, Reminder } from '../types/blood-pressure';
+import { validateBPRange } from '../security/sanitizer';
 
 export function createBackupFilename(exportedAt = new Date()): string {
   const stamp = exportedAt.toISOString().replace(/[:.]/g, '-');
@@ -72,7 +73,9 @@ export function normalizeBackupPayload(input: unknown): BackupDataFormat {
     version: typeof payload.version === 'string' ? payload.version : '1.0.0',
     exportedAt: typeof payload.exportedAt === 'string' ? payload.exportedAt : new Date().toISOString(),
     profiles,
-    readings: ensureArray<BPReading>(payload.readings),
+    readings: ensureArray<BPReading>(payload.readings).filter(
+      (r) => r && typeof r === 'object' && validateBPRange(r.systolic, r.diastolic, r.pulse).valid
+    ),
     reminders: ensureArray<Reminder>(payload.reminders),
     habits: ensureArray<HabitLog>(payload.habits),
     medications: ensureArray<import('../types/blood-pressure').MedicationItem>(payload.medications),

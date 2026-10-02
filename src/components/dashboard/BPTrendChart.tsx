@@ -41,7 +41,7 @@ export const BPTrendChart: React.FC<BPTrendChartProps> = ({ readings }) => {
     rawReading: r
   }));
 
-  const latestPulse = readings.length > 0 ? readings[0].pulse : 72;
+  const latestPulse = readings.find((r) => typeof r.pulse === 'number')?.pulse ?? 72;
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -69,10 +69,12 @@ export const BPTrendChart: React.FC<BPTrendChartProps> = ({ readings }) => {
               <span className="text-slate-500 font-medium">Diastolik:</span>
               <span className="font-extrabold text-teal-600 dark:text-teal-400">{reading.diastolic} mmHg</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500 font-medium">Nadi:</span>
-              <span className="font-semibold text-rose-500">{reading.pulse} BPM</span>
-            </div>
+            {typeof reading.pulse === 'number' && (
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-medium">Nadi:</span>
+                <span className="font-semibold text-rose-500">{reading.pulse} BPM</span>
+              </div>
+            )}
           </div>
 
           {reading.notes && (

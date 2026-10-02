@@ -62,13 +62,16 @@ export function generateClinicalReportPDF({
     periodStr = `Periode: 30 Hari Terakhir (${format(thirtyDaysAgo, 'dd/MM/yyyy')} – ${format(now, 'dd/MM/yyyy')})`;
   }
 
-  // Compute stats for filtered dataset
-  const count = filteredReadings.length;
-  const avgSys = count > 0 ? Math.round(filteredReadings.reduce((a, b) => a + b.systolic, 0) / count) : stats.avgSystolic;
-  const avgDia = count > 0 ? Math.round(filteredReadings.reduce((a, b) => a + b.diastolic, 0) / count) : stats.avgDiastolic;
-  const avgPulse = count > 0 ? Math.round(filteredReadings.reduce((a, b) => a + b.pulse, 0) / count) : stats.avgPulse;
-  const avgMAP = Math.round((avgDia * 2 + avgSys) / 3);
-  const avgPP = avgSys - avgDia;
+  // Compute stats for valid filtered dataset (excluding artifact measurements)
+  const totalObservations = filteredReadings.length;
+  const validAvgReadings = filteredReadings.filter((r) => !r.isExcludedFromAverages);
+  const validCount = validAvgReadings.length;
+  const avgSys = validCount > 0 ? Math.round(validAvgReadings.reduce((a, b) => a + b.systolic, 0) / validCount) : 0;
+  const avgDia = validCount > 0 ? Math.round(validAvgReadings.reduce((a, b) => a + b.diastolic, 0) / validCount) : 0;
+  const validPulses = validAvgReadings.map((r) => r.pulse).filter((p): p is number => typeof p === 'number' && !isNaN(p));
+  const avgPulse = validPulses.length > 0 ? Math.round(validPulses.reduce((a, b) => a + b, 0) / validPulses.length) : 0;
+  const avgMAP = validCount > 0 ? Math.round((avgDia * 2 + avgSys) / 3) : 0;
+  const avgPP = validCount > 0 ? avgSys - avgDia : 0;
 
   // =========================================================================
   // 1. TOP HEADER BANNER (HL7 FHIR R4 & CLINICAL RESUME IDENTITY)
@@ -154,14 +157,15 @@ export function generateClinicalReportPDF({
   doc.text('RATA-RATA TENSI', 18, startY + 4.5);
   doc.setFontSize(10.5);
   doc.setFont('helvetica', 'bold');
-  doc.text(`${avgSys}/${avgDia}`, 18, startY + 10.5);
+  doc.text(validCount > 0 ? `${avgSys}/${avgDia}` : '–', 18, startY + 10.5);
   doc.setFontSize(6.5);
-  doc.text('mmHg (Periode Terpilih)', 18, startY + 14.5);
+  doc.text(validCount > 0 ? 'mmHg (Periode Terpilih)' : 'Tidak Ada Data Valid', 18, startY + 14.5);
 
   // Stat Box 2: Nocturnal Dipping Analysis
-  const dippingReport = calculateNocturnalDipping(filteredReadings);
-  const dippingVal = dippingReport?.sysDippingPercent ?? -12.5;
-  const dippingStatus = dippingReport?.label ?? 'Normal Dipper';
+  const dippingReport = validCount > 0 ? calculateNocturnalDipping(validAvgReadings) : null;
+  const hasDippingData = dippingReport !== null && dippingReport.label !== 'Data Tidak Cukup';
+  const dippingVal = hasDippingData ? dippingReport.sysDippingPercent : null;
+  const dippingStatus = hasDippingData ? dippingReport.label : 'Data Tidak Cukup';
   
   doc.setFillColor(238, 242, 255); // Indigo-50
   doc.setDrawColor(224, 231, 255);
@@ -171,7 +175,7 @@ export function generateClinicalReportPDF({
   doc.text('NOCTURNAL DIPPING', 64, startY + 4.5);
   doc.setFontSize(10.5);
   doc.setFont('helvetica', 'bold');
-  doc.text(`${dippingVal > 0 ? '+' : ''}${dippingVal.toFixed(1)}%`, 64, startY + 10.5);
+  doc.text(dippingVal !== null ? `${dippingVal > 0 ? '+' : ''}${dippingVal.toFixed(1)}%` : '–', 64, startY + 10.5);
   doc.setFontSize(6.5);
   doc.text(dippingStatus, 64, startY + 14.5);
 
@@ -184,12 +188,12 @@ export function generateClinicalReportPDF({
   doc.text('PULSE PRESSURE & MAP', 110, startY + 4.5);
   doc.setFontSize(10.5);
   doc.setFont('helvetica', 'bold');
-  doc.text(`PP: ${avgPP} mmHg`, 110, startY + 10.5);
+  doc.text(validCount > 0 ? `PP: ${avgPP} mmHg` : 'PP: –', 110, startY + 10.5);
   doc.setFontSize(6.5);
-  doc.text(`MAP: ${avgMAP} mmHg • Nadi ${avgPulse} BPM`, 110, startY + 14.5);
+  doc.text(validCount > 0 ? `MAP: ${avgMAP} mmHg • Nadi ${avgPulse ? `${avgPulse} BPM` : '–'}` : 'MAP: –', 110, startY + 14.5);
 
   // Stat Box 4: Total & Compliance
-  const compliance = stats.targetComplianceRate ?? (count > 0 ? 85 : 0);
+  const compliance = stats.targetComplianceRate ?? (validCount > 0 ? 85 : 0);
   doc.setFillColor(248, 250, 252); // Slate-50
   doc.setDrawColor(226, 232, 240);
   doc.roundedRect(152, startY, boxWidth, boxHeight, 2, 2, 'FD');
@@ -200,7 +204,7 @@ export function generateClinicalReportPDF({
   doc.setFont('helvetica', 'bold');
   doc.text(`${Math.round(compliance)}%`, 156, startY + 10.5);
   doc.setFontSize(6.5);
-  doc.text(`${count} Observasi Tercatat`, 156, startY + 14.5);
+  doc.text(`${totalObservations} Observasi Tercatat`, 156, startY + 14.5);
 
   // =========================================================================
   // 4. CLINICAL ALERTS, RECOMMENDATIONS & ADVICE
@@ -208,25 +212,32 @@ export function generateClinicalReportPDF({
   let flagY = startY + boxHeight + 4;
   const flags: Array<{ level: 'critical' | 'warning' | 'info'; text: string }> = [];
 
-  // Age evaluation
-  const ageEval = classifyAgeAdjustedBP(avgSys, avgDia, profile.age || 45, avgPulse);
-  flags.push({
-    level: ageEval.isNormalForAge ? 'info' : 'warning',
-    text: `STRATIFIKASI USIA (${ageEval.ageStratum}): Rata-rata ${avgSys}/${avgDia} mmHg. ${ageEval.ageClinicalAdvice}`
-  });
-
-  if (avgPP > 60) {
+  if (validCount === 0) {
     flags.push({
-      level: 'warning',
-      text: `KEKAKUAN ARTERI: Pulse Pressure ${avgPP} mmHg (>60 mmHg) mengindikasikan pengerasan dinding pembuluh darah aorta.`
+      level: 'info',
+      text: 'DATA TIDAK CUKUP: Tidak ada pengukuran tekanan darah valid yang tercatat pada rentang waktu ini untuk dievaluasi.'
     });
-  }
-
-  if (dippingVal > -10) {
+  } else {
+    // Age evaluation
+    const ageEval = classifyAgeAdjustedBP(avgSys, avgDia, profile.age || 45, avgPulse);
     flags.push({
-      level: 'warning',
-      text: `KRONOTERAPI: Pola Non-Dipper terdeteksi. Pertimbangkan evaluasi waktu konsumsi obat penurun tensi malam hari.`
+      level: ageEval.isNormalForAge ? 'info' : 'warning',
+      text: `STRATIFIKASI USIA (${ageEval.ageStratum}): Rata-rata ${avgSys}/${avgDia} mmHg. ${ageEval.ageClinicalAdvice}`
     });
+
+    if (avgPP > 60) {
+      flags.push({
+        level: 'warning',
+        text: `KEKAKUAN ARTERI: Pulse Pressure ${avgPP} mmHg (>60 mmHg) mengindikasikan pengerasan dinding pembuluh darah aorta.`
+      });
+    }
+
+    if (hasDippingData && dippingVal !== null && dippingVal > -10) {
+      flags.push({
+        level: 'warning',
+        text: `KRONOTERAPI: Pola Non-Dipper terdeteksi. Pertimbangkan evaluasi waktu konsumsi obat penurun tensi malam hari.`
+      });
+    }
   }
 
   if (latestLab && latestLab.uricAcid > 7.0) {
@@ -382,9 +393,13 @@ function buildWeeklyStats(report: WeeklyReport): BPSummaryStats {
     };
   }
 
-  const avg = (values: number[]) => values.reduce((sum, v) => sum + v, 0) / values.length;
-  const avgSystolic = avg(readings.map((r) => r.systolic));
-  const avgDiastolic = avg(readings.map((r) => r.diastolic));
+  const avg = (values: number[]) => values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : 0;
+  const validReadings = readings.filter((r) => !r.isExcludedFromAverages);
+  const avgReadings = validReadings;
+  const avgSystolic = avg(avgReadings.map((r) => r.systolic));
+  const avgDiastolic = avg(avgReadings.map((r) => r.diastolic));
+  const validPulses = avgReadings.map((r) => r.pulse).filter((p): p is number => typeof p === 'number' && !isNaN(p));
+  const avgPulse = validPulses.length > 0 ? Math.round(avg(validPulses)) : 0;
 
   const categoryCounts = { ...report.categories };
   const mostFrequentCategory = (Object.entries(categoryCounts) as Array<[keyof typeof categoryCounts, number]>)
@@ -394,14 +409,14 @@ function buildWeeklyStats(report: WeeklyReport): BPSummaryStats {
     totalReadings: readings.length,
     avgSystolic: Math.round(avgSystolic),
     avgDiastolic: Math.round(avgDiastolic),
-    avgPulse: Math.round(avg(readings.map((r) => r.pulse))),
-    avgMAP: Math.round(avg(readings.map((r) => calculateMAP(r.systolic, r.diastolic)))),
-    avgPulsePressure: Math.round(avgSystolic - avgDiastolic),
+    avgPulse,
+    avgMAP: avgReadings.length ? Math.round(avg(avgReadings.map((r) => calculateMAP(r.systolic, r.diastolic)))) : 0,
+    avgPulsePressure: avgReadings.length ? Math.round(avgSystolic - avgDiastolic) : 0,
     targetComplianceRate: report.adherence,
     maxSystolic: report.maxSystolic,
     minSystolic: report.minSystolic,
-    maxDiastolic: Math.max(...readings.map((r) => r.diastolic)),
-    minDiastolic: Math.min(...readings.map((r) => r.diastolic)),
+    maxDiastolic: avgReadings.length ? Math.max(...avgReadings.map((r) => r.diastolic)) : 0,
+    minDiastolic: avgReadings.length ? Math.min(...avgReadings.map((r) => r.diastolic)) : 0,
     latestReading: sorted[0],
     categoryCounts,
     mostFrequentCategory

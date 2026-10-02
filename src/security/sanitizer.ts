@@ -44,18 +44,20 @@ export function decodeLegacyEscapedText(input: string): string {
   return current;
 }
 
-export function validateBPRange(systolic: number, diastolic: number, pulse: number): { valid: boolean; error?: string } {
-  if (isNaN(systolic) || systolic < 40 || systolic > 300) {
-    return { valid: false, error: 'Sistolik harus di antara 40 dan 300 mmHg.' };
+export function validateBPRange(systolic: number, diastolic: number, pulse?: number): { valid: boolean; error?: string } {
+  if (typeof systolic !== 'number' || !Number.isFinite(systolic) || isNaN(systolic) || systolic < 40 || systolic > 300) {
+    return { valid: false, error: 'Sistolik harus berada di antara 40 dan 300 mmHg.' };
   }
-  if (isNaN(diastolic) || diastolic < 30 || diastolic > 200) {
-    return { valid: false, error: 'Diastolik harus di antara 30 dan 200 mmHg.' };
+  if (typeof diastolic !== 'number' || !Number.isFinite(diastolic) || isNaN(diastolic) || diastolic < 30 || diastolic > 200) {
+    return { valid: false, error: 'Diastolik harus berada di antara 30 dan 200 mmHg.' };
   }
   if (systolic <= diastolic) {
     return { valid: false, error: 'Sistolik (tekanan atas) harus lebih tinggi dari Diastolik (tekanan bawah).' };
   }
-  if (isNaN(pulse) || pulse < 30 || pulse > 250) {
-    return { valid: false, error: 'Denyut nadi harus di antara 30 dan 250 BPM.' };
+  if (pulse !== undefined && pulse !== null) {
+    if (typeof pulse !== 'number' || !Number.isFinite(pulse) || isNaN(pulse) || pulse < 30 || pulse > 250) {
+      return { valid: false, error: 'Denyut nadi harus berada di antara 30 dan 250 BPM.' };
+    }
   }
   return { valid: true };
 }

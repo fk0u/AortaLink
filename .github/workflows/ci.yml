@@ -42,3 +42,6 @@ jobs:
 
       - name: Clinical Guidelines & Classification Selfcheck
         run: npm run test:guidelines
+
+      - name: Bluetooth Telemetry & Fallback Protocol Selfcheck
+        run: npm run test:ble
