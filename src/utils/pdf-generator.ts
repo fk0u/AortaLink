@@ -162,9 +162,10 @@ export function generateClinicalReportPDF({
   doc.text(validCount > 0 ? 'mmHg (Periode Terpilih)' : 'Tidak Ada Data Valid', 18, startY + 14.5);
 
   // Stat Box 2: Nocturnal Dipping Analysis
-  const dippingReport = calculateNocturnalDipping(filteredReadings);
-  const dippingVal = dippingReport?.sysDippingPercent ?? -12.5;
-  const dippingStatus = dippingReport?.label ?? 'Normal Dipper';
+  const dippingReport = validCount > 0 ? calculateNocturnalDipping(validAvgReadings) : null;
+  const hasDippingData = dippingReport !== null && dippingReport.label !== 'Data Tidak Cukup';
+  const dippingVal = hasDippingData ? dippingReport.sysDippingPercent : null;
+  const dippingStatus = hasDippingData ? dippingReport.label : 'Data Tidak Cukup';
   
   doc.setFillColor(238, 242, 255); // Indigo-50
   doc.setDrawColor(224, 231, 255);
@@ -174,7 +175,7 @@ export function generateClinicalReportPDF({
   doc.text('NOCTURNAL DIPPING', 64, startY + 4.5);
   doc.setFontSize(10.5);
   doc.setFont('helvetica', 'bold');
-  doc.text(`${dippingVal > 0 ? '+' : ''}${dippingVal.toFixed(1)}%`, 64, startY + 10.5);
+  doc.text(dippingVal !== null ? `${dippingVal > 0 ? '+' : ''}${dippingVal.toFixed(1)}%` : '–', 64, startY + 10.5);
   doc.setFontSize(6.5);
   doc.text(dippingStatus, 64, startY + 14.5);
 
@@ -211,25 +212,32 @@ export function generateClinicalReportPDF({
   let flagY = startY + boxHeight + 4;
   const flags: Array<{ level: 'critical' | 'warning' | 'info'; text: string }> = [];
 
-  // Age evaluation
-  const ageEval = classifyAgeAdjustedBP(avgSys, avgDia, profile.age || 45, avgPulse);
-  flags.push({
-    level: ageEval.isNormalForAge ? 'info' : 'warning',
-    text: `STRATIFIKASI USIA (${ageEval.ageStratum}): Rata-rata ${avgSys}/${avgDia} mmHg. ${ageEval.ageClinicalAdvice}`
-  });
-
-  if (avgPP > 60) {
+  if (validCount === 0) {
     flags.push({
-      level: 'warning',
-      text: `KEKAKUAN ARTERI: Pulse Pressure ${avgPP} mmHg (>60 mmHg) mengindikasikan pengerasan dinding pembuluh darah aorta.`
+      level: 'info',
+      text: 'DATA TIDAK CUKUP: Tidak ada pengukuran tekanan darah valid yang tercatat pada rentang waktu ini untuk dievaluasi.'
     });
-  }
-
-  if (dippingVal > -10) {
+  } else {
+    // Age evaluation
+    const ageEval = classifyAgeAdjustedBP(avgSys, avgDia, profile.age || 45, avgPulse);
     flags.push({
-      level: 'warning',
-      text: `KRONOTERAPI: Pola Non-Dipper terdeteksi. Pertimbangkan evaluasi waktu konsumsi obat penurun tensi malam hari.`
+      level: ageEval.isNormalForAge ? 'info' : 'warning',
+      text: `STRATIFIKASI USIA (${ageEval.ageStratum}): Rata-rata ${avgSys}/${avgDia} mmHg. ${ageEval.ageClinicalAdvice}`
     });
+
+    if (avgPP > 60) {
+      flags.push({
+        level: 'warning',
+        text: `KEKAKUAN ARTERI: Pulse Pressure ${avgPP} mmHg (>60 mmHg) mengindikasikan pengerasan dinding pembuluh darah aorta.`
+      });
+    }
+
+    if (hasDippingData && dippingVal !== null && dippingVal > -10) {
+      flags.push({
+        level: 'warning',
+        text: `KRONOTERAPI: Pola Non-Dipper terdeteksi. Pertimbangkan evaluasi waktu konsumsi obat penurun tensi malam hari.`
+      });
+    }
   }
 
   if (latestLab && latestLab.uricAcid > 7.0) {
