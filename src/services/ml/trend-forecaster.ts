@@ -48,7 +48,9 @@ const ALPHA = 0.05;
 const STABLE_SLOPE_EPSILON = 1.0;
 
 export function forecastBpTrend(readings: BPReading[], horizonDays = 7): BpTrendForecast {
-  const sorted = [...readings].sort(
+  const validReadings = readings.filter((r) => !r.isExcludedFromAverages);
+  const effectiveReadings = validReadings.length >= MIN_READINGS ? validReadings : readings;
+  const sorted = [...effectiveReadings].sort(
     (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
 

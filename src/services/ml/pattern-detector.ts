@@ -56,12 +56,14 @@ function pText(p: number): string {
 }
 
 export function detectBpPatterns(readings: BPReading[]): BpPatternFinding[] {
+  const valid = readings.filter((r) => !r.isExcludedFromAverages);
+  const effective = valid.length >= 6 ? valid : readings;
   return [
-    detectWhiteCoat(readings),
-    detectMaskedHypertension(readings),
-    detectMorningSurge(readings),
-    detectVariability(readings),
-    detectWeekendEffect(readings)
+    detectWhiteCoat(effective),
+    detectMaskedHypertension(effective),
+    detectMorningSurge(effective),
+    detectVariability(effective),
+    detectWeekendEffect(effective)
   ];
 }
 

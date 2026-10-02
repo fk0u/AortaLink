@@ -21,19 +21,30 @@ export interface Profile {
   isDefault?: boolean;
 }
 
+export interface BleMeasurementStatus {
+  bodyMovement?: boolean;
+  cuffLoose?: boolean;
+  irregularPulse?: boolean;
+  pulseRangeExceeded?: 'upper' | 'lower';
+  improperPosition?: boolean;
+}
+
 export interface BPReading {
   /** UUID primary key. Legacy numeric ids are migrated on schema upgrade. */
   id?: string;
   profileId: string;
   systolic: number;
   diastolic: number;
-  pulse: number;
+  pulse?: number;
   timestamp: string; // ISO 8601 string
   position?: BodyPosition;
   arm?: ArmUsed;
   tags?: string[];
   notes?: string;
   measurement_context?: MeasurementContext;
+  measurementStatus?: BleMeasurementStatus;
+  isFlaggedMeasurement?: boolean;
+  isExcludedFromAverages?: boolean;
 }
 
 export type DrugClass = 

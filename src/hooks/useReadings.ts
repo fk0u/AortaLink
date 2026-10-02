@@ -97,9 +97,14 @@ export function useReadings() {
       };
     }
 
+    const statReadings = filteredReadings.filter((r) => !r.isExcludedFromAverages);
+    const readingsForAvg = statReadings.length > 0 ? statReadings : filteredReadings;
+    const avgTotal = readingsForAvg.length;
+
     let sumSys = 0;
     let sumDia = 0;
     let sumPulse = 0;
+    let pulseCount = 0;
     let sumMAP = 0;
     let sumPP = 0;
     let compliantCount = 0;
@@ -123,15 +128,6 @@ export function useReadings() {
     };
 
     filteredReadings.forEach((r) => {
-      sumSys += r.systolic;
-      sumDia += r.diastolic;
-      sumPulse += r.pulse;
-
-      const map = calculateMAP(r.systolic, r.diastolic);
-      const pp = calculatePulsePressure(r.systolic, r.diastolic);
-      sumMAP += map;
-      sumPP += pp;
-
       if (r.systolic <= targetSys && r.diastolic <= targetDia) {
         compliantCount++;
       }
@@ -143,6 +139,17 @@ export function useReadings() {
 
       const category = classifyBP(r.systolic, r.diastolic, activeProfile?.guidelinePreference).key;
       counts[category]++;
+    });
+
+    readingsForAvg.forEach((r) => {
+      sumSys += r.systolic;
+      sumDia += r.diastolic;
+      if (typeof r.pulse === 'number' && !isNaN(r.pulse)) {
+        sumPulse += r.pulse;
+        pulseCount++;
+      }
+      sumMAP += calculateMAP(r.systolic, r.diastolic);
+      sumPP += calculatePulsePressure(r.systolic, r.diastolic);
     });
 
     const total = filteredReadings.length;
@@ -157,11 +164,11 @@ export function useReadings() {
 
     return {
       totalReadings: total,
-      avgSystolic: Math.round(sumSys / total),
-      avgDiastolic: Math.round(sumDia / total),
-      avgPulse: Math.round(sumPulse / total),
-      avgMAP: Math.round(sumMAP / total),
-      avgPulsePressure: Math.round(sumPP / total),
+      avgSystolic: Math.round(sumSys / avgTotal),
+      avgDiastolic: Math.round(sumDia / avgTotal),
+      avgPulse: pulseCount > 0 ? Math.round(sumPulse / pulseCount) : 0,
+      avgMAP: Math.round(sumMAP / avgTotal),
+      avgPulsePressure: Math.round(sumPP / avgTotal),
       targetComplianceRate: Math.round((compliantCount / total) * 100),
       maxSystolic: maxSys,
       minSystolic: minSys,

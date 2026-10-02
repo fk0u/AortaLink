@@ -66,7 +66,8 @@ export function generateClinicalReportPDF({
   const count = filteredReadings.length;
   const avgSys = count > 0 ? Math.round(filteredReadings.reduce((a, b) => a + b.systolic, 0) / count) : stats.avgSystolic;
   const avgDia = count > 0 ? Math.round(filteredReadings.reduce((a, b) => a + b.diastolic, 0) / count) : stats.avgDiastolic;
-  const avgPulse = count > 0 ? Math.round(filteredReadings.reduce((a, b) => a + b.pulse, 0) / count) : stats.avgPulse;
+  const validPulses = filteredReadings.map((r) => r.pulse).filter((p): p is number => typeof p === 'number' && !isNaN(p));
+  const avgPulse = validPulses.length > 0 ? Math.round(validPulses.reduce((a, b) => a + b, 0) / validPulses.length) : stats.avgPulse;
   const avgMAP = Math.round((avgDia * 2 + avgSys) / 3);
   const avgPP = avgSys - avgDia;
 
@@ -394,7 +395,7 @@ function buildWeeklyStats(report: WeeklyReport): BPSummaryStats {
     totalReadings: readings.length,
     avgSystolic: Math.round(avgSystolic),
     avgDiastolic: Math.round(avgDiastolic),
-    avgPulse: Math.round(avg(readings.map((r) => r.pulse))),
+    avgPulse: Math.round(avg(readings.map((r) => r.pulse).filter((p): p is number => typeof p === 'number' && !isNaN(p)))),
     avgMAP: Math.round(avg(readings.map((r) => calculateMAP(r.systolic, r.diastolic)))),
     avgPulsePressure: Math.round(avgSystolic - avgDiastolic),
     targetComplianceRate: report.adherence,

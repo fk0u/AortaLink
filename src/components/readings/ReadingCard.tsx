@@ -3,7 +3,7 @@ import { useProfiles } from '../../hooks/useProfiles';
 import { classifyBP } from '../../utils/bp-classifier';
 import { formatDateIndonesian } from '../../utils/formatters';
 import { playClickSound } from '../../utils/audio-fx';
-import { Heart, Edit3, Trash2, Tag, Clock } from '../icons/AppIcons';
+import { Heart, Edit3, Trash2, Tag, Clock, AlertTriangle } from '../icons/AppIcons';
 import { motion } from 'framer-motion';
 
 interface ReadingCardProps {
@@ -59,10 +59,12 @@ export const ReadingCard: React.FC<ReadingCardProps> = ({ reading, onEdit, onDel
                 {formatDateIndonesian(reading.timestamp)}
               </span>
 
-              <span className="inline-flex items-center gap-1 font-bold text-rose-500 bg-rose-50 dark:bg-rose-950/60 px-1.5 py-0.5 rounded-md text-[11px]">
-                <Heart size={12} className="fill-rose-500" />
-                {reading.pulse} BPM
-              </span>
+              {typeof reading.pulse === 'number' && (
+                <span className="inline-flex items-center gap-1 font-bold text-rose-500 bg-rose-50 dark:bg-rose-950/60 px-1.5 py-0.5 rounded-md text-[11px]">
+                  <Heart size={12} className="fill-rose-500" />
+                  {reading.pulse} BPM
+                </span>
+              )}
             </div>
           </div>
 
@@ -138,6 +140,56 @@ export const ReadingCard: React.FC<ReadingCardProps> = ({ reading, onEdit, onDel
               title="Hipertensi Diastolik Terisolasi (IDH)"
             >
               IDH
+            </span>
+          )}
+
+          {/* BLE Measurement Status & Artifact Flags */}
+          {reading.measurementStatus?.cuffLoose && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60"
+              title="Manset kendur saat pengukuran"
+            >
+              <AlertTriangle size={10} />
+              Manset Longgar
+            </span>
+          )}
+
+          {reading.measurementStatus?.bodyMovement && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60"
+              title="Terdeteksi gerakan tubuh saat pengukuran"
+            >
+              <AlertTriangle size={10} />
+              Gerakan
+            </span>
+          )}
+
+          {reading.measurementStatus?.irregularPulse && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-rose-100 dark:bg-rose-950/70 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-700/60"
+              title="Detak nadi tidak teratur (aritmia) terdeteksi sensor"
+            >
+              <Heart size={10} className="fill-rose-600" />
+              Ireguler
+            </span>
+          )}
+
+          {reading.measurementStatus?.improperPosition && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60"
+              title="Posisi tubuh tidak sesuai rekomendasi"
+            >
+              <AlertTriangle size={10} />
+              Posisi Miring
+            </span>
+          )}
+
+          {reading.isExcludedFromAverages && (
+            <span
+              className="px-2 py-0.5 rounded-md font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+              title="Pengukuran ini memiliki artefak dan tidak disertakan dalam kalkulasi rata-rata klinis"
+            >
+              Eksklusi Rata-rata
             </span>
           )}
         </div>

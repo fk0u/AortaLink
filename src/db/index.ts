@@ -1,6 +1,6 @@
 import Dexie, { type Table } from 'dexie';
-import { decodeLegacyEscapedText } from '../security/sanitizer';
-import { Profile, BPReading, Reminder, HabitLog, GamificationState, SodiumLog, SleepLog, MedicationLog, MedicationItem, LabResult, FhirPatient, FhirObservation, FhirMedicationRequest, FhirMedicationStatement, AscvdProfile, ClinicalNote } from '../types/blood-pressure';
+import { decodeLegacyEscapedText } from '../security/sanitizer.ts';
+import type { Profile, BPReading, Reminder, HabitLog, GamificationState, SodiumLog, SleepLog, MedicationLog, MedicationItem, LabResult, FhirPatient, FhirObservation, FhirMedicationRequest, FhirMedicationStatement, AscvdProfile, ClinicalNote } from '../types/blood-pressure.ts';
 
 export class AortaLinkDatabase extends Dexie {
   profiles!: Table<Profile, string>;

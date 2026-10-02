@@ -6,7 +6,7 @@ import { useFocusTrap } from '../../utils/modal-a11y';
 import { BodyPosition, ArmUsed, MeasurementContext, BPReading } from '../../types/blood-pressure';
 import { classifyBP, classifyAgeAdjustedBP } from '../../utils/bp-classifier';
 import { playClickSound, playSuccessChime, playAlertSound } from '../../utils/audio-fx';
-import { normalizeClinicalText } from '../../security/sanitizer';
+import { normalizeClinicalText, validateBPRange } from '../../security/sanitizer';
 import { getLocalDateTimeForInput, parseLocalDateTimeInput } from '../../utils/formatters';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -89,7 +89,7 @@ export const ReadingFormModal: React.FC = () => {
     if (editingReading) {
       setSystolic(editingReading.systolic);
       setDiastolic(editingReading.diastolic);
-      setPulse(editingReading.pulse);
+      setPulse(editingReading.pulse ?? 72);
       setTimestamp(getLocalDateTimeForInput(editingReading.timestamp));
       setPosition(editingReading.position || 'duduk');
       setArm(editingReading.arm || 'kiri');
@@ -201,9 +201,14 @@ export const ReadingFormModal: React.FC = () => {
       return;
     }
 
-    if (systolic < 60 || systolic > 260 || diastolic < 40 || diastolic > 180) {
+    const bpValidation = validateBPRange(systolic, diastolic, pulse);
+    if (!bpValidation.valid) {
       playAlertSound();
-      addToast({ type: 'error', title: 'Nilai Tidak Valid', message: 'Periksa kembali nilai sistolik & diastolik Anda.' });
+      addToast({
+        type: 'error',
+        title: 'Nilai Tidak Valid',
+        message: bpValidation.error || 'Periksa kembali nilai sistolik, diastolik, atau nadi Anda.'
+      });
       return;
     }
 

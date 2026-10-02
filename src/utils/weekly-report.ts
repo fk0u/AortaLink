@@ -40,6 +40,6 @@ export function createWeeklyReport(readings: BPReading[], sodiumLogs: SodiumLog[
     const highReadings = current.filter(r => highSodium.has(dayKey(new Date(r.timestamp))));
     if (highReadings.length && highSodium.size) insights.push(`Pada ${highSodium.size} hari dengan sodium tinggi, tercatat ${highReadings.length} pengukuran; hubungan ini bukan diagnosis.`);
   }
-  return { startDate,endDate,previousStartDate,previousEndDate,readings:current,previousReadings:previous,count:current.length,avgSystolic:avg(current.map(r=>r.systolic)),avgDiastolic:avg(current.map(r=>r.diastolic)),minSystolic:current.length?Math.min(...current.map(r=>r.systolic)):0,maxSystolic:current.length?Math.max(...current.map(r=>r.systolic)):0,avgPulse:avg(current.map(r=>r.pulse).filter(Boolean)),categories,morning,evening,adherence:Math.round(days.size/7*100),insights };
+  return { startDate,endDate,previousStartDate,previousEndDate,readings:current,previousReadings:previous,count:current.length,avgSystolic:avg(current.map(r=>r.systolic)),avgDiastolic:avg(current.map(r=>r.diastolic)),minSystolic:current.length?Math.min(...current.map(r=>r.systolic)):0,maxSystolic:current.length?Math.max(...current.map(r=>r.systolic)):0,avgPulse:avg(current.map(r=>r.pulse).filter((p): p is number => typeof p === 'number' && !isNaN(p))),categories,morning,evening,adherence:Math.round(days.size/7*100),insights };
 }
 export const formatWeeklyRange = (r: WeeklyReport) => `${format(r.startDate,'d MMM',{locale:idLocale})} – ${format(r.endDate,'d MMM yyyy',{locale:idLocale})}`;
