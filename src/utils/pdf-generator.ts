@@ -63,14 +63,15 @@ export function generateClinicalReportPDF({
   }
 
   // Compute stats for valid filtered dataset (excluding artifact measurements)
+  const totalObservations = filteredReadings.length;
   const validAvgReadings = filteredReadings.filter((r) => !r.isExcludedFromAverages);
-  const count = validAvgReadings.length;
-  const avgSys = count > 0 ? Math.round(validAvgReadings.reduce((a, b) => a + b.systolic, 0) / count) : stats.avgSystolic;
-  const avgDia = count > 0 ? Math.round(validAvgReadings.reduce((a, b) => a + b.diastolic, 0) / count) : stats.avgDiastolic;
+  const validCount = validAvgReadings.length;
+  const avgSys = validCount > 0 ? Math.round(validAvgReadings.reduce((a, b) => a + b.systolic, 0) / validCount) : 0;
+  const avgDia = validCount > 0 ? Math.round(validAvgReadings.reduce((a, b) => a + b.diastolic, 0) / validCount) : 0;
   const validPulses = validAvgReadings.map((r) => r.pulse).filter((p): p is number => typeof p === 'number' && !isNaN(p));
-  const avgPulse = validPulses.length > 0 ? Math.round(validPulses.reduce((a, b) => a + b, 0) / validPulses.length) : (stats.avgPulse || 0);
-  const avgMAP = Math.round((avgDia * 2 + avgSys) / 3);
-  const avgPP = avgSys - avgDia;
+  const avgPulse = validPulses.length > 0 ? Math.round(validPulses.reduce((a, b) => a + b, 0) / validPulses.length) : 0;
+  const avgMAP = validCount > 0 ? Math.round((avgDia * 2 + avgSys) / 3) : 0;
+  const avgPP = validCount > 0 ? avgSys - avgDia : 0;
 
   // =========================================================================
   // 1. TOP HEADER BANNER (HL7 FHIR R4 & CLINICAL RESUME IDENTITY)
@@ -191,7 +192,7 @@ export function generateClinicalReportPDF({
   doc.text(`MAP: ${avgMAP} mmHg • Nadi ${avgPulse} BPM`, 110, startY + 14.5);
 
   // Stat Box 4: Total & Compliance
-  const compliance = stats.targetComplianceRate ?? (count > 0 ? 85 : 0);
+  const compliance = stats.targetComplianceRate ?? (validCount > 0 ? 85 : 0);
   doc.setFillColor(248, 250, 252); // Slate-50
   doc.setDrawColor(226, 232, 240);
   doc.roundedRect(152, startY, boxWidth, boxHeight, 2, 2, 'FD');
@@ -202,7 +203,7 @@ export function generateClinicalReportPDF({
   doc.setFont('helvetica', 'bold');
   doc.text(`${Math.round(compliance)}%`, 156, startY + 10.5);
   doc.setFontSize(6.5);
-  doc.text(`${count} Observasi Tercatat`, 156, startY + 14.5);
+  doc.text(`${totalObservations} Observasi Tercatat`, 156, startY + 14.5);
 
   // =========================================================================
   // 4. CLINICAL ALERTS, RECOMMENDATIONS & ADVICE
@@ -406,8 +407,8 @@ function buildWeeklyStats(report: WeeklyReport): BPSummaryStats {
     targetComplianceRate: report.adherence,
     maxSystolic: report.maxSystolic,
     minSystolic: report.minSystolic,
-    maxDiastolic: Math.max(...readings.map((r) => r.diastolic)),
-    minDiastolic: Math.min(...readings.map((r) => r.diastolic)),
+    maxDiastolic: avgReadings.length ? Math.max(...avgReadings.map((r) => r.diastolic)) : 0,
+    minDiastolic: avgReadings.length ? Math.min(...avgReadings.map((r) => r.diastolic)) : 0,
     latestReading: sorted[0],
     categoryCounts,
     mostFrequentCategory

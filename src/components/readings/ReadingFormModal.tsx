@@ -592,6 +592,16 @@ export const ReadingFormModal: React.FC = () => {
                       <Plus size={14} />
                     </button>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      setPulse((prev) => (prev !== undefined ? undefined : 72));
+                    }}
+                    className="text-[9px] font-semibold text-rose-600 dark:text-rose-400 hover:underline pt-0.5 block mx-auto"
+                  >
+                    {pulse !== undefined ? 'Kosongkan Nadi' : 'Isi Nadi (72 BPM)'}
+                  </button>
                 </div>
 
               </div>
