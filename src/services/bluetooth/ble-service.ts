@@ -114,12 +114,13 @@ export interface BLEPairingOptions {
 // Parsed measurement result
 // ---------------------------------------------------------------------------
 export interface ParsedBPMeasurement {
-  systolic: number;
-  diastolic: number;
-  map: number; // Mean Arterial Pressure
+  systolic: number; // in mmHg
+  diastolic: number; // in mmHg
+  map: number; // Mean Arterial Pressure in mmHg
   pulse?: number;
   timestamp?: Date;
-  unit: 'mmHg' | 'kPa';
+  unit: 'mmHg';
+  rawUnit?: 'mmHg' | 'kPa';
   userId?: number;
   measurementStatus?: BleMeasurementStatus;
   isFlaggedMeasurement?: boolean;
@@ -143,24 +144,25 @@ export interface ParsedBPMeasurement {
  */
 export function decodeSFloat(dataView: DataView, offset: number): number {
   const word = dataView.getUint16(offset, true); // little-endian
-  const rawMantissa = word & 0x0fff;
 
-  if (rawMantissa === 0x07ff) {
+  // IEEE 11073-20601 section A.1.1: Special values are defined when exponent is 0
+  if (word === 0x07ff) {
     throw new Error('SFLOAT decode error: NaN (Not a Number, 0x07FF)');
   }
-  if (rawMantissa === 0x0800) {
+  if (word === 0x0800) {
     throw new Error('SFLOAT decode error: NRes (Not at this Resolution, 0x0800)');
   }
-  if (rawMantissa === 0x07fe) {
+  if (word === 0x07fe) {
     throw new Error('SFLOAT decode error: +INFINITY (0x07FE)');
   }
-  if (rawMantissa === 0x0802) {
+  if (word === 0x0802) {
     throw new Error('SFLOAT decode error: -INFINITY (0x0802)');
   }
-  if (rawMantissa === 0x0801) {
+  if (word === 0x0801) {
     throw new Error('SFLOAT decode error: Reserved (0x0801)');
   }
 
+  const rawMantissa = word & 0x0fff;
   const mantissa = (rawMantissa << 20) >> 20; // sign-extend 12-bit mantissa
   const exponent = (word >> 12) << 28 >> 28;  // sign-extend 4-bit exponent
   return mantissa * Math.pow(10, exponent);
@@ -204,6 +206,10 @@ export function kPaToMmHg(kPa: number): number {
  * according to IEEE 11073-20601.
  */
 export function parseBPMeasurement(data: DataView): ParsedBPMeasurement {
+  if (data.byteLength < 7) {
+    throw new Error(`Truncated BLE packet: packet length ${data.byteLength} bytes is less than minimum 7 bytes`);
+  }
+
   const flags = parseFlags(data.getUint8(0));
   let offset = 1;
 
@@ -222,7 +228,10 @@ export function parseBPMeasurement(data: DataView): ParsedBPMeasurement {
   const map = isKpa ? kPaToMmHg(rawMap) : Math.round(rawMap * 10) / 10;
 
   let timestamp: Date | undefined;
-  if (flags.timestampPresent && offset + 7 <= data.byteLength) {
+  if (flags.timestampPresent) {
+    if (offset + 7 > data.byteLength) {
+      throw new Error('Truncated BLE packet: timestamp flag set but insufficient bytes in payload');
+    }
     const year = data.getUint16(offset, true);
     const month = data.getUint8(offset + 2) - 1; // JS Date months are 0-indexed
     const day = data.getUint8(offset + 3);
@@ -236,7 +245,10 @@ export function parseBPMeasurement(data: DataView): ParsedBPMeasurement {
   }
 
   let pulse: number | undefined;
-  if (flags.pulsePresent && offset + 2 <= data.byteLength) {
+  if (flags.pulsePresent) {
+    if (offset + 2 > data.byteLength) {
+      throw new Error('Truncated BLE packet: pulse flag set but insufficient bytes in payload');
+    }
     const rawPulse = decodeSFloat(data, offset);
     const roundedPulse = Math.round(rawPulse);
     pulse = roundedPulse > 0 ? roundedPulse : undefined;
@@ -244,7 +256,10 @@ export function parseBPMeasurement(data: DataView): ParsedBPMeasurement {
   }
 
   let userId: number | undefined;
-  if (flags.userIdPresent && offset + 1 <= data.byteLength) {
+  if (flags.userIdPresent) {
+    if (offset + 1 > data.byteLength) {
+      throw new Error('Truncated BLE packet: userId flag set but insufficient bytes in payload');
+    }
     userId = data.getUint8(offset);
     offset += 1;
   }
@@ -253,7 +268,10 @@ export function parseBPMeasurement(data: DataView): ParsedBPMeasurement {
   let isFlaggedMeasurement = false;
   let isExcludedFromAverages = false;
 
-  if (flags.measurementStatusPresent && offset + 2 <= data.byteLength) {
+  if (flags.measurementStatusPresent) {
+    if (offset + 2 > data.byteLength) {
+      throw new Error('Truncated BLE packet: measurement status flag set but insufficient bytes in payload');
+    }
     const statusWord = data.getUint16(offset, true);
     offset += 2;
     const bodyMovement = !!(statusWord & 0x0001);
@@ -282,7 +300,8 @@ export function parseBPMeasurement(data: DataView): ParsedBPMeasurement {
     map,
     pulse,
     timestamp,
-    unit: flags.unit,
+    unit: 'mmHg',
+    rawUnit: flags.unit,
     userId,
     measurementStatus,
     isFlaggedMeasurement,
@@ -444,9 +463,9 @@ export async function scanAndReadBP(
     diastolic,
     pulse,
     timestamp: (parsed.timestamp ?? new Date()).toISOString(),
-    position: options?.position || 'duduk',
-    arm: options?.arm || 'kiri',
-    measurement_context: options?.measurementContext || 'Home',
+    position: options?.position,
+    arm: options?.arm,
+    measurement_context: options?.measurementContext,
     measurementStatus: parsed.measurementStatus,
     isFlaggedMeasurement: parsed.isFlaggedMeasurement,
     isExcludedFromAverages: parsed.isExcludedFromAverages,

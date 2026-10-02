@@ -38,6 +38,10 @@ assert.equal(decodeSFloat(view80, 0), 80, 'SFLOAT 80 * 10^0 should decode to 80'
 const viewExpNeg1 = buildSFloatBuffer(1200, -1);
 assert.equal(decodeSFloat(viewExpNeg1, 0), 120, 'SFLOAT 1200 * 10^-1 should decode to 120');
 
+// Nonzero exponent with mantissa 0x07FF: 2047 * 10^-1 = 204.7 mmHg (must NOT throw)
+const view2047 = buildSFloatBuffer(0x07ff, -1);
+assert.equal(Math.round(decodeSFloat(view2047, 0) * 10) / 10, 204.7, 'SFLOAT 0xF7FF should decode to 204.7');
+
 // 1.2 Rejection of IEEE 11073-20601 Special Values
 assert.throws(
   () => decodeSFloat(buildSFloatBuffer(0x07ff, 0), 0),
@@ -126,11 +130,27 @@ assert.equal(standardMeasurement.diastolic, 80);
 assert.equal(standardMeasurement.map, 93);
 assert.equal(standardMeasurement.pulse, 72);
 assert.equal(standardMeasurement.unit, 'mmHg');
+assert.equal(standardMeasurement.rawUnit, 'mmHg');
 assert.ok(standardMeasurement.timestamp instanceof Date);
 assert.equal(standardMeasurement.timestamp?.getFullYear(), 2026);
 assert.equal(standardMeasurement.isFlaggedMeasurement, false);
 assert.equal(standardMeasurement.isExcludedFromAverages, false);
-console.log('✓ Standard mmHg GATT measurement packet parsed cleanly');
+
+// 3.2 Corrupted / Truncated Packets Rejection
+assert.throws(
+  () => parseBPMeasurement(new DataView(new ArrayBuffer(6))),
+  /Truncated BLE packet/,
+  'Packets shorter than minimum 7 bytes must throw'
+);
+
+const truncatedTimestampBuf = new ArrayBuffer(10);
+new DataView(truncatedTimestampBuf).setUint8(0, 0x02); // timestamp flag set, but only 10 bytes total (needs 14)
+assert.throws(
+  () => parseBPMeasurement(new DataView(truncatedTimestampBuf)),
+  /Truncated BLE packet/,
+  'Packets with incomplete timestamp must throw'
+);
+console.log('✓ Standard mmHg GATT measurement packet parsed and truncated packets rejected');
 
 // 3.2 Measurement Status Flags: body movement, cuff loose, improper position
 // Flags byte = 0x14 (pulsePresent=1, measurementStatusPresent=1)

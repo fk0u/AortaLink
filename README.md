@@ -43,7 +43,7 @@ AortaLink v3.0 is **engineered to Software-as-a-Medical-Device (SaMD) discipline
 
 - **Offline-first records**: Dexie (IndexedDB) is the single source of truth; multi-profile family care.
 - **Cloud sync**: Express + MongoDB Atlas with per-record `updatedAt`, merge-by-recency and deletion tombstones (open hardening items: [#10](https://github.com/fk0u/AortaLink/issues/10)).
-- **Bluetooth BP cuffs**: Web Bluetooth GATT Blood Pressure Profile (`0x1810` / `0x2A35`) with IEEE 11073-20601 SFLOAT decoding, special values rejection (NaN/INF), measurement status flags (cuff fit, motion, arrhythmia), catalog of tested devices (Omron, Beurer, Yuwell, A&D), single-door physiological range validation, and active manual fallback on Safari iOS ([#14](https://github.com/fk0u/AortaLink/issues/14)).
+- **Bluetooth BP cuffs**: Web Bluetooth GATT Blood Pressure Profile (`0x1810` / `0x2A35`) with IEEE 11073-20601 SFLOAT decoding, special values rejection (NaN/INF), measurement status flags (cuff fit, motion, arrhythmia), catalog of tested devices (Omron, Beurer, Yuwell, A&D), single-door physiological range validation, and active manual fallback on browsers without Web Bluetooth (e.g. Safari iOS) ([#14](https://github.com/fk0u/AortaLink/issues/14)).
 - **Measurement context**: Home / Clinic / Post-medication / Stress, so clinic readings don't distort home averages.
 - **Circadian dipping profile**: Dipper / Non-dipper / Riser / Extreme dipper, shown as a pattern to discuss with a doctor.
 - **FHIR R4 export**: Patient, Observation and MedicationRequest bundles with an in-app JSON inspector.

@@ -141,35 +141,41 @@ export const HistoryFilter: React.FC = () => {
 
         for (let i = 1; i < lines.length; i++) {
           const cols = lines[i].split(',');
-          if (cols.length >= 4) {
-            const systolic = parseInt(cols[1], 10);
-            const diastolic = parseInt(cols[2], 10);
-            const rawPulse = cols[3] ? parseInt(cols[3], 10) : undefined;
-            const pulse = !isNaN(rawPulse as number) ? rawPulse : undefined;
-
-            const validation = validateBPRange(systolic, diastolic, pulse);
-            if (!validation.valid) {
-              skippedCount++;
-              continue;
-            }
-
-            newReadings.push({
-              id: (cols[0] && cols[0].trim().length > 0) ? cols[0].trim() : newSyncId(),
-              profileId: activeProfileId,
-              systolic,
-              diastolic,
-              pulse,
-              timestamp: cols[4]?.trim() || new Date().toISOString(),
-              position: (cols[5]?.trim() as any) || 'duduk',
-              arm: (cols[6]?.trim() as any) || 'kiri',
-              tags: cols[7] ? cols[7].split(';').map((t) => t.trim()).filter(Boolean) : [],
-              notes: cols[8] ? cols[8].replace(/^"|"$/g, '').replace(/""/g, '"') : ''
-            });
+          if (cols.length < 4) {
+            skippedCount++;
+            continue;
           }
+
+          const rawSysStr = cols[1]?.trim() ?? '';
+          const rawDiaStr = cols[2]?.trim() ?? '';
+          const rawPulseStr = cols[3]?.trim() ?? '';
+
+          const systolic = rawSysStr !== '' ? Number(rawSysStr) : NaN;
+          const diastolic = rawDiaStr !== '' ? Number(rawDiaStr) : NaN;
+          const pulse = rawPulseStr !== '' ? Number(rawPulseStr) : undefined;
+
+          const validation = validateBPRange(systolic, diastolic, pulse);
+          if (!validation.valid) {
+            skippedCount++;
+            continue;
+          }
+
+          newReadings.push({
+            id: (cols[0] && cols[0].trim().length > 0) ? cols[0].trim() : newSyncId(),
+            profileId: activeProfileId,
+            systolic,
+            diastolic,
+            pulse,
+            timestamp: cols[4]?.trim() || new Date().toISOString(),
+            position: (cols[5]?.trim() as any) || undefined,
+            arm: (cols[6]?.trim() as any) || undefined,
+            tags: cols[7] ? cols[7].split(';').map((t) => t.trim()).filter(Boolean) : [],
+            notes: cols[8] ? cols[8].replace(/^"|"$/g, '').replace(/""/g, '"') : ''
+          });
         }
 
         if (newReadings.length > 0) {
-          await db.readings.bulkAdd(newReadings);
+          await db.readings.bulkPut(newReadings);
           playSuccessChime();
           const skipMsg = skippedCount > 0 ? ` (${skippedCount} baris tidak valid dilewati)` : '';
           addToast({
@@ -182,7 +188,7 @@ export const HistoryFilter: React.FC = () => {
           addToast({
             type: 'error',
             title: 'Gagal Impor CSV',
-            message: skippedCount > 0 ? `Semua baris (${skippedCount}) memiliki nilai tensi di luar batas valid.` : 'Tidak ada data valid yang ditemukan.'
+            message: skippedCount > 0 ? `Semua baris (${skippedCount}) memiliki nilai tensi atau format di luar batas valid.` : 'Tidak ada data valid yang ditemukan.'
           });
         }
       } catch (err) {

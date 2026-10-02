@@ -73,12 +73,14 @@ export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{
     }
 
     const rawReadings = Array.isArray(payload.readings) ? payload.readings : [];
-    const readings = rawReadings
-      .filter((r) => r && typeof r === 'object' && validateBPRange(r.systolic, r.diastolic, r.pulse).valid)
-      .map((r) => ({
-        ...r,
-        id: typeof r.id === 'string' && r.id ? r.id : newSyncId()
-      }));
+    const validRawReadings = rawReadings.filter(
+      (r) => r && typeof r === 'object' && validateBPRange(r.systolic, r.diastolic, r.pulse).valid
+    );
+    const discardedReadingsCount = rawReadings.length - validRawReadings.length;
+    const readings = validRawReadings.map((r) => ({
+      ...r,
+      id: typeof r.id === 'string' && r.id ? r.id : newSyncId()
+    }));
     const reminders = Array.isArray(payload.reminders) ? payload.reminders : [];
     const habits = Array.isArray(payload.habits) ? payload.habits : [];
     let medications = Array.isArray(payload.medications) ? payload.medications : [];
@@ -156,10 +158,11 @@ export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{
     });
 
     const totalRecords = profiles.length + readings.length + reminders.length;
+    const discardedMsg = discardedReadingsCount > 0 ? ` (${discardedReadingsCount} data tensi tidak valid diabaikan)` : '';
     return {
       success: true,
       recordCount: totalRecords,
-      message: `Pemulihan JSON v1.1 / v2.0 Berhasil! Terpulihkan ${profiles.length} profil, ${readings.length} pengukuran tensi, dan ${reminders.length} pengingat.`
+      message: `Pemulihan JSON v1.1 / v2.0 Berhasil! Terpulihkan ${profiles.length} profil, ${readings.length} pengukuran tensi${discardedMsg}, dan ${reminders.length} pengingat.`
     };
   } catch (err: any) {
     return {

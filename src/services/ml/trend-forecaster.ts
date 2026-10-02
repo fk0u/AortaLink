@@ -49,8 +49,7 @@ const STABLE_SLOPE_EPSILON = 1.0;
 
 export function forecastBpTrend(readings: BPReading[], horizonDays = 7): BpTrendForecast {
   const validReadings = readings.filter((r) => !r.isExcludedFromAverages);
-  const effectiveReadings = validReadings.length >= MIN_READINGS ? validReadings : readings;
-  const sorted = [...effectiveReadings].sort(
+  const sorted = [...validReadings].sort(
     (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
 
@@ -68,8 +67,8 @@ export function forecastBpTrend(readings: BPReading[], horizonDays = 7): BpTrend
     forecast: [],
     assessment:
       nReadings === 0
-        ? 'Belum ada data pengukuran. Catat setidaknya 5 pengukuran selama 7 hari agar model tren dapat bekerja.'
-        : `Baru ${nReadings} pengukuran. Model tren membutuhkan minimal 5 pengukuran dalam rentang 7 hari.`,
+        ? 'Belum ada data pengukuran valid. Catat setidaknya 5 pengukuran selama 7 hari agar model tren dapat bekerja.'
+        : `Baru ${nReadings} pengukuran valid. Model tren membutuhkan minimal 5 pengukuran dalam rentang 7 hari.`,
     confidenceNote: 'Data belum cukup untuk memodelkan tren.'
   };
   if (nReadings < MIN_READINGS) return empty;
