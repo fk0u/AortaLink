@@ -98,6 +98,7 @@ export function isResearchModeActive(): boolean {
 export function getResearchStudyId(): string | null {
   try {
     if (typeof localStorage === 'undefined') return null;
+    if (!isResearchModeActive()) return null;
     return localStorage.getItem(STORAGE_KEYS.STUDY_ID);
   } catch {
     return null;

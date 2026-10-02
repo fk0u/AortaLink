@@ -52,9 +52,13 @@ export function exportPseudonymizedFHIRBundle(
       entry.resource.name = [{ use: 'anonymous', text: pseudonym }];
       entry.resource.telecom = undefined;
       entry.resource.birthDate = undefined;
+      (entry.resource as any).address = undefined;
     } else if (entry.resource.resourceType === 'Observation') {
       // Scrub free-text clinician or participant notes to prevent accidental PII leakage
       entry.resource.note = undefined;
+      if (entry.resource.subject) {
+        entry.resource.subject.display = pseudonym;
+      }
     }
   }
 
@@ -69,6 +73,19 @@ export function exportPseudonymizedFHIRBundle(
   };
 
   return bundle;
+}
+
+/**
+ * Neutralizes Excel/Calc CSV formula injection and escapes embedded quotes.
+ */
+function sanitizeCSVCell(val: unknown): string {
+  if (val === null || val === undefined) return '""';
+  let str = String(val);
+  // Neutralize spreadsheet formula injection characters (=, +, -, @, \t, \r)
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = "'" + str;
+  }
+  return `"${str.replace(/"/g, '""')}"`;
 }
 
 /**
@@ -92,21 +109,27 @@ export function exportPseudonymizedCSV(
     'pulse_bpm',
     'position',
     'arm',
-    'measurement_context'
+    'measurement_context',
+    'algorithm_engine_version',
+    'guideline_version',
+    'app_version'
   ];
 
   const rows = readings.map((r) => {
     return [
-      `"${activeStudyId}"`,
-      `"${pseudonym}"`,
-      `"${r.id || ''}"`,
-      `"${r.timestamp}"`,
-      r.systolic,
-      r.diastolic,
-      r.pulse,
-      `"${r.position || ''}"`,
-      `"${r.arm || ''}"`,
-      `"${r.measurement_context || ''}"`
+      sanitizeCSVCell(activeStudyId),
+      sanitizeCSVCell(pseudonym),
+      sanitizeCSVCell(r.id || ''),
+      sanitizeCSVCell(r.timestamp),
+      typeof r.systolic === 'number' ? r.systolic : sanitizeCSVCell(r.systolic),
+      typeof r.diastolic === 'number' ? r.diastolic : sanitizeCSVCell(r.diastolic),
+      typeof r.pulse === 'number' ? r.pulse : sanitizeCSVCell(r.pulse),
+      sanitizeCSVCell(r.position || ''),
+      sanitizeCSVCell(r.arm || ''),
+      sanitizeCSVCell(r.measurement_context || ''),
+      sanitizeCSVCell(ALGORITHM_VERSIONS.engineVersion),
+      sanitizeCSVCell(ALGORITHM_VERSIONS.guideline),
+      sanitizeCSVCell(ALGORITHM_VERSIONS.appVersion)
     ].join(',');
   });
 

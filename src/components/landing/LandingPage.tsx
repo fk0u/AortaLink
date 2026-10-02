@@ -293,7 +293,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
 
             {/* Body */}
             <p className="gsap-hero-item text-sm sm:text-base text-slate-600 font-normal leading-relaxed max-w-2xl">
-              Platform Personal EHR yang menghubungkan data vital harian dengan evaluasi ritme sirkadian (<em>nocturnal dipping</em>), protokol kombinasi terapi CCB + ARB, serta asisten klinis spesialis penyakit dalam berstandar rumah sakit.
+              Platform Personal EHR terbuka untuk pencatatan mandiri tekanan darah harian, visualisasi tren vital offline-first, dan ekspor interoperabilitas standar HL7 FHIR R4 tanpa ketergantungan cloud.
             </p>
 
             {/* Actions */}

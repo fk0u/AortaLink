@@ -62,7 +62,8 @@ const sampleInput: ClinicalMlInput = {
       systolic: 130,
       diastolic: 85,
       pulse: 72,
-      timestamp: '2026-09-01T08:00:00Z'
+      timestamp: '2026-09-01T08:00:00Z',
+      notes: 'Catatan rahasia: Pasien Budi Santoso email budi.santoso@klinik.id'
     },
     {
       id: 'r-2',
@@ -129,20 +130,40 @@ console.log('✓ Clinical ML engine produces versioned outputs in research mode'
 // 5. Pseudonymized dataset export (FHIR & CSV)
 const sanitizedBundle = exportPseudonymizedFHIRBundle(sampleInput.readings, sampleInput.profile!);
 assert.equal(sanitizedBundle.resourceType, 'Bundle');
+const bundleString = JSON.stringify(sanitizedBundle);
+assert.equal(bundleString.includes('Budi Santoso'), false, 'FHIR bundle must not contain real patient name');
+assert.equal(bundleString.includes('budi.santoso@klinik.id'), false, 'FHIR bundle must not contain PII from notes');
+
 const patientRes = sanitizedBundle.entry.find((e) => e.resource.resourceType === 'Patient')?.resource as any;
 assert.ok(patientRes);
 assert.equal(patientRes.name[0]?.text, 'PT-TEST-001', 'Real name must be replaced by pseudonym');
 assert.equal(patientRes.telecom, undefined, 'Telecom must be stripped');
 assert.equal(patientRes.birthDate, undefined, 'Birthdate must be stripped');
-const obsRes = sanitizedBundle.entry.find((e) => e.resource.resourceType === 'Observation')?.resource as any;
-assert.ok(obsRes);
-assert.equal(obsRes.note, undefined, 'Free-text observation note must be stripped in research bundle');
+
+const observations = sanitizedBundle.entry.filter((e) => e.resource.resourceType === 'Observation');
+assert.ok(observations.length > 0);
+for (const obs of observations) {
+  const o = obs.resource as any;
+  assert.equal(o.note, undefined, 'Free-text observation note must be stripped');
+  assert.equal(o.subject?.display, 'PT-TEST-001', 'Observation subject display must match pseudonym');
+}
 
 const csv = exportPseudonymizedCSV(sampleInput.readings);
 assert.ok(csv.includes('study_id,participant_pseudonym,reading_id'));
+assert.ok(csv.includes('algorithm_engine_version,guideline_version,app_version'));
 assert.ok(csv.includes('STUDY-CARDIO-2026'));
 assert.ok(csv.includes('PT-TEST-001'));
 assert.equal(csv.includes('Budi Santoso'), false, 'Real name must not appear in exported CSV');
+assert.equal(csv.includes('budi.santoso@klinik.id'), false, 'Free-text note PII must not appear in exported CSV');
+
+// Formula injection test
+const formulaInjectedCSV = exportPseudonymizedCSV(sampleInput.readings, {
+  studyId: '=CMD|/C calc.exe',
+  pseudonym: '+628123456789'
+});
+assert.ok(formulaInjectedCSV.includes("\"'=CMD|/C calc.exe\""), 'Excel formula injection prefix = must be neutralized');
+assert.ok(formulaInjectedCSV.includes("\"'+628123456789\""), 'Excel formula injection prefix + must be neutralized');
+
 console.log('✓ Pseudonymized export strips all PII from FHIR and CSV');
 
 // 6. Withdrawal of consent

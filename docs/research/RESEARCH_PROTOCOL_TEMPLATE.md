@@ -32,7 +32,7 @@ Hipertensi merupakan penyebab morbiditas dan mortalitas kardiovaskular tertinggi
 
 ---
 
-## 4. Perlindungan Partisipan & Kerahasiaan Data (Pseudonimisai)
+## 4. Perlindungan Partisipan & Kerahasiaan Data (Pseudonimisasi)
 - Data yang diekspor dari aplikasi AortaLink untuk analisis data menggunakan fitur **Ekspor Dataset Ter-pseudonimisasi** (`src/services/research/pseudonymized-exporter.ts`).
 - Identitas langsung (nama lengkap, nomor telepon, email) dihapus secara otomatis dari file ekspor (CSV & FHIR Bundle).
 - Setiap partisipan diidentifikasi hanya menggunakan kode pseudonim unik (format `PT-XXXXXXXX`).
