@@ -55,8 +55,14 @@ async function adoptLocalDataForSession(
   const owner = getLocalDataOwner();
 
   if (owner === session.id) {
-    await mongoDbAtlasService.pullAndRestoreUserData();
-    await mongoDbAtlasService.pushUserData();
+    const pull = await mongoDbAtlasService.pullAndRestoreUserData();
+    if (!pull.success) {
+      throw new Error(`Data akun belum bisa diunduh (${pull.message}).`);
+    }
+    const push = await mongoDbAtlasService.pushUserData();
+    if (!push.success) {
+      throw new Error(`Data akun belum bisa diunggah (${push.message}).`);
+    }
     return;
   }
 
@@ -94,6 +100,9 @@ async function adoptLocalDataForSession(
     return;
   }
   const pull = await mongoDbAtlasService.pullAndRestoreUserData();
+  if (!pull.success) {
+    throw new Error(`Data akun belum bisa diunduh (${pull.message}).`);
+  }
   if (pull.restoredCount === 0) await seedInitialData(session.name);
 }
 
@@ -119,6 +128,7 @@ interface AuthState {
   updateSubscriptionTier: (tier: SubscriptionTier) => void;
   initSessionFromStorage: () => Promise<void>;
   syncCloudData: () => Promise<void>;
+  handleSessionExpired: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -173,13 +183,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isAuthenticated: true, user: guestUser });
   },
 
+  handleSessionExpired: () => {
+    localStorage.removeItem(SESSION_KEY);
+    set({ isAuthenticated: false, user: null });
+    useAppStore.getState().addToast({
+      type: 'warning',
+      title: 'Sesi Berakhir',
+      message: 'Sesi login telah kadaluwarsa. Silakan masuk kembali untuk melanjutkan sinkronisasi cloud.'
+    });
+  },
+
   syncCloudData: async () => {
     if (get().user?.authProvider === 'guest') return;
     // Errors intentionally propagate so the sync badge can show real failures.
     // 1. Pull data from cloud (MongoDB Atlas) to local Dexie.js
-    await mongoDbAtlasService.pullAndRestoreUserData();
+    const pull = await mongoDbAtlasService.pullAndRestoreUserData();
+    if (!pull.success) {
+      if (pull.isAuthError || pull.statusCode === 401 || pull.statusCode === 403) {
+        get().handleSessionExpired();
+      }
+      throw new Error(pull.message || 'Gagal mengunduh data dari cloud.');
+    }
+
     // 2. Push any local records to MongoDB Atlas
-    await mongoDbAtlasService.pushUserData();
+    const push = await mongoDbAtlasService.pushUserData();
+    if (!push.success) {
+      if (push.isAuthError || push.statusCode === 401 || push.statusCode === 403) {
+        get().handleSessionExpired();
+      }
+      throw new Error(push.message || 'Gagal mengunggah data ke cloud.');
+    }
   },
 
   loginWithEmail: async (email, password, options = {}) => {
