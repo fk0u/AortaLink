@@ -36,3 +36,6 @@ jobs:
 
       - name: HL7 FHIR R4 Bundle Validation
         run: npm run test:fhir
+
+      - name: Research Mode & SaMD Gating Selfcheck
+        run: npm run test:research

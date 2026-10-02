@@ -7,11 +7,12 @@
  * invented conclusions, no network calls.
  */
 
-import { BPReading, CircadianDippingReport, LabResult, MedicationItem, MedicationLog, Profile, SleepLog, SodiumLog } from '../../types/blood-pressure';
-import { calculateNocturnalDipping } from '../../utils/advanced-analytics';
-import { forecastBpTrend, type BpTrendForecast } from './trend-forecaster';
-import { detectBpPatterns, type BpPatternFinding } from './pattern-detector';
-import { analyzeAdherenceImpact, type AdherenceAnalysis } from './adherence-model';
+import type { BPReading, CircadianDippingReport, LabResult, MedicationItem, MedicationLog, Profile, SleepLog, SodiumLog } from '../../types/blood-pressure.ts';
+import { calculateNocturnalDipping } from '../../utils/advanced-analytics.ts';
+import { forecastBpTrend, type BpTrendForecast } from './trend-forecaster.ts';
+import { detectBpPatterns, type BpPatternFinding } from './pattern-detector.ts';
+import { analyzeAdherenceImpact, type AdherenceAnalysis } from './adherence-model.ts';
+import { isResearchModeActive } from '../config/release-mode.ts';
 
 export const ML_ENGINE_VERSION = '2.0.0';
 
@@ -66,7 +67,15 @@ export interface ClinicalMlInput {
 export const ML_DISCLAIMER =
   'Analisis statistik on-device dari data Anda sendiri. Bukan alat kesehatan, bukan diagnosis, dan tidak menggantikan dokter. Keputusan terapi selalu bersama dokter.';
 
+export function isMlEngineAvailable(): boolean {
+  return isResearchModeActive();
+}
+
 export function runClinicalMlAnalysis(input: ClinicalMlInput): ClinicalMlReport {
+  if (!isResearchModeActive()) {
+    throw new Error('Fitur SaMD Clinical ML hanya aktif pada Mode Riset/Akademik dengan Study ID terdaftar (Issue #28).');
+  }
+
   const { profile, readings, medications, medicationLogs, sodiumLogs, sleepLogs, labResults } = input;
 
   const trend = forecastBpTrend(readings);

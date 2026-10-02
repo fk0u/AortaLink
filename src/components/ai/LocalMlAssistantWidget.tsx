@@ -10,6 +10,8 @@ import { db } from '../../db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { playClickSound } from '../../utils/audio-fx';
 import { runClinicalMlAnalysis, ML_DISCLAIMER, ML_ENGINE_VERSION, type MlInsight } from '../../services/ml/ml-engine';
+import { useResearchStore } from '../../store/useResearchStore';
+import { FlaskConical } from 'lucide-react';
 import {
   getCuratedQuestions,
   answerLocalQuestion,
@@ -62,6 +64,7 @@ export const LocalMlAssistantWidget: React.FC = () => {
 
   const { activeProfile } = useProfiles();
   const { rawReadings } = useReadings();
+  const { isActive: isResearchActive, openConsentModal } = useResearchStore();
 
   const medications = useLiveQuery(
     async () => {
@@ -105,6 +108,7 @@ export const LocalMlAssistantWidget: React.FC = () => {
 
   const report = useMemo(() => {
     if (
+      !isResearchActive ||
       medications === undefined ||
       medicationLogs === undefined ||
       sodiumLogs === undefined ||
@@ -122,7 +126,7 @@ export const LocalMlAssistantWidget: React.FC = () => {
       sleepLogs,
       labResults
     });
-  }, [activeProfile, rawReadings, medications, medicationLogs, sodiumLogs, sleepLogs, labResults]);
+  }, [isResearchActive, activeProfile, rawReadings, medications, medicationLogs, sodiumLogs, sleepLogs, labResults]);
 
   const curatedQuestions = useMemo(() => getCuratedQuestions(), []);
 
@@ -213,11 +217,34 @@ export const LocalMlAssistantWidget: React.FC = () => {
                 </p>
               </div>
 
-              {!report && (
+              {!isResearchActive ? (
+                <div className="p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 space-y-3 text-center">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 mx-auto flex items-center justify-center font-bold">
+                    <FlaskConical size={22} />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                      Fitur SaMD Terkunci (Mode Publik)
+                    </h4>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                      Sesuai keputusan rilis non-alkes publik, model inferensi statistik dan prediksi pola on-device dikhususkan untuk Mode Riset & Akademik dengan Study ID dan Informed Consent terdaftar.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      closeModal();
+                      openConsentModal();
+                    }}
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-colors shadow-sm"
+                  >
+                    Buka Pengaturan Mode Riset
+                  </button>
+                </div>
+              ) : !report ? (
                 <div className="p-3 text-xs text-slate-500">Memuat data rekam medis…</div>
-              )}
-
-              {report && (
+              ) : (
                 <>
                   {/* Trend snapshot */}
                   <div className="p-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/10 space-y-1.5">

@@ -7,8 +7,8 @@
  * user's own data only — nothing is uploaded and nothing is invented.
  */
 
-import { BPReading } from '../../types/blood-pressure';
-import { olsFit, predictionHalfWidth, type RegressionResult } from './statistics';
+import type { BPReading } from '../../types/blood-pressure.ts';
+import { olsFit, predictionHalfWidth, type RegressionResult } from './statistics.ts';
 
 export type TrendDirection = 'rising' | 'falling' | 'stable';
 

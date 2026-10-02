@@ -14,6 +14,7 @@
     "test:ml": "node --experimental-strip-types --no-warnings scripts/ml-selfcheck.ts",
     "test:cleanup": "node --experimental-strip-types --no-warnings scripts/cleanup-selfcheck.ts",
     "test:fhir": "node --experimental-strip-types --no-warnings scripts/fhir-selfcheck.ts",
+    "test:research": "node --experimental-strip-types --no-warnings scripts/research-selfcheck.ts",
     "cleanup:duplicates": "node scripts/cleanup-legacy-duplicate-readings.js",
     "preview": "rsbuild preview"
   },
