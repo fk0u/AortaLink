@@ -6,6 +6,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { getRelationshipLabel } from '../../utils/formatters';
 import { playClickSound } from '../../utils/audio-fx';
 import { ArrowLeft, HeartPulse, Settings, SquarePen, Target, Users } from '../icons/AppIcons';
+import { GUIDELINE_REGISTRY } from '../../utils/bp-classifier';
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
@@ -117,6 +118,15 @@ export const ProfilePage: React.FC = () => {
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Kepatuhan Target</p>
               <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
                 {stats.targetComplianceRate}%
+              </p>
+            </div>
+            <div className="rounded-2xl p-4 bg-white/80 dark:bg-[#1c1c1e]/70 border border-slate-200/80 dark:border-white/10 sm:col-span-3">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Acuan Guideline Hipertensi</p>
+              <p className="text-sm font-black text-slate-900 dark:text-slate-100 mt-1">
+                {GUIDELINE_REGISTRY[activeProfile?.guidelinePreference || 'esh_perhi'].name}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {GUIDELINE_REGISTRY[activeProfile?.guidelinePreference || 'esh_perhi'].description}
               </p>
             </div>
           </div>

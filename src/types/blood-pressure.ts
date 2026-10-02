@@ -4,6 +4,8 @@ export type ArmUsed = 'kiri' | 'kanan';
 
 export type MeasurementContext = 'Home' | 'Clinic/Hospital' | 'Post-Medication' | 'Stress';
 
+export type GuidelineId = 'esh_perhi' | 'acc_aha_2025' | 'esc_2024';
+
 export interface Profile {
   id: string;
   name: string;
@@ -13,6 +15,7 @@ export interface Profile {
   gender?: 'male' | 'female' | 'other';
   targetSystolic: number;
   targetDiastolic: number;
+  guidelinePreference?: GuidelineId;
   notes?: string;
   createdAt: string;
   isDefault?: boolean;
@@ -137,7 +140,7 @@ export interface HabitLog {
   timestamp: string;
 }
 
-export type BPCategoryKey = 'normal' | 'elevated' | 'stage1' | 'stage2' | 'crisis';
+export type BPCategoryKey = 'optimal' | 'normal' | 'elevated' | 'stage1' | 'stage2' | 'stage3' | 'crisis';
 
 export interface BPCategory {
   key: BPCategoryKey;
@@ -153,6 +156,17 @@ export interface BPCategory {
   textClass: string;
   hexColor: string;
   iconName: string;
+}
+
+export interface BPClassificationResult extends BPCategory {
+  guidelineId: GuidelineId;
+  guidelineVersion: string;
+  guidelineName: string;
+  isIsolatedSystolic: boolean;
+  isIsolatedDiastolic: boolean;
+  isHomeMeasurement?: boolean;
+  isAboveHomeThreshold?: boolean;
+  patientWording: string;
 }
 
 export interface Reminder {
@@ -285,6 +299,7 @@ export interface FhirObservation {
     code: string;
   };
   component?: FhirObservationComponent[];
+  interpretation?: FhirCodeableConcept[];
   note?: Array<{ text: string }>;
   extension?: Array<{
     url: string;

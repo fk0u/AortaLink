@@ -39,3 +39,6 @@ jobs:
 
       - name: Research Mode & SaMD Gating Selfcheck
         run: npm run test:research
+
+      - name: Clinical Guidelines & Classification Selfcheck
+        run: npm run test:guidelines

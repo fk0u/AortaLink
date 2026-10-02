@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { useProfiles } from '../../hooks/useProfiles';
 import { db } from '../../db';
-import { Profile, RelationshipType } from '../../types/blood-pressure';
+import { Profile, RelationshipType, GuidelineId } from '../../types/blood-pressure';
+import { GUIDELINE_REGISTRY } from '../../utils/bp-classifier';
 import { getRelationshipLabel } from '../../utils/formatters';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,6 +28,7 @@ export const ProfileModal: React.FC = () => {
   const [gender, setGender] = useState<'male' | 'female' | 'other'>('male');
   const [targetSystolic, setTargetSystolic] = useState(120);
   const [targetDiastolic, setTargetDiastolic] = useState(80);
+  const [guidelinePreference, setGuidelinePreference] = useState<GuidelineId>('esh_perhi');
   const [notes, setNotes] = useState('');
 
   // Delete confirm state
@@ -56,6 +58,7 @@ export const ProfileModal: React.FC = () => {
     setGender('male');
     setTargetSystolic(120);
     setTargetDiastolic(80);
+    setGuidelinePreference('esh_perhi');
     setNotes('');
     setEditingProfile(null);
     setIsAddingNew(false);
@@ -71,6 +74,7 @@ export const ProfileModal: React.FC = () => {
     setGender(profile.gender || 'male');
     setTargetSystolic(profile.targetSystolic);
     setTargetDiastolic(profile.targetDiastolic);
+    setGuidelinePreference(profile.guidelinePreference || 'esh_perhi');
     setNotes(profile.notes || '');
     setIsAddingNew(true);
   };
@@ -92,6 +96,7 @@ export const ProfileModal: React.FC = () => {
           gender,
           targetSystolic,
           targetDiastolic,
+          guidelinePreference,
           notes
         });
         playSuccessChime();
@@ -107,6 +112,7 @@ export const ProfileModal: React.FC = () => {
           gender,
           targetSystolic,
           targetDiastolic,
+          guidelinePreference,
           notes,
           createdAt: new Date().toISOString()
         });
@@ -422,6 +428,25 @@ export const ProfileModal: React.FC = () => {
                       className="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-slate-700 font-bold text-xs focus:outline-none"
                     />
                   </div>
+                </div>
+
+                {/* Clinical Guideline Preference */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 block">
+                    Acuan Guideline Hipertensi
+                  </label>
+                  <select
+                    value={guidelinePreference}
+                    onChange={(e) => setGuidelinePreference(e.target.value as GuidelineId)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                  >
+                    <option value="esh_perhi">ESH 2023 / PERHI 2021 (Default Indonesia — ≥140/90 mmHg)</option>
+                    <option value="acc_aha_2025">ACC / AHA 2025 (Stage 1 ≥130/80 mmHg, PREVENT)</option>
+                    <option value="esc_2024">ESC 2024 (Elevated 120–139/70–89, Hipertensi ≥140/90 mmHg)</option>
+                  </select>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-1 leading-normal">
+                    {GUIDELINE_REGISTRY[guidelinePreference].description}
+                  </span>
                 </div>
 
                 {/* Notes */}

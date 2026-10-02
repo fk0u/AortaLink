@@ -253,7 +253,12 @@ export const ReadingFormModal: React.FC = () => {
     }
   };
 
-  const currentCategory = classifyBP(systolic, diastolic);
+  const currentCategory = classifyBP(
+    systolic,
+    diastolic,
+    activeProfile?.guidelinePreference,
+    { isHomeMeasurement: measurementContext === 'Home' }
+  );
 
   return (
     <AnimatePresence>
@@ -328,7 +333,13 @@ export const ReadingFormModal: React.FC = () => {
               
               {/* Age-Stratified Clinical Assessment & Hemodynamics Banner */}
               {(() => {
-                const ageEval = classifyAgeAdjustedBP(systolic, diastolic, activeProfile?.age || 45, pulse);
+                const ageEval = classifyAgeAdjustedBP(
+                  systolic,
+                  diastolic,
+                  activeProfile?.age || 45,
+                  pulse,
+                  activeProfile?.guidelinePreference
+                );
                 return (
                   <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/10 border border-slate-200/80 dark:border-white/10 space-y-2.5">
                     <div className="flex items-center justify-between gap-2 flex-wrap">

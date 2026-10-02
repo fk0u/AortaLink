@@ -30,7 +30,11 @@ export const StatCards: React.FC<StatCardsProps> = ({
   const { activeProfile } = useProfiles();
 
   const latest = stats.latestReading;
-  const latestCategory = latest ? classifyBP(latest.systolic, latest.diastolic) : null;
+  const latestCategory = latest
+    ? classifyBP(latest.systolic, latest.diastolic, activeProfile?.guidelinePreference, {
+        isHomeMeasurement: latest.measurement_context === 'Home'
+      })
+    : null;
   const pulseStatus = classifyPulse(stats.avgPulse);
 
   // Mean Arterial Pressure (MAP) = (2 * Diastolic + Systolic) / 3
@@ -40,10 +44,12 @@ export const StatCards: React.FC<StatCardsProps> = ({
 
   const getGlowClass = (catKey?: string) => {
     switch (catKey) {
+      case 'optimal':
       case 'normal': return 'glow-normal border-emerald-500/30 dark:border-emerald-500/40 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.05]';
       case 'elevated': return 'glow-elevated border-amber-500/30 dark:border-amber-500/40 bg-amber-500/[0.03] dark:bg-amber-500/[0.05]';
       case 'stage1': return 'glow-stage1 border-orange-500/30 dark:border-orange-500/40 bg-orange-500/[0.03] dark:bg-orange-500/[0.05]';
       case 'stage2': return 'glow-stage2 border-rose-500/30 dark:border-rose-500/40 bg-rose-500/[0.03] dark:bg-rose-500/[0.05]';
+      case 'stage3':
       case 'crisis': return 'glow-crisis border-rose-600/40 dark:border-rose-600/50 bg-rose-600/[0.06] dark:bg-rose-600/[0.08]';
       default: return 'border-teal-500/20 bg-white dark:bg-slate-900';
     }
