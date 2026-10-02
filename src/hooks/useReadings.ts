@@ -60,7 +60,7 @@ export function useReadings() {
 
     // 2. Category filter
     if (categoryFilter !== 'all') {
-      result = result.filter((r) => classifyBP(r.systolic, r.diastolic).key === categoryFilter);
+      result = result.filter((r) => classifyBP(r.systolic, r.diastolic, activeProfile?.guidelinePreference).key === categoryFilter);
     }
 
     // 3. Search query (tags or notes)
@@ -92,7 +92,7 @@ export function useReadings() {
         minSystolic: 0,
         maxDiastolic: 0,
         minDiastolic: 0,
-        categoryCounts: { normal: 0, elevated: 0, stage1: 0, stage2: 0, crisis: 0 },
+        categoryCounts: { optimal: 0, normal: 0, elevated: 0, stage1: 0, stage2: 0, stage3: 0, crisis: 0 },
         mostFrequentCategory: 'normal'
       };
     }
@@ -113,10 +113,12 @@ export function useReadings() {
     const targetDia = activeProfile?.targetDiastolic || 80;
 
     const counts: Record<BPCategoryKey, number> = {
+      optimal: 0,
       normal: 0,
       elevated: 0,
       stage1: 0,
       stage2: 0,
+      stage3: 0,
       crisis: 0
     };
 
@@ -139,7 +141,7 @@ export function useReadings() {
       if (r.diastolic > maxDia) maxDia = r.diastolic;
       if (r.diastolic < minDia) minDia = r.diastolic;
 
-      const category = classifyBP(r.systolic, r.diastolic).key;
+      const category = classifyBP(r.systolic, r.diastolic, activeProfile?.guidelinePreference).key;
       counts[category]++;
     });
 

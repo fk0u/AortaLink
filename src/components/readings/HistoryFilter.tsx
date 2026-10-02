@@ -292,12 +292,14 @@ export const HistoryFilter: React.FC = () => {
             }}
             className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-[#2c2c2e] border border-slate-200/80 dark:border-white/10 text-[11px] font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
           >
-            <option value="all">Semua Kategori AHA</option>
-            <option value="normal">Normal (&lt; 120/80)</option>
-            <option value="elevated">Elevated (120-129/&lt;80)</option>
-            <option value="stage1">Hipertensi Tahap 1 (130-139/80-89)</option>
-            <option value="stage2">Hipertensi Tahap 2 (&ge; 140/90)</option>
-            <option value="crisis">Krisis Hipertensi (&gt; 180/120)</option>
+            <option value="all">Semua Kategori Klinis</option>
+            <option value="optimal">Optimal (&lt; 120/80)</option>
+            <option value="normal">Normal</option>
+            <option value="elevated">Normal-Tinggi / Meningkat</option>
+            <option value="stage1">Hipertensi Derajat 1</option>
+            <option value="stage2">Hipertensi Derajat 2</option>
+            <option value="stage3">Hipertensi Derajat 3 (≥ 180/110)</option>
+            <option value="crisis">Hipertensi Berat (&gt; 180/120)</option>
           </select>
         </div>
 

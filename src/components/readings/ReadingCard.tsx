@@ -1,5 +1,5 @@
-import React from 'react';
 import { BPReading } from '../../types/blood-pressure';
+import { useProfiles } from '../../hooks/useProfiles';
 import { classifyBP } from '../../utils/bp-classifier';
 import { formatDateIndonesian } from '../../utils/formatters';
 import { playClickSound } from '../../utils/audio-fx';
@@ -13,7 +13,13 @@ interface ReadingCardProps {
 }
 
 export const ReadingCard: React.FC<ReadingCardProps> = ({ reading, onEdit, onDelete }) => {
-  const category = classifyBP(reading.systolic, reading.diastolic);
+  const { activeProfile } = useProfiles();
+  const category = classifyBP(
+    reading.systolic,
+    reading.diastolic,
+    activeProfile?.guidelinePreference,
+    { isHomeMeasurement: reading.measurement_context === 'Home' }
+  );
   
   // Calculate MAP & Pulse Pressure
   const mapValue = Math.round((2 * reading.diastolic + reading.systolic) / 3);
@@ -116,6 +122,24 @@ export const ReadingCard: React.FC<ReadingCardProps> = ({ reading, onEdit, onDel
           <span className="px-2 py-0.5 rounded-md font-semibold bg-slate-100 dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-400">
             PP: {pulsePressure} mmHg
           </span>
+
+          {category.isIsolatedSystolic && (
+            <span
+              className="px-2 py-0.5 rounded-md font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60"
+              title="Hipertensi Sistolik Terisolasi (ISH)"
+            >
+              ISH
+            </span>
+          )}
+
+          {category.isIsolatedDiastolic && (
+            <span
+              className="px-2 py-0.5 rounded-md font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60"
+              title="Hipertensi Diastolik Terisolasi (IDH)"
+            >
+              IDH
+            </span>
+          )}
         </div>
 
         {/* Tags */}

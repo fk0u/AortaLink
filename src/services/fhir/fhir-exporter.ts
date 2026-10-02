@@ -9,6 +9,7 @@ import type {
   FhirMedicationRequest,
   MedicationSchedule
 } from '../../types/blood-pressure.ts';
+import { classifyBP } from '../../utils/bp-classifier.ts';
 
 export interface FHIRBundleEntry {
   fullUrl: string;
@@ -149,6 +150,24 @@ export function convertReadingToFHIR(reading: BPReading, profile?: Profile): Fhi
     });
   }
 
+  const guidelineId = profile?.guidelinePreference || 'esh_perhi';
+  const classification = classifyBP(reading.systolic, reading.diastolic, guidelineId, {
+    isHomeMeasurement: reading.measurement_context === 'Home'
+  });
+
+  let interpCode = 'N';
+  let interpDisplay = 'Normal';
+  if (classification.key === 'stage3' || classification.key === 'crisis') {
+    interpCode = 'HH';
+    interpDisplay = 'Critically high';
+  } else if (classification.key === 'stage1' || classification.key === 'stage2' || classification.key === 'elevated') {
+    interpCode = 'H';
+    interpDisplay = 'High';
+  } else if (classification.key === 'optimal' || classification.key === 'normal') {
+    interpCode = 'N';
+    interpDisplay = 'Normal';
+  }
+
   const fhirResource: FhirObservation = {
     resourceType: 'Observation',
     id: obsId,
@@ -182,6 +201,18 @@ export function convertReadingToFHIR(reading: BPReading, profile?: Profile): Fhi
       display: profile ? profile.name : 'Patient'
     },
     effectiveDateTime: reading.timestamp,
+    interpretation: [
+      {
+        coding: [
+          {
+            system: 'http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation',
+            code: interpCode,
+            display: interpDisplay
+          }
+        ],
+        text: classification.label
+      }
+    ],
     component: components
   };
 

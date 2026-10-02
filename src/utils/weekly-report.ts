@@ -4,7 +4,15 @@ import { BPReading, BPCategoryKey, SodiumLog } from '../types/blood-pressure';
 import { classifyBP } from './bp-classifier';
 
 export interface WeeklyReport { startDate: Date; endDate: Date; previousStartDate: Date; previousEndDate: Date; readings: BPReading[]; previousReadings: BPReading[]; count: number; avgSystolic: number; avgDiastolic: number; minSystolic: number; maxSystolic: number; avgPulse: number; categories: Record<BPCategoryKey, number>; morning: number; evening: number; adherence: number; insights: string[]; sodiumHighDays?: number; }
-const emptyCategories = (): Record<BPCategoryKey, number> => ({ normal: 0, elevated: 0, stage1: 0, stage2: 0, crisis: 0 });
+const emptyCategories = (): Record<BPCategoryKey, number> => ({
+  optimal: 0,
+  normal: 0,
+  elevated: 0,
+  stage1: 0,
+  stage2: 0,
+  stage3: 0,
+  crisis: 0
+});
 const avg = (xs: number[]) => xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : 0;
 const dayKey = (d: Date) => format(d, 'yyyy-MM-dd');
 
