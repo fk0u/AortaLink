@@ -94,6 +94,16 @@ assert.throws(
   /Fitur SaMD Clinical ML hanya aktif pada Mode Riset\/Akademik/,
   'Calling runClinicalMlAnalysis in Public mode must throw gating error'
 );
+assert.throws(
+  () => exportPseudonymizedCSV(sampleInput.readings),
+  /Fitur ekspor dataset riset hanya dapat diakses dalam Mode Riset aktif/,
+  'Calling exportPseudonymizedCSV in Public mode must throw gating error'
+);
+assert.throws(
+  () => exportPseudonymizedFHIRBundle(sampleInput.readings, sampleInput.profile),
+  /Fitur ekspor dataset riset hanya dapat diakses dalam Mode Riset aktif/,
+  'Calling exportPseudonymizedFHIRBundle in Public mode must throw gating error'
+);
 console.log('✓ SaMD core features throw gating error in public mode');
 
 // 3. Activation validation
@@ -177,6 +187,14 @@ assert.ok(withdrawnRecord?.withdrawnAt);
 assert.throws(
   () => runClinicalMlAnalysis(sampleInput),
   /Fitur SaMD Clinical ML hanya aktif pada Mode Riset\/Akademik/
+);
+assert.throws(
+  () => exportPseudonymizedCSV(sampleInput.readings),
+  /Fitur ekspor dataset riset hanya dapat diakses dalam Mode Riset aktif/
+);
+assert.throws(
+  () => exportPseudonymizedFHIRBundle(sampleInput.readings, sampleInput.profile),
+  /Fitur ekspor dataset riset hanya dapat diakses dalam Mode Riset aktif/
 );
 console.log('✓ Withdrawal immediately re-locks SaMD features and resets to public');
 

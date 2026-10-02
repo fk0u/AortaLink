@@ -10,7 +10,7 @@
 
 import type { BPReading, Profile } from '../../types/blood-pressure.ts';
 import { exportReadingsToFHIRBundle, type FHIRBundleResource, toValidUuid } from '../fhir/fhir-exporter.ts';
-import { ALGORITHM_VERSIONS, getResearchConsentRecord, getResearchStudyId } from '../config/release-mode.ts';
+import { ALGORITHM_VERSIONS, getResearchConsentRecord, getResearchStudyId, isResearchModeActive } from '../config/release-mode.ts';
 
 export interface PseudonymizedExportOptions {
   studyId?: string;
@@ -22,6 +22,10 @@ export function exportPseudonymizedFHIRBundle(
   profile?: Profile,
   options?: PseudonymizedExportOptions
 ): FHIRBundleResource {
+  if (!isResearchModeActive()) {
+    throw new Error('Fitur ekspor dataset riset hanya dapat diakses dalam Mode Riset aktif.');
+  }
+
   const activeStudyId = options?.studyId || getResearchStudyId() || 'UNSPECIFIED-STUDY';
   const consent = getResearchConsentRecord();
   const pseudonym = options?.pseudonym || consent?.participantPseudonym || 'PT-ANONYMOUS';
@@ -95,6 +99,10 @@ export function exportPseudonymizedCSV(
   readings: BPReading[],
   options?: PseudonymizedExportOptions
 ): string {
+  if (!isResearchModeActive()) {
+    throw new Error('Fitur ekspor dataset riset hanya dapat diakses dalam Mode Riset aktif.');
+  }
+
   const activeStudyId = options?.studyId || getResearchStudyId() || 'UNSPECIFIED-STUDY';
   const consent = getResearchConsentRecord();
   const pseudonym = options?.pseudonym || consent?.participantPseudonym || 'PT-ANONYMOUS';

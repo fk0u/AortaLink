@@ -128,8 +128,16 @@ export interface ActivateResearchParams {
 export function generateParticipantPseudonym(): string {
   const chars = '0123456789ABCDEF';
   let out = 'PT-';
-  for (let i = 0; i < 8; i++) {
-    out += chars.charAt(Math.floor(Math.random() * chars.length));
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const bytes = new Uint8Array(8);
+    crypto.getRandomValues(bytes);
+    for (let i = 0; i < 8; i++) {
+      out += chars.charAt(bytes[i] % chars.length);
+    }
+  } else {
+    for (let i = 0; i < 8; i++) {
+      out += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
   }
   return out;
 }
@@ -169,18 +177,27 @@ export function activateResearchMode(params: ActivateResearchParams): { success:
  * Withdraw participant consent and revert immediately to Public mode.
  */
 export function withdrawResearchConsent(): void {
+  // Guarantee immediate lockout regardless of audit persistence outcome
+  try {
+    localStorage.setItem(STORAGE_KEYS.MODE, 'public');
+    localStorage.removeItem(STORAGE_KEYS.STUDY_ID);
+  } catch {
+    // ignore
+  }
+
   try {
     const existing = getResearchConsentRecord();
     if (existing) {
       existing.withdrawnAt = new Date().toISOString();
       localStorage.setItem(STORAGE_KEYS.CONSENT, JSON.stringify(existing));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.CONSENT);
     }
-    localStorage.setItem(STORAGE_KEYS.MODE, 'public');
-    localStorage.removeItem(STORAGE_KEYS.STUDY_ID);
-    notifyListeners('public');
   } catch {
     // ignore
   }
+
+  notifyListeners('public');
 }
 
 /**
