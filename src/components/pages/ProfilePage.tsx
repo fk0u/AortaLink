@@ -5,7 +5,7 @@ import { useReadings } from '../../hooks/useReadings';
 import { useAppStore } from '../../store/useAppStore';
 import { getRelationshipLabel } from '../../utils/formatters';
 import { playClickSound } from '../../utils/audio-fx';
-import { ArrowLeft, HeartPulse, Settings, SquarePen, Target, Users } from '../icons/AppIcons';
+import { ArrowLeft, HeartPulse, Settings, SquarePen, Target, Users, Shield } from '../icons/AppIcons';
 import { GUIDELINE_REGISTRY } from '../../utils/bp-classifier';
 
 export const ProfilePage: React.FC = () => {
@@ -13,6 +13,7 @@ export const ProfilePage: React.FC = () => {
   const { profiles, activeProfile, switchProfile } = useProfiles();
   const { stats } = useReadings();
   const openProfileModal = useAppStore((state) => state.openProfileModal);
+  const openScreeningModal = useAppStore((state) => state.openScreeningModal);
 
   const activeTarget = activeProfile ? `${activeProfile.targetSystolic}/${activeProfile.targetDiastolic} mmHg` : '-';
 
@@ -46,12 +47,23 @@ export const ProfilePage: React.FC = () => {
               Halaman Profil Pasien
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-              Kelola profil aktif, target tensi, dan perpindahan antar anggota keluarga dari satu tempat.
+              Kelola profil aktif, target tensi, skrining kesehatan FHIR, dan perpindahan antar anggota keluarga dari satu tempat.
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              playClickSound();
+              openScreeningModal();
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 text-white font-extrabold text-xs shadow-lg shadow-rose-500/20 active:scale-95 transition-all"
+          >
+            <Shield size={16} />
+            Skrining Kesehatan FHIR
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -128,6 +140,59 @@ export const ProfilePage: React.FC = () => {
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {GUIDELINE_REGISTRY[activeProfile?.guidelinePreference || 'esh_perhi'].description}
               </p>
+            </div>
+
+            {/* Step 03: Anthropometry & Screening Summary Card */}
+            <div className="rounded-2xl p-4 bg-gradient-to-br from-rose-50/70 to-amber-50/70 dark:from-rose-950/30 dark:to-amber-950/30 border border-rose-200/80 dark:border-rose-900/40 sm:col-span-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-400 flex items-center gap-1.5">
+                  <Shield size={12} />
+                  Skrining Antropometri &amp; Risiko Aorta (FHIR R4)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClickSound();
+                    openScreeningModal();
+                  }}
+                  className="text-[10px] font-bold text-rose-700 dark:text-rose-400 hover:underline"
+                >
+                  {activeProfile?.screeningCompletedAt ? 'Ubah Data' : 'Mulai Skrining'}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-semibold">Tinggi &amp; Berat</span>
+                  <span className="font-black text-slate-800 dark:text-slate-200">
+                    {activeProfile?.heightCm ? `${activeProfile.heightCm} cm` : '–'} • {activeProfile?.weightKg ? `${activeProfile.weightKg} kg` : '–'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-semibold">BMI (Asia-Pasifik)</span>
+                  <span className="font-black text-slate-800 dark:text-slate-200">
+                    {activeProfile?.bmi ? `${activeProfile.bmi} kg/m²` : '–'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-semibold">Status Merokok</span>
+                  <span className="font-black text-slate-800 dark:text-slate-200">
+                    {activeProfile?.smokingStatus === 'never'
+                      ? 'Bukan Perokok'
+                      : activeProfile?.smokingStatus === 'former'
+                      ? 'Mantan Perokok'
+                      : activeProfile?.smokingStatus === 'current'
+                      ? 'Perokok Aktif'
+                      : '–'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-semibold">Status Skrining</span>
+                  <span className="font-black text-slate-800 dark:text-slate-200">
+                    {activeProfile?.screeningCompletedAt ? 'Lengkap' : 'Belum Lengkap'}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 

@@ -45,3 +45,6 @@ jobs:
 
       - name: Bluetooth Telemetry & Fallback Protocol Selfcheck
         run: npm run test:ble
+
+      - name: Health Screening & Aorta Risk Selfcheck
+        run: npm run test:screening

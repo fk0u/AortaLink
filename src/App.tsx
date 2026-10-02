@@ -64,6 +64,7 @@ import { useAuthStore } from './store/useAuthStore';
 import { MobileToolsSheet } from './components/layout/MobileToolsSheet';
 import { initializeNotificationService } from './services/notifications/push-service';
 import { OnboardingModal, ONBOARDING_DONE_KEY } from './components/onboarding/OnboardingModal';
+import { HealthScreeningModal } from './components/screening/HealthScreeningModal';
 
 // Bluetooth pairing
 import { DevicePairingButton } from './components/bluetooth/DevicePairingButton';
@@ -830,6 +831,9 @@ export function App() {
         onOpenReading={() => openReadingModal()}
         onFinish={() => setOnboardingDone(true)}
       />
+
+      {/* Step 03 Health Screening Modal */}
+      <HealthScreeningModal />
 
       {/* All Subsystem Modals */}
       <SecurityBackupModal

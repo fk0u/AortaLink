@@ -7,13 +7,25 @@ import type {
   FhirObservationComponent,
   FhirPatient,
   FhirMedicationRequest,
-  MedicationSchedule
+  MedicationSchedule,
+  ConditionItem,
+  FamilyMemberHistoryItem,
+  ImmunizationItem,
+  FhirCondition,
+  FhirFamilyMemberHistory,
+  FhirImmunization
 } from '../../types/blood-pressure.ts';
 import { classifyBP } from '../../utils/bp-classifier.ts';
 
 export interface FHIRBundleEntry {
   fullUrl: string;
-  resource: FhirObservation | FhirPatient | FhirMedicationRequest;
+  resource:
+    | FhirObservation
+    | FhirPatient
+    | FhirMedicationRequest
+    | FhirCondition
+    | FhirFamilyMemberHistory
+    | FhirImmunization;
 }
 
 export interface FHIRBundleResource {
@@ -489,4 +501,639 @@ export function profileFromFHIR(patient: FhirPatient): Partial<Profile> {
     ...(age !== undefined ? { age } : {})
   };
 }
+
+// ---------------------------------------------------------------------------
+// Step 03: Condition, Family History & Immunization Converters (FHIR R4)
+// ---------------------------------------------------------------------------
+
+export function convertConditionToFHIR(condition: ConditionItem, profile?: Profile): FhirCondition {
+  const condId = toValidUuid(condition.id, 'condition');
+  const patientId = toValidUuid(condition.profileId || profile?.id || 'default-patient', 'patient');
+
+  const fhir: FhirCondition = {
+    resourceType: 'Condition',
+    id: condId,
+    meta: {
+      profile: ['http://hl7.org/fhir/StructureDefinition/Condition']
+    },
+    clinicalStatus: {
+      coding: [
+        {
+          system: 'http://terminology.hl7.org/CodeSystem/condition-clinical',
+          code: condition.clinicalStatus || 'active',
+          display: condition.clinicalStatus || 'Active'
+        }
+      ]
+    },
+    ...(condition.verificationStatus
+      ? {
+          verificationStatus: {
+            coding: [
+              {
+                system: 'http://terminology.hl7.org/CodeSystem/condition-ver-status',
+                code: condition.verificationStatus,
+                display: condition.verificationStatus
+              }
+            ]
+          }
+        }
+      : {}),
+    category: [
+      {
+        coding: [
+          {
+            system: 'http://terminology.hl7.org/CodeSystem/condition-category',
+            code: 'problem-list-item',
+            display: 'Problem List Item'
+          }
+        ]
+      }
+    ],
+    code: {
+      coding: [
+        {
+          system: condition.codeSystem || 'http://hl7.org/fhir/sid/icd-10',
+          code: condition.code,
+          display: condition.name
+        },
+        ...(condition.snomedCode
+          ? [
+              {
+                system: 'http://snomed.info/sct',
+                code: condition.snomedCode,
+                display: condition.name
+              }
+            ]
+          : [])
+      ],
+      text: condition.name
+    },
+    subject: {
+      reference: `urn:uuid:${patientId}`,
+      display: profile ? profile.name : 'Patient'
+    },
+    ...(condition.onsetDateTime ? { onsetDateTime: condition.onsetDateTime } : {}),
+    recordedDate: condition.recordedDate || new Date().toISOString(),
+    ...(condition.notes ? { note: [{ text: condition.notes }] } : {})
+  };
+
+  if (condition.aortaDetails) {
+    const ext: Array<{ url: string; valueString?: string; valueDecimal?: number }> = [];
+    if (condition.aortaDetails.diameterMm !== undefined) {
+      ext.push({
+        url: 'https://aortalink.health/fhir/StructureDefinition/aorta-diameter-mm',
+        valueDecimal: condition.aortaDetails.diameterMm
+      });
+    }
+    if (condition.aortaDetails.segment) {
+      ext.push({
+        url: 'https://aortalink.health/fhir/StructureDefinition/aorta-segment',
+        valueString: condition.aortaDetails.segment
+      });
+    }
+    if (condition.aortaDetails.modality) {
+      ext.push({
+        url: 'https://aortalink.health/fhir/StructureDefinition/aorta-modality',
+        valueString: condition.aortaDetails.modality
+      });
+    }
+    if (condition.aortaDetails.measurementMethod) {
+      ext.push({
+        url: 'https://aortalink.health/fhir/StructureDefinition/aorta-measurement-method',
+        valueString: condition.aortaDetails.measurementMethod
+      });
+    }
+    if (ext.length > 0) {
+      fhir.extension = ext;
+    }
+  }
+
+  return fhir;
+}
+
+export function conditionFromFHIR(fhir: FhirCondition): ConditionItem {
+  const ref = fhir.subject?.reference || '';
+  const profileId = ref.startsWith('urn:uuid:') ? ref.replace('urn:uuid:', '') : ref.replace(/^Patient\//, '');
+  const icd10Coding = fhir.code.coding?.find((c) => c.system === 'http://hl7.org/fhir/sid/icd-10');
+  const snomedCoding = fhir.code.coding?.find((c) => c.system === 'http://snomed.info/sct');
+  const primaryCoding = icd10Coding || fhir.code.coding?.[0];
+
+  const clinicalStatus = (fhir.clinicalStatus?.coding?.[0]?.code as any) || 'active';
+  const verificationStatus = fhir.verificationStatus?.coding?.[0]?.code as any;
+
+  let aortaDetails: any = undefined;
+  if (fhir.extension && fhir.extension.length > 0) {
+    const diam = fhir.extension.find((e) => e.url.endsWith('aorta-diameter-mm'))?.valueDecimal;
+    const seg = fhir.extension.find((e) => e.url.endsWith('aorta-segment'))?.valueString;
+    const mod = fhir.extension.find((e) => e.url.endsWith('aorta-modality'))?.valueString;
+    const met = fhir.extension.find((e) => e.url.endsWith('aorta-measurement-method'))?.valueString;
+    if (diam !== undefined || seg || mod || met) {
+      aortaDetails = {
+        diameterMm: diam,
+        segment: seg,
+        modality: mod,
+        measurementMethod: met
+      };
+    }
+  }
+
+  return {
+    id: fhir.id || '',
+    profileId,
+    code: primaryCoding?.code || 'unknown',
+    codeSystem: primaryCoding?.system,
+    snomedCode: snomedCoding?.code,
+    category: 'aorta_risk',
+    name: fhir.code.text || primaryCoding?.display || 'Kondisi Medis',
+    clinicalStatus,
+    ...(verificationStatus ? { verificationStatus } : {}),
+    ...(fhir.onsetDateTime ? { onsetDateTime: fhir.onsetDateTime } : {}),
+    recordedDate: fhir.recordedDate || new Date().toISOString(),
+    ...(fhir.note?.[0]?.text ? { notes: fhir.note[0].text } : {}),
+    ...(aortaDetails ? { aortaDetails } : {})
+  };
+}
+
+export function convertFamilyHistoryToFHIR(
+  history: FamilyMemberHistoryItem,
+  profile?: Profile
+): FhirFamilyMemberHistory {
+  const fId = toValidUuid(history.id, 'fmh');
+  const patientId = toValidUuid(history.profileId || profile?.id || 'default-patient', 'patient');
+
+  return {
+    resourceType: 'FamilyMemberHistory',
+    id: fId,
+    meta: {
+      profile: ['http://hl7.org/fhir/StructureDefinition/FamilyMemberHistory']
+    },
+    status: 'completed',
+    patient: {
+      reference: `urn:uuid:${patientId}`,
+      display: profile ? profile.name : 'Patient'
+    },
+    relationship: {
+      coding: [
+        {
+          system: 'http://terminology.hl7.org/CodeSystem/v3-RoleCode',
+          code: history.relationship,
+          display: history.relationshipDisplay || history.relationship
+        }
+      ],
+      text: history.relationshipDisplay
+    },
+    ...(history.deceased !== undefined ? { deceasedBoolean: history.deceased } : {}),
+    ...(history.deceasedAge !== undefined
+      ? {
+          deceasedAge: {
+            value: history.deceasedAge,
+            unit: 'years',
+            system: 'http://unitsofmeasure.org',
+            code: 'a'
+          }
+        }
+      : {}),
+    condition: [
+      {
+        code: {
+          coding: [
+            {
+              system: 'http://hl7.org/fhir/sid/icd-10',
+              code: history.conditionCode,
+              display: history.conditionName
+            },
+            ...(history.snomedCode
+              ? [
+                  {
+                    system: 'http://snomed.info/sct',
+                    code: history.snomedCode,
+                    display: history.conditionName
+                  }
+                ]
+              : [])
+          ],
+          text: history.conditionName
+        },
+        ...(history.contributedToDeath !== undefined ? { contributedToDeath: history.contributedToDeath } : {})
+      }
+    ]
+  };
+}
+
+export function familyHistoryFromFHIR(fhir: FhirFamilyMemberHistory): FamilyMemberHistoryItem {
+  const ref = fhir.patient?.reference || '';
+  const profileId = ref.startsWith('urn:uuid:') ? ref.replace('urn:uuid:', '') : ref.replace(/^Patient\//, '');
+  const relCode = (fhir.relationship?.coding?.[0]?.code as any) || 'EXT';
+  const relDisplay = fhir.relationship?.text || fhir.relationship?.coding?.[0]?.display || 'Keluarga';
+
+  const cond = fhir.condition?.[0];
+  const icd10Coding = cond?.code.coding?.find((c) => c.system === 'http://hl7.org/fhir/sid/icd-10');
+  const snomedCoding = cond?.code.coding?.find((c) => c.system === 'http://snomed.info/sct');
+  const primaryCoding = icd10Coding || cond?.code.coding?.[0];
+
+  return {
+    id: fhir.id || '',
+    profileId,
+    relationship: relCode,
+    relationshipDisplay: relDisplay,
+    conditionCode: primaryCoding?.code || 'unknown',
+    conditionName: cond?.code.text || primaryCoding?.display || 'Kondisi Keluarga',
+    ...(snomedCoding?.code ? { snomedCode: snomedCoding.code } : {}),
+    ...(fhir.deceasedBoolean !== undefined ? { deceased: fhir.deceasedBoolean } : {}),
+    ...(fhir.deceasedAge?.value !== undefined ? { deceasedAge: fhir.deceasedAge.value } : {}),
+    ...(cond?.contributedToDeath !== undefined ? { contributedToDeath: cond.contributedToDeath } : {}),
+    recordedDate: new Date().toISOString()
+  };
+}
+
+export function convertImmunizationToFHIR(imm: ImmunizationItem, profile?: Profile): FhirImmunization {
+  const immId = toValidUuid(imm.id, 'imm');
+  const patientId = toValidUuid(imm.profileId || profile?.id || 'default-patient', 'patient');
+
+  return {
+    resourceType: 'Immunization',
+    id: immId,
+    meta: {
+      profile: ['http://hl7.org/fhir/StructureDefinition/Immunization']
+    },
+    status: imm.status || 'completed',
+    vaccineCode: {
+      coding: [
+        {
+          system: 'https://aortalink.health/fhir/CodeSystem/vaccines',
+          code: imm.vaccineCode,
+          display: imm.vaccineName
+        },
+        ...(imm.cvxCode
+          ? [
+              {
+                system: 'http://hl7.org/fhir/sid/cvx',
+                code: imm.cvxCode,
+                display: imm.vaccineName
+              }
+            ]
+          : [])
+      ],
+      text: imm.vaccineName
+    },
+    patient: {
+      reference: `urn:uuid:${patientId}`,
+      display: profile ? profile.name : 'Patient'
+    },
+    occurrenceDateTime: imm.occurrenceDateTime,
+    recorded: imm.recordedDate || new Date().toISOString()
+  };
+}
+
+export function immunizationFromFHIR(fhir: FhirImmunization): ImmunizationItem {
+  const ref = fhir.patient?.reference || '';
+  const profileId = ref.startsWith('urn:uuid:') ? ref.replace('urn:uuid:', '') : ref.replace(/^Patient\//, '');
+  const coding = fhir.vaccineCode.coding?.[0];
+  const cvxCoding = fhir.vaccineCode.coding?.find((c) => c.system === 'http://hl7.org/fhir/sid/cvx');
+
+  return {
+    id: fhir.id || '',
+    profileId,
+    vaccineCode: coding?.code || 'unknown',
+    vaccineName: fhir.vaccineCode.text || coding?.display || 'Vaksinasi',
+    ...(cvxCoding?.code ? { cvxCode: cvxCoding.code } : {}),
+    occurrenceDateTime: fhir.occurrenceDateTime,
+    status: fhir.status,
+    recordedDate: fhir.recorded || new Date().toISOString()
+  };
+}
+
+export function convertAnthropometryToFHIR(profile: Profile): {
+  height?: FhirObservation;
+  weight?: FhirObservation;
+  bmi?: FhirObservation;
+} {
+  const patientId = toValidUuid(profile.id, 'patient');
+  const subjectRef = { reference: `urn:uuid:${patientId}`, display: profile.name };
+  const effectiveDateTime = profile.screeningCompletedAt || profile.createdAt || new Date().toISOString();
+  const result: { height?: FhirObservation; weight?: FhirObservation; bmi?: FhirObservation } = {};
+
+  let heightId: string | undefined;
+  if (profile.heightCm && profile.heightCm > 0) {
+    heightId = toValidUuid(`${profile.id}-height`, 'obs-height');
+    result.height = {
+      resourceType: 'Observation',
+      id: heightId,
+      meta: { profile: ['http://hl7.org/fhir/StructureDefinition/vitalsigns'] },
+      status: 'final',
+      category: [
+        {
+          coding: [
+            {
+              system: 'http://terminology.hl7.org/CodeSystem/observation-category',
+              code: 'vital-signs',
+              display: 'Vital Signs'
+            }
+          ]
+        }
+      ],
+      code: {
+        coding: [{ system: 'http://loinc.org', code: '8302-2', display: 'Body height' }],
+        text: 'Tinggi Badan'
+      },
+      subject: subjectRef,
+      effectiveDateTime,
+      valueQuantity: {
+        value: profile.heightCm,
+        unit: 'cm',
+        system: 'http://unitsofmeasure.org',
+        code: 'cm'
+      }
+    };
+  }
+
+  let weightId: string | undefined;
+  if (profile.weightKg && profile.weightKg > 0) {
+    weightId = toValidUuid(`${profile.id}-weight`, 'obs-weight');
+    result.weight = {
+      resourceType: 'Observation',
+      id: weightId,
+      meta: { profile: ['http://hl7.org/fhir/StructureDefinition/vitalsigns'] },
+      status: 'final',
+      category: [
+        {
+          coding: [
+            {
+              system: 'http://terminology.hl7.org/CodeSystem/observation-category',
+              code: 'vital-signs',
+              display: 'Vital Signs'
+            }
+          ]
+        }
+      ],
+      code: {
+        coding: [{ system: 'http://loinc.org', code: '29463-7', display: 'Body weight' }],
+        text: 'Berat Badan'
+      },
+      subject: subjectRef,
+      effectiveDateTime,
+      valueQuantity: {
+        value: profile.weightKg,
+        unit: 'kg',
+        system: 'http://unitsofmeasure.org',
+        code: 'kg'
+      }
+    };
+  }
+
+  if (profile.bmi && profile.bmi > 0) {
+    const bmiId = toValidUuid(`${profile.id}-bmi`, 'obs-bmi');
+    const derivedFrom: Array<{ reference: string; display?: string }> = [];
+    if (heightId) derivedFrom.push({ reference: `urn:uuid:${heightId}`, display: 'Body Height' });
+    if (weightId) derivedFrom.push({ reference: `urn:uuid:${weightId}`, display: 'Body Weight' });
+
+    result.bmi = {
+      resourceType: 'Observation',
+      id: bmiId,
+      meta: { profile: ['http://hl7.org/fhir/StructureDefinition/vitalsigns'] },
+      status: 'final',
+      category: [
+        {
+          coding: [
+            {
+              system: 'http://terminology.hl7.org/CodeSystem/observation-category',
+              code: 'vital-signs',
+              display: 'Vital Signs'
+            }
+          ]
+        }
+      ],
+      code: {
+        coding: [{ system: 'http://loinc.org', code: '39156-5', display: 'Body mass index (BMI) [Ratio]' }],
+        text: 'Indeks Massa Tubuh (BMI)'
+      },
+      subject: subjectRef,
+      effectiveDateTime,
+      valueQuantity: {
+        value: profile.bmi,
+        unit: 'kg/m2',
+        system: 'http://unitsofmeasure.org',
+        code: 'kg/m2'
+      },
+      ...(derivedFrom.length > 0
+        ? {
+            extension: derivedFrom.map((d) => ({
+              url: 'http://hl7.org/fhir/StructureDefinition/observation-derivedFrom',
+              valueString: d.reference
+            }))
+          }
+        : {})
+    };
+  }
+
+  return result;
+}
+
+export function convertSocialHistoryToFHIR(profile: Profile): FhirObservation[] {
+  const patientId = toValidUuid(profile.id, 'patient');
+  const subjectRef = { reference: `urn:uuid:${patientId}`, display: profile.name };
+  const effectiveDateTime = profile.screeningCompletedAt || profile.createdAt || new Date().toISOString();
+  const obsList: FhirObservation[] = [];
+
+  if (profile.smokingStatus && profile.smokingStatus !== 'unknown') {
+    const snomedSmokingMap: Record<string, { code: string; display: string }> = {
+      current: { code: '449868002', display: 'Current every day smoker' },
+      former: { code: '8517006', display: 'Former smoker' },
+      never: { code: '266919005', display: 'Never smoked tobacco' }
+    };
+    const sInfo = snomedSmokingMap[profile.smokingStatus] || { code: '266919005', display: 'Never smoked tobacco' };
+
+    obsList.push({
+      resourceType: 'Observation',
+      id: toValidUuid(`${profile.id}-smoking`, 'obs-smoking'),
+      meta: { profile: ['http://hl7.org/fhir/StructureDefinition/socialhistory'] },
+      status: 'final',
+      category: [
+        {
+          coding: [
+            {
+              system: 'http://terminology.hl7.org/CodeSystem/observation-category',
+              code: 'social-history',
+              display: 'Social History'
+            }
+          ]
+        }
+      ],
+      code: {
+        coding: [{ system: 'http://loinc.org', code: '72166-2', display: 'Tobacco smoking status' }],
+        text: 'Status Merokok'
+      },
+      subject: subjectRef,
+      effectiveDateTime,
+      interpretation: [
+        {
+          coding: [
+            {
+              system: 'http://snomed.info/sct',
+              code: sInfo.code,
+              display: sInfo.display
+            }
+          ],
+          text: profile.smokingStatus === 'current' ? 'Perokok Aktif' : profile.smokingStatus === 'former' ? 'Mantan Perokok' : 'Bukan Perokok'
+        }
+      ]
+    });
+  }
+
+  if (profile.alcoholConsumption && profile.alcoholConsumption !== 'unknown') {
+    obsList.push({
+      resourceType: 'Observation',
+      id: toValidUuid(`${profile.id}-alcohol`, 'obs-alcohol'),
+      meta: { profile: ['http://hl7.org/fhir/StructureDefinition/socialhistory'] },
+      status: 'final',
+      category: [
+        {
+          coding: [
+            {
+              system: 'http://terminology.hl7.org/CodeSystem/observation-category',
+              code: 'social-history',
+              display: 'Social History'
+            }
+          ]
+        }
+      ],
+      code: {
+        coding: [{ system: 'http://loinc.org', code: '11331-6', display: 'History of Alcohol use' }],
+        text: 'Riwayat Konsumsi Alkohol'
+      },
+      subject: subjectRef,
+      effectiveDateTime,
+      note: [{ text: `Konsumsi alkohol: ${profile.alcoholConsumption}` }]
+    });
+  }
+
+  return obsList;
+}
+
+export function exportCompleteFHIRBundle(options: {
+  profile?: Profile;
+  readings?: BPReading[];
+  labResults?: LabResult[];
+  medications?: MedicationItem[];
+  conditions?: ConditionItem[];
+  familyHistory?: FamilyMemberHistoryItem[];
+  immunizations?: ImmunizationItem[];
+}): FHIRBundleResource {
+  const {
+    profile,
+    readings = [],
+    labResults = [],
+    medications = [],
+    conditions = [],
+    familyHistory = [],
+    immunizations = []
+  } = options;
+
+  const entries: FHIRBundleEntry[] = [];
+
+  let patientRef: string;
+  if (profile) {
+    const patientResource = convertProfileToFHIR(profile);
+    patientRef = `urn:uuid:${patientResource.id}`;
+    entries.push({
+      fullUrl: patientRef,
+      resource: patientResource
+    });
+
+    // Anthropometry observations (Height, Weight, BMI)
+    const anthro = convertAnthropometryToFHIR(profile);
+    if (anthro.height) {
+      entries.push({ fullUrl: `urn:uuid:${anthro.height.id}`, resource: anthro.height });
+    }
+    if (anthro.weight) {
+      entries.push({ fullUrl: `urn:uuid:${anthro.weight.id}`, resource: anthro.weight });
+    }
+    if (anthro.bmi) {
+      entries.push({ fullUrl: `urn:uuid:${anthro.bmi.id}`, resource: anthro.bmi });
+    }
+
+    // Social history observations (Smoking, Alcohol)
+    const social = convertSocialHistoryToFHIR(profile);
+    for (const s of social) {
+      entries.push({ fullUrl: `urn:uuid:${s.id}`, resource: s });
+    }
+  } else {
+    const defaultPatientId = toValidUuid('default-patient', 'patient');
+    patientRef = `urn:uuid:${defaultPatientId}`;
+    entries.push({
+      fullUrl: patientRef,
+      resource: {
+        resourceType: 'Patient',
+        id: defaultPatientId,
+        meta: { profile: ['http://hl7.org/fhir/StructureDefinition/Patient'] },
+        active: true,
+        name: [{ use: 'official', text: 'Patient' }]
+      }
+    });
+  }
+
+  for (const r of readings) {
+    const res = convertReadingToFHIR(r, profile);
+    res.subject.reference = patientRef;
+    entries.push({
+      fullUrl: `urn:uuid:${res.id}`,
+      resource: res
+    });
+  }
+
+  for (const l of labResults) {
+    const obs = convertLabResultToFHIR(l, profile);
+    for (const o of obs) {
+      o.subject.reference = patientRef;
+      entries.push({
+        fullUrl: `urn:uuid:${o.id}`,
+        resource: o
+      });
+    }
+  }
+
+  for (const m of medications) {
+    const medRes = convertMedicationToFHIR(m, profile);
+    medRes.subject.reference = patientRef;
+    entries.push({
+      fullUrl: `urn:uuid:${medRes.id}`,
+      resource: medRes
+    });
+  }
+
+  for (const c of conditions) {
+    const condRes = convertConditionToFHIR(c, profile);
+    condRes.subject.reference = patientRef;
+    entries.push({
+      fullUrl: `urn:uuid:${condRes.id}`,
+      resource: condRes
+    });
+  }
+
+  for (const f of familyHistory) {
+    const fRes = convertFamilyHistoryToFHIR(f, profile);
+    fRes.patient.reference = patientRef;
+    entries.push({
+      fullUrl: `urn:uuid:${fRes.id}`,
+      resource: fRes
+    });
+  }
+
+  for (const im of immunizations) {
+    const immRes = convertImmunizationToFHIR(im, profile);
+    immRes.patient.reference = patientRef;
+    entries.push({
+      fullUrl: `urn:uuid:${immRes.id}`,
+      resource: immRes
+    });
+  }
+
+  return {
+    resourceType: 'Bundle',
+    type: 'collection',
+    timestamp: new Date().toISOString(),
+    entry: entries
+  };
+}
+
 
