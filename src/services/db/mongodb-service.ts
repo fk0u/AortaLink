@@ -2,6 +2,22 @@ import { db, NOTES_ENCODING_RAW, withSyncMetadataSuppressed, type SyncTombstone 
 import { decodeLegacyEscapedText } from '../../security/sanitizer';
 import { useAppStore } from '../../store/useAppStore';
 
+export interface SyncPushResult {
+  success: boolean;
+  syncedCount: number;
+  message: string;
+  statusCode?: number;
+  isAuthError?: boolean;
+}
+
+export interface SyncPullResult {
+  success: boolean;
+  restoredCount: number;
+  message: string;
+  statusCode?: number;
+  isAuthError?: boolean;
+}
+
 export interface MongoAtlasConfig {
   connectionString: string;
   clusterName: string;
@@ -37,11 +53,17 @@ export class MongoDbAtlasService {
   /**
    * Push ALL 14 local Dexie.js records & userSettings to MongoDB Atlas Cloud Cluster
    */
-  public async pushUserData(): Promise<{ success: boolean; syncedCount: number; message: string }> {
+  public async pushUserData(): Promise<SyncPushResult> {
     try {
       const token = this.getAuthToken();
       if (!token) {
-        return { success: false, syncedCount: 0, message: 'Tidak ada sesi login pengguna.' };
+        return {
+          success: false,
+          syncedCount: 0,
+          message: 'Tidak ada sesi login pengguna.',
+          statusCode: 401,
+          isAuthError: true
+        };
       }
 
       const [
@@ -119,7 +141,9 @@ export class MongoDbAtlasService {
         })
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      const isAuthError = res.status === 401 || res.status === 403;
+
       if (res.ok && data.success) {
         // Cloud acknowledged the tombstones — prune them locally.
         if (tombstones.length > 0) {
@@ -131,11 +155,18 @@ export class MongoDbAtlasService {
         return {
           success: true,
           syncedCount: data.totalSynced,
-          message: data.message || `Berhasil mengunggah ${data.totalSynced} data ke MongoDB Atlas Cloud.`
+          message: data.message || `Berhasil mengunggah ${data.totalSynced} data ke MongoDB Atlas Cloud.`,
+          statusCode: res.status
         };
       }
 
-      return { success: false, syncedCount: 0, message: data.message || 'Gagal menyinkronkan data.' };
+      return {
+        success: false,
+        syncedCount: 0,
+        message: data.message || (isAuthError ? 'Sesi tidak valid atau telah kadaluwarsa.' : `Gagal menyinkronkan data (HTTP ${res.status}).`),
+        statusCode: res.status,
+        isAuthError
+      };
     } catch (err: any) {
       console.error('[AortaLink] Push User Data Error:', err);
       return { success: false, syncedCount: 0, message: err.message || 'Kesalahan koneksi sync.' };
@@ -145,11 +176,17 @@ export class MongoDbAtlasService {
   /**
    * Pull ALL 14 EHR tables & settings from MongoDB Atlas Cloud Cluster & restore into Dexie.js for multi-device access
    */
-  public async pullAndRestoreUserData(): Promise<{ success: boolean; restoredCount: number; message: string }> {
+  public async pullAndRestoreUserData(): Promise<SyncPullResult> {
     try {
       const token = this.getAuthToken();
       if (!token) {
-        return { success: false, restoredCount: 0, message: 'Tidak ada sesi login pengguna.' };
+        return {
+          success: false,
+          restoredCount: 0,
+          message: 'Tidak ada sesi login pengguna.',
+          statusCode: 401,
+          isAuthError: true
+        };
       }
 
       const res = await fetch('/api/sync/pull', {
@@ -159,9 +196,17 @@ export class MongoDbAtlasService {
         }
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      const isAuthError = res.status === 401 || res.status === 403;
+
       if (!res.ok || !data.success || !data.data) {
-        return { success: false, restoredCount: 0, message: data.message || 'Gagal mengunduh data dari cloud.' };
+        return {
+          success: false,
+          restoredCount: 0,
+          message: data.message || (isAuthError ? 'Sesi tidak valid atau telah kadaluwarsa.' : `Gagal mengunduh data dari cloud (HTTP ${res.status}).`),
+          statusCode: res.status,
+          isAuthError
+        };
       }
 
       const cloudData = data.data;
@@ -306,7 +351,8 @@ export class MongoDbAtlasService {
       return {
         success: true,
         restoredCount: totalRestored,
-        message: `Berhasil memulihkan ${totalRestored} rekam medis dari MongoDB Atlas Cloud!`
+        message: `Berhasil memulihkan ${totalRestored} rekam medis dari MongoDB Atlas Cloud!`,
+        statusCode: res.status
       };
     } catch (err: any) {
       console.error('[AortaLink] Pull & Restore Error:', err);
