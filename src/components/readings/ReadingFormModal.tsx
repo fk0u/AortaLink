@@ -39,7 +39,7 @@ export const ReadingFormModal: React.FC = () => {
   // Form inputs state
   const [systolic, setSystolic] = useState<number>(120);
   const [diastolic, setDiastolic] = useState<number>(80);
-  const [pulse, setPulse] = useState<number>(72);
+  const [pulse, setPulse] = useState<number | undefined>(72);
   const [timestamp, setTimestamp] = useState<string>(() => getLocalDateTimeForInput());
   const [position, setPosition] = useState<BodyPosition>('duduk');
   const [arm, setArm] = useState<ArmUsed>('kiri');
@@ -89,7 +89,7 @@ export const ReadingFormModal: React.FC = () => {
     if (editingReading) {
       setSystolic(editingReading.systolic);
       setDiastolic(editingReading.diastolic);
-      setPulse(editingReading.pulse ?? 72);
+      setPulse(editingReading.pulse);
       setTimestamp(getLocalDateTimeForInput(editingReading.timestamp));
       setPosition(editingReading.position || 'duduk');
       setArm(editingReading.arm || 'kiri');
@@ -568,14 +568,14 @@ export const ReadingFormModal: React.FC = () => {
                     Nadi / BPM
                   </span>
                   <div className="text-2xl font-black font-mono text-rose-900 dark:text-rose-100">
-                    {pulse}
+                    {pulse !== undefined ? pulse : '--'}
                   </div>
                   <div className="flex items-center justify-center gap-1">
                     <button
                       type="button"
                       onClick={() => {
                         playClickSound();
-                        setPulse((v) => Math.max(40, v - 1));
+                        setPulse((v) => Math.max(40, (v ?? 72) - 1));
                       }}
                       className="w-7 h-7 rounded-lg bg-white dark:bg-[#2c2c2e] text-rose-700 dark:text-rose-300 font-black shadow-sm flex items-center justify-center active:scale-90"
                     >
@@ -585,7 +585,7 @@ export const ReadingFormModal: React.FC = () => {
                       type="button"
                       onClick={() => {
                         playClickSound();
-                        setPulse((v) => Math.min(200, v + 1));
+                        setPulse((v) => Math.min(200, (v ?? 72) + 1));
                       }}
                       className="w-7 h-7 rounded-lg bg-rose-600 text-white font-black shadow-sm flex items-center justify-center active:scale-90"
                     >

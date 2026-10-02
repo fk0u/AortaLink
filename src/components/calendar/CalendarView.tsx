@@ -227,7 +227,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ readings }) => {
                       </div>
                       <div className="text-[10px] text-slate-500 flex items-center gap-2">
                         <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {format(new Date(r.timestamp), 'HH:mm')} WIB</span>
-                        <span>• Nadi: {r.pulse} BPM</span>
+                        {typeof r.pulse === 'number' && <span>• Nadi: {r.pulse} BPM</span>}
                       </div>
                     </div>
                   </div>

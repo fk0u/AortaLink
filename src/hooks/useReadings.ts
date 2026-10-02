@@ -98,8 +98,7 @@ export function useReadings() {
     }
 
     const statReadings = filteredReadings.filter((r) => !r.isExcludedFromAverages);
-    const readingsForAvg = statReadings.length > 0 ? statReadings : filteredReadings;
-    const avgTotal = readingsForAvg.length;
+    const avgTotal = statReadings.length;
 
     let sumSys = 0;
     let sumDia = 0;
@@ -141,7 +140,7 @@ export function useReadings() {
       counts[category]++;
     });
 
-    readingsForAvg.forEach((r) => {
+    statReadings.forEach((r) => {
       sumSys += r.systolic;
       sumDia += r.diastolic;
       if (typeof r.pulse === 'number' && !isNaN(r.pulse)) {
@@ -164,11 +163,11 @@ export function useReadings() {
 
     return {
       totalReadings: total,
-      avgSystolic: Math.round(sumSys / avgTotal),
-      avgDiastolic: Math.round(sumDia / avgTotal),
+      avgSystolic: avgTotal > 0 ? Math.round(sumSys / avgTotal) : 0,
+      avgDiastolic: avgTotal > 0 ? Math.round(sumDia / avgTotal) : 0,
       avgPulse: pulseCount > 0 ? Math.round(sumPulse / pulseCount) : 0,
-      avgMAP: Math.round(sumMAP / avgTotal),
-      avgPulsePressure: Math.round(sumPP / avgTotal),
+      avgMAP: avgTotal > 0 ? Math.round(sumMAP / avgTotal) : 0,
+      avgPulsePressure: avgTotal > 0 ? Math.round(sumPP / avgTotal) : 0,
       targetComplianceRate: Math.round((compliantCount / total) * 100),
       maxSystolic: maxSys,
       minSystolic: minSys,

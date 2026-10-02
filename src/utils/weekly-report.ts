@@ -27,9 +27,15 @@ export function createWeeklyReport(readings: BPReading[], sodiumLogs: SodiumLog[
   const morning = current.filter(r => new Date(r.timestamp).getHours() < 12).length;
   const evening = current.filter(r => new Date(r.timestamp).getHours() >= 17).length;
   const insights: string[] = [];
+  const currentValid = current.filter(r => !r.isExcludedFromAverages);
+  const previousValid = previous.filter(r => !r.isExcludedFromAverages);
+  const avgReadings = currentValid.length > 0 ? currentValid : current;
+  const prevAvgReadings = previousValid.length > 0 ? previousValid : previous;
+  const currentPulses = avgReadings.map(r=>r.pulse).filter((p): p is number => typeof p === 'number' && !isNaN(p));
+
   if (!current.length) insights.push('Belum ada cukup data untuk menyusun ringkasan minggu ini. Mulai catat tekanan darah secara rutin.');
   else {
-    if (previous.length) { const delta = avg(current.map(r=>r.systolic)) - avg(previous.map(r=>r.systolic)); if (Math.abs(delta) >= 3) insights.push(`Rata-rata sistolik ${delta > 0 ? 'naik' : 'turun'} ${Math.abs(delta)} mmHg dibanding minggu lalu.`); else insights.push('Rata-rata sistolik relatif stabil dibanding minggu lalu.'); }
+    if (previous.length) { const delta = avg(avgReadings.map(r=>r.systolic)) - avg(prevAvgReadings.map(r=>r.systolic)); if (Math.abs(delta) >= 3) insights.push(`Rata-rata sistolik ${delta > 0 ? 'naik' : 'turun'} ${Math.abs(delta)} mmHg dibanding minggu lalu.`); else insights.push('Rata-rata sistolik relatif stabil dibanding minggu lalu.'); }
     const normalDays = new Set(current.filter(r => classifyBP(r.systolic,r.diastolic).key === 'normal').map(r => dayKey(new Date(r.timestamp)))).size;
     insights.push(`Tekanan darah kategori normal tercatat pada ${normalDays} dari 7 hari.`);
     if (days.size < 7) insights.push(`Konsistensi pengukuran ${days.size} dari 7 hari; usahakan mencatat setiap hari.`); else insights.push('Pengukuran tercatat setiap hari minggu ini. Pertahankan kebiasaan baik!');
@@ -40,6 +46,6 @@ export function createWeeklyReport(readings: BPReading[], sodiumLogs: SodiumLog[
     const highReadings = current.filter(r => highSodium.has(dayKey(new Date(r.timestamp))));
     if (highReadings.length && highSodium.size) insights.push(`Pada ${highSodium.size} hari dengan sodium tinggi, tercatat ${highReadings.length} pengukuran; hubungan ini bukan diagnosis.`);
   }
-  return { startDate,endDate,previousStartDate,previousEndDate,readings:current,previousReadings:previous,count:current.length,avgSystolic:avg(current.map(r=>r.systolic)),avgDiastolic:avg(current.map(r=>r.diastolic)),minSystolic:current.length?Math.min(...current.map(r=>r.systolic)):0,maxSystolic:current.length?Math.max(...current.map(r=>r.systolic)):0,avgPulse:avg(current.map(r=>r.pulse).filter((p): p is number => typeof p === 'number' && !isNaN(p))),categories,morning,evening,adherence:Math.round(days.size/7*100),insights };
+  return { startDate,endDate,previousStartDate,previousEndDate,readings:current,previousReadings:previous,count:current.length,avgSystolic:avg(avgReadings.map(r=>r.systolic)),avgDiastolic:avg(avgReadings.map(r=>r.diastolic)),minSystolic:current.length?Math.min(...current.map(r=>r.systolic)):0,maxSystolic:current.length?Math.max(...current.map(r=>r.systolic)):0,avgPulse:avg(currentPulses),categories,morning,evening,adherence:Math.round(days.size/7*100),insights };
 }
 export const formatWeeklyRange = (r: WeeklyReport) => `${format(r.startDate,'d MMM',{locale:idLocale})} – ${format(r.endDate,'d MMM yyyy',{locale:idLocale})}`;
