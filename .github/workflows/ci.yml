@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install Dependencies
@@ -30,3 +30,9 @@ jobs:
 
       - name: Audit Dependencies for Vulnerabilities
         run: npm audit --audit-level=high --production
+
+      - name: Statistical & Cleanup Selfchecks
+        run: npm run test:ml && npm run test:cleanup
+
+      - name: HL7 FHIR R4 Bundle Validation
+        run: npm run test:fhir
