@@ -38,6 +38,25 @@ export const useResearchStore = create<ResearchState>((set, get) => {
     });
   });
 
+  // Cross-tab synchronization
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', (e) => {
+      if (
+        e.key === 'aortalink_release_mode' ||
+        e.key === 'aortalink_study_id' ||
+        e.key === 'aortalink_consent_record'
+      ) {
+        get().refreshState();
+      }
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        get().refreshState();
+      }
+    });
+  }
+
   return {
     mode: getAppReleaseMode(),
     isActive: isResearchModeActive(),

@@ -1,5 +1,5 @@
 /* Hallmark & Minimalist UI · On-Device Clinical ML Assistant Modal */
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BrainCircuit, X, Send, HeartPulse, Sparkles, TrendingUp, TrendingDown, Minus, CheckCircle2, AlertTriangle, Info, FlaskConical } from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
@@ -64,6 +64,12 @@ export const LocalMlAssistantWidget: React.FC = () => {
   const { activeProfile } = useProfiles();
   const { rawReadings } = useReadings();
   const { isActive: isResearchActive, openConsentModal } = useResearchStore();
+
+  useEffect(() => {
+    if (!isResearchActive) {
+      setConversation([]);
+    }
+  }, [isResearchActive]);
 
   const medications = useLiveQuery(
     async () => {

@@ -210,7 +210,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
     },
     {
       q: 'Bagaimana cara kerja analisis klinis di AortaLink?',
-      a: 'AortaLink memakai mesin analitik Machine Learning on-device buatan sendiri — regresi tren, deteksi pola (white-coat, lonjakan pagi, dipping), dan model kepatuhan obat — yang seluruhnya dihitung dari data pengukuran Anda di perangkat, mengikuti kerangka JNC-8, AHA/ACC 2017, dan PERHI. Tidak ada data yang dikirim ke server AI mana pun, dan setiap jawaban mencantumkan sumber datanya.'
+      a: 'Untuk pengguna umum, AortaLink beroperasi sebagai rekam data mandiri (Personal EHR) non-alkes dengan visualisasi tren deterministik. Modul inferensi klinis dan Machine Learning on-device (seperti deteksi pola white-coat, dipping, dan lonjakan pagi) dikhususkan untuk Mode Riset/Akademik dengan persetujuan Komisi Etik Penelitian Kesehatan (KEPK) dan informed consent. Seluruh komputasi berjalan 100% di perangkat tanpa mengirim data ke model AI eksternal pihak ketiga.'
     },
     {
       q: 'Apakah AortaLink dapat digunakan di smartphone tanpa instalasi app store?',

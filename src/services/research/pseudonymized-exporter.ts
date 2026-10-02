@@ -52,6 +52,9 @@ export function exportPseudonymizedFHIRBundle(
       entry.resource.name = [{ use: 'anonymous', text: pseudonym }];
       entry.resource.telecom = undefined;
       entry.resource.birthDate = undefined;
+    } else if (entry.resource.resourceType === 'Observation') {
+      // Scrub free-text clinician or participant notes to prevent accidental PII leakage
+      entry.resource.note = undefined;
     }
   }
 
@@ -89,16 +92,10 @@ export function exportPseudonymizedCSV(
     'pulse_bpm',
     'position',
     'arm',
-    'measurement_context',
-    'notes'
+    'measurement_context'
   ];
 
   const rows = readings.map((r) => {
-    // Sanitize notes: remove potential names/emails in free text
-    const cleanNotes = (r.notes || '')
-      .replace(/[\r\n]+/g, ' ')
-      .replace(/"/g, '""');
-
     return [
       `"${activeStudyId}"`,
       `"${pseudonym}"`,
@@ -109,8 +106,7 @@ export function exportPseudonymizedCSV(
       r.pulse,
       `"${r.position || ''}"`,
       `"${r.arm || ''}"`,
-      `"${r.measurement_context || ''}"`,
-      `"${cleanNotes}"`
+      `"${r.measurement_context || ''}"`
     ].join(',');
   });
 

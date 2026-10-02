@@ -134,6 +134,9 @@ assert.ok(patientRes);
 assert.equal(patientRes.name[0]?.text, 'PT-TEST-001', 'Real name must be replaced by pseudonym');
 assert.equal(patientRes.telecom, undefined, 'Telecom must be stripped');
 assert.equal(patientRes.birthDate, undefined, 'Birthdate must be stripped');
+const obsRes = sanitizedBundle.entry.find((e) => e.resource.resourceType === 'Observation')?.resource as any;
+assert.ok(obsRes);
+assert.equal(obsRes.note, undefined, 'Free-text observation note must be stripped in research bundle');
 
 const csv = exportPseudonymizedCSV(sampleInput.readings);
 assert.ok(csv.includes('study_id,participant_pseudonym,reading_id'));

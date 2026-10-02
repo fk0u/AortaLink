@@ -3,7 +3,6 @@ import { useResearchStore } from '../../store/useResearchStore';
 import { FlaskConical, ShieldCheck, AlertCircle, X, Download } from '../icons/AppIcons';
 import { ALGORITHM_VERSIONS } from '../../services/config/release-mode';
 import { exportPseudonymizedCSV, exportPseudonymizedFHIRBundle } from '../../services/research/pseudonymized-exporter';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db';
 
 export const ResearchConsentModal: React.FC = () => {
@@ -22,9 +21,6 @@ export const ResearchConsentModal: React.FC = () => {
   const [institution, setInstitution] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const readings = useLiveQuery(() => db.readings.toArray(), []) || [];
-  const profiles = useLiveQuery(() => db.profiles.toArray(), []) || [];
 
   if (!isConsentModalOpen) return null;
 
@@ -55,8 +51,9 @@ export const ResearchConsentModal: React.FC = () => {
     }
   };
 
-  const handleExportCSV = () => {
-    const csv = exportPseudonymizedCSV(readings);
+  const handleExportCSV = async () => {
+    const allReadings = await db.readings.toArray();
+    const csv = exportPseudonymizedCSV(allReadings);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -66,9 +63,11 @@ export const ResearchConsentModal: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleExportFHIR = () => {
-    const activeProf = profiles[0];
-    const bundle = exportPseudonymizedFHIRBundle(readings, activeProf);
+  const handleExportFHIR = async () => {
+    const allReadings = await db.readings.toArray();
+    const allProfiles = await db.profiles.toArray();
+    const activeProf = allProfiles[0];
+    const bundle = exportPseudonymizedFHIRBundle(allReadings, activeProf);
     const json = JSON.stringify(bundle, null, 2);
     const blob = new Blob([json], { type: 'application/fhir+json;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -143,7 +142,7 @@ export const ResearchConsentModal: React.FC = () => {
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold text-xs hover:bg-slate-800 transition-colors shadow-sm"
                   >
                     <Download size={14} />
-                    <span>Unduh CSV Riset ({readings.length} data)</span>
+                    <span>Unduh CSV Riset Ter-pseudonimisasi</span>
                   </button>
                   <button
                     type="button"
