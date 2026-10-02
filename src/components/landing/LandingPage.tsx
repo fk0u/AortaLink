@@ -58,8 +58,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
   // Interactive 24-Hour Dipping Simulator state (0 - 23 hours)
   const [simulatedHour, setSimulatedHour] = useState<number>(7);
   
-  // Interactive Combination Therapy Tab state
-  const [activeDrugTab, setActiveDrugTab] = useState<'ccb' | 'arb' | 'gout'>('ccb');
+  // Interactive Guideline Comparison Tab state
+  const [activeGuidelineTab, setActiveGuidelineTab] = useState<'esh_perhi' | 'acc_aha' | 'esc'>('esh_perhi');
 
   // JSON Copied indicator
   const [isJsonCopied, setIsJsonCopied] = useState(false);
@@ -250,7 +250,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
           <nav className="hidden lg:flex items-center gap-7 text-[11px] font-mono uppercase tracking-wider text-slate-600 select-none">
             <a href="#fitur" className="hover:text-teal-700 transition-colors">01. Fitur Klinis</a>
             <a href="#sirkadian" className="hover:text-teal-700 transition-colors">02. Sirkadian 24H</a>
-            <a href="#terapi" className="hover:text-teal-700 transition-colors">03. Farmakologi</a>
+            <a href="#guideline" className="hover:text-teal-700 transition-colors">03. Acuan Klinis</a>
             <a href="#arsitektur" className="hover:text-teal-700 transition-colors">04. HL7 FHIR R4</a>
             <a href="#faq" className="hover:text-teal-700 transition-colors">05. FAQ Medis</a>
           </nav>
@@ -446,7 +446,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
             Simulasi Sirkadian &amp; Pencegahan Lonjakan Pagi (Morning Surge).
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            Tekanan darah manusia berfluktuasi secara ritmis sepanjang 24 jam. Geser pengendali waktu di bawah untuk melihat estimasi hemodinamik dan waktu optimal pemberian obat antihipertensi.
+            Tekanan darah manusia berfluktuasi secara ritmis sepanjang 24 jam. Geser pengendali waktu di bawah untuk melihat estimasi fluktuasi hemodinamik fisiologis tubuh antara siang dan malam hari.
           </p>
         </div>
 
@@ -534,18 +534,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
 
       </section>
 
-      {/* Section 02: Pharmacological Synergy Matrix (CCB + ARB + Allopurinol) */}
-      <section id="terapi" className="py-16 sm:py-24 px-4 sm:px-8 max-w-7xl mx-auto w-full border-b border-slate-200/80 space-y-10">
+      {/* Section 02: Clinical Guideline Registry & Classification Framework */}
+      <section id="guideline" className="py-16 sm:py-24 px-4 sm:px-8 max-w-7xl mx-auto w-full border-b border-slate-200/80 space-y-10">
         
         <div className="space-y-2 text-left max-w-3xl">
           <div className="text-[10px] font-mono uppercase tracking-widest text-teal-800">
-            [SECTION 02 // FARMAKOLOGI KLINIS]
+            [SECTION 02 // ACUAN KLINIS RESMI]
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-            Sinergi Kombinasi Terapi CCB &amp; ARB + Kontrol Asam Urat.
+            Tiga Acuan Standar Penilaian Hipertensi Modern.
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            Kombinasi Calcium Channel Blocker di pagi hari dan Angiotensin Receptor Blocker di malam hari bekerja saling menetralkan efek samping sekaligus memaksimalkan proteksi target organ.
+            AortaLink mendukung perbandingan klasifikasi berdasarkan pedoman medis resmi terkini. Klasifikasi dapat disesuaikan pada setiap profil pengguna untuk menyelaraskan catatan tensi mandiri dengan acuan dokter spesialis yang merawat Anda.
           </p>
         </div>
 
@@ -555,113 +555,113 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
             type="button"
             onClick={() => {
               playClickSound();
-              setActiveDrugTab('ccb');
+              setActiveGuidelineTab('esh_perhi');
             }}
             className={`px-4 py-2 text-xs font-mono font-bold uppercase transition-all rounded-md ${
-              activeDrugTab === 'ccb'
+              activeGuidelineTab === 'esh_perhi'
                 ? 'bg-slate-900 text-white'
                 : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
             }`}
           >
-            01. Amlodipine 5mg (CCB)
+            01. ESH 2023 / PERHI 2021 (Default RI)
           </button>
           <button
             type="button"
             onClick={() => {
               playClickSound();
-              setActiveDrugTab('arb');
+              setActiveGuidelineTab('acc_aha');
             }}
             className={`px-4 py-2 text-xs font-mono font-bold uppercase transition-all rounded-md ${
-              activeDrugTab === 'arb'
+              activeGuidelineTab === 'acc_aha'
                 ? 'bg-slate-900 text-white'
                 : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
             }`}
           >
-            02. Candesartan 8mg (ARB)
+            02. ACC / AHA 2025 (Stage 1 ≥130/80)
           </button>
           <button
             type="button"
             onClick={() => {
               playClickSound();
-              setActiveDrugTab('gout');
+              setActiveGuidelineTab('esc');
             }}
             className={`px-4 py-2 text-xs font-mono font-bold uppercase transition-all rounded-md ${
-              activeDrugTab === 'gout'
+              activeGuidelineTab === 'esc'
                 ? 'bg-slate-900 text-white'
                 : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
             }`}
           >
-            03. Allopurinol 100mg (Gout)
+            03. ESC 2024 (Elevated BP Baru)
           </button>
         </div>
 
         {/* Active Tab Spec Card */}
         <div className="gsap-bento-card bg-white border border-slate-300 rounded-xl p-6 sm:p-8 space-y-4 shadow-sm">
-          {activeDrugTab === 'ccb' && (
+          {activeGuidelineTab === 'esh_perhi' && (
             <div className="space-y-4 text-left">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
-                    Amlodipine 5mg (Calcium Channel Blocker)
+                    European Society of Hypertension &amp; Perhimpunan Dokter Hipertensi Indonesia (PERHI)
                   </h3>
-                  <span className="font-mono text-xs text-slate-500">Jadwal: Pagi Hari (07:00 - 08:00 WIB)</span>
+                  <span className="font-mono text-xs text-slate-500">Ambang Klinik: ≥ 140/90 mmHg • Ambang Mandiri Rumah (HBPM): ≥ 135/85 mmHg</span>
                 </div>
-                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200 w-fit">
-                  VASODILATASI ARTERIOLER
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-teal-50 text-teal-800 border border-teal-200 w-fit">
+                  STANDAR UTAMA INDONESIA
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
-                Menghambat influks ion kalsium transmembran ke otot polos vaskular arteri, menurunkan resistensi perifer total secara konsisten selama 24 jam, dan secara efektif menekan lonjakan tekanan darah sistolik pagi hari.
+                Mengklasifikasikan tekanan darah ke dalam 6 tingkatan klinis: Optimal (&lt;120/80), Normal (120–129/80–84), Normal-Tinggi (130–139/85–89), Derajat 1 (140–159/90–99), Derajat 2 (160–179/100–109), dan Derajat 3 (≥180/≥110 mmHg). Kategori ditentukan oleh parameter tertinggi antara sistolik atau diastolik.
               </p>
               <div className="p-3.5 rounded bg-slate-50 border border-slate-200 text-xs text-slate-700 flex items-start gap-2">
                 <CheckCircle2 size={16} className="text-teal-700 shrink-0 mt-0.5" />
-                <span><strong>Sinergi Farmakologis:</strong> Pemberian Candesartan di malam hari memfasilitasi dilatasi pasca-kapiler sehingga mencegah risiko edema pergelangan kaki yang sering dipicu oleh monoterapi CCB dosis tinggi.</span>
+                <span><strong>Pentingnya Ambang Mandiri (HBPM):</strong> Pengukuran mandiri di rumah menggunakan batas evaluasi terpisah (≥135/85 mmHg). AortaLink otomatis menandai pengukuran di atas ambang rumah tanpa mengaburkan penilaian klinis dokter.</span>
               </div>
             </div>
           )}
 
-          {activeDrugTab === 'arb' && (
+          {activeGuidelineTab === 'acc_aha' && (
             <div className="space-y-4 text-left">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
-                    Candesartan 8mg (Angiotensin II Receptor Blocker)
+                    American College of Cardiology / American Heart Association (ACC/AHA 2025)
                   </h3>
-                  <span className="font-mono text-xs text-slate-500">Jadwal: Malam Hari (20:00 - 21:00 WIB)</span>
+                  <span className="font-mono text-xs text-slate-500">Normal: &lt;120/&lt;80 • Stage 1: 130–139/80–89 • Stage 2: ≥140/≥90 mmHg</span>
                 </div>
                 <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-indigo-50 text-indigo-800 border border-indigo-200 w-fit">
-                  PROTEKSI GINJAL &amp; NOCTURNAL
+                  AMBANG INTERVENSI DINI
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
-                Memblokade selektif reseptor AT1 dari Angiotensin II, menurunkan tekanan intraglomerular ginjal, meredakan proteinuria mikroalbuminuria, serta mengembalikan pola <em>nocturnal dipping</em> fisiologis saat tidur.
+                Menetapkan ambang batas hipertensi lebih awal pada 130/80 mmHg guna mendorong intervensi gaya hidup preventif sedini mungkin. Dilengkapi dengan evaluasi risiko kardiovaskular PREVENT 10-tahun.
               </p>
               <div className="p-3.5 rounded bg-slate-50 border border-slate-200 text-xs text-slate-700 flex items-start gap-2">
                 <CheckCircle2 size={16} className="text-teal-700 shrink-0 mt-0.5" />
-                <span><strong>Sinergi Farmakologis:</strong> Menurunkan tonus vasokonstriksi nocturnal dan melindungi endotel vaskular saat istirahat malam.</span>
+                <span><strong>Intervensi Gaya Hidup:</strong> Pada kategori Stage 1 risiko rendah (&lt;7.5%), penatalaksanaan primer berfokus pada modifikasi gaya hidup (pembatasan garam, olahraga aerobik, tidur berkualitas) selama 3–6 bulan sebelum evaluasi lanjutan.</span>
               </div>
             </div>
           )}
 
-          {activeDrugTab === 'gout' && (
+          {activeGuidelineTab === 'esc' && (
             <div className="space-y-4 text-left">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
-                    Allopurinol 100mg (Xanthine Oxidase Inhibitor)
+                    European Society of Cardiology (ESC 2024 Guidelines)
                   </h3>
-                  <span className="font-mono text-xs text-slate-500">Jadwal: Siang Hari (Sesudah Makan)</span>
+                  <span className="font-mono text-xs text-slate-500">Non-elevated: &lt;120/&lt;70 • Elevated BP: 120–139/70–89 • Hipertensi: ≥140/≥90 mmHg</span>
                 </div>
                 <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-purple-50 text-purple-800 border border-purple-200 w-fit">
-                  TARGET ASAM URAT &lt; 6.0 mg/dL
+                  KATEGORI ELEVATED BP RESMI
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
-                Menghambat biosintesis asam urat darah dari purin. Kadar asam urat &gt; 7.0 mg/dL secara klinis terbukti memicu mikrotrombus ginjal dan disfungsi endotel yang memperberat hipertensi resisten.
+                Memperkenalkan klasifikasi terpadu 3 kategori: Non-elevated BP, Elevated BP (120–139 sistolik atau 70–89 diastolik), dan Hipertensi (≥140/90 mmHg). Menargetkan tekanan darah sistolik 120–129 mmHg bagi mayoritas pasien dewasa.
               </p>
               <div className="p-3.5 rounded bg-slate-50 border border-slate-200 text-xs text-slate-700 flex items-start gap-2">
                 <CheckCircle2 size={16} className="text-teal-700 shrink-0 mt-0.5" />
-                <span><strong>Sinergi Farmakologis:</strong> Menjaga filtrasi ginjal (eGFR) tetap stabil dan mencegah peradangan vaskular sistemik.</span>
+                <span><strong>Penyederhanaan Klinis:</strong> Mengeliminasi kerancuan kategori perantara dan memfokuskan pemantauan pada deteksi dini peningkatan tekanan darah sistemik.</span>
               </div>
             </div>
           )}
@@ -719,7 +719,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
                 Asisten Analisis ML On-Device
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Mesin statistik yang belajar langsung dari data Anda — tren, pola white-coat, lonjakan pagi, dan keterkaitan kepatuhan obat — tanpa mengirim data ke server AI mana pun.
+                Mesin statistik yang belajar langsung dari data Anda — tren, pola white-coat, lonjakan pagi, dan keterkaitan kepatuhan pencatatan mandiri — tanpa mengirim data ke server AI mana pun.
               </p>
             </div>
             <div className="p-3 rounded bg-teal-50 border border-teal-200 text-xs font-mono font-bold text-teal-800">
@@ -856,9 +856,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
                 <td className="p-3.5 text-teal-800 font-bold bg-teal-50/30">Otomatis dihitung (Normal/Non-Dipper/Riser)</td>
               </tr>
               <tr>
-                <td className="p-3.5 font-bold text-slate-900">Kombinasi Obat CCB + ARB</td>
-                <td className="p-3.5 text-slate-500">Pengingat teks biasa tanpa konteks</td>
-                <td className="p-3.5 text-teal-800 font-bold bg-teal-50/30">Terintegrasi farmakologi pagi &amp; malam</td>
+                <td className="p-3.5 font-bold text-slate-900">Multi-Guideline Klinis</td>
+                <td className="p-3.5 text-slate-500">Ambang statis tunggal tanpa rujukan</td>
+                <td className="p-3.5 text-teal-800 font-bold bg-teal-50/30">Dukungan ESH/PERHI, ACC/AHA 2025, ESC 2024</td>
               </tr>
               <tr>
                 <td className="p-3.5 font-bold text-slate-900">Parameter Lab Sekunder</td>
