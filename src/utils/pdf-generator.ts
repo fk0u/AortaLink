@@ -157,9 +157,9 @@ export function generateClinicalReportPDF({
   doc.text('RATA-RATA TENSI', 18, startY + 4.5);
   doc.setFontSize(10.5);
   doc.setFont('helvetica', 'bold');
-  doc.text(`${avgSys}/${avgDia}`, 18, startY + 10.5);
+  doc.text(validCount > 0 ? `${avgSys}/${avgDia}` : '–', 18, startY + 10.5);
   doc.setFontSize(6.5);
-  doc.text('mmHg (Periode Terpilih)', 18, startY + 14.5);
+  doc.text(validCount > 0 ? 'mmHg (Periode Terpilih)' : 'Tidak Ada Data Valid', 18, startY + 14.5);
 
   // Stat Box 2: Nocturnal Dipping Analysis
   const dippingReport = calculateNocturnalDipping(filteredReadings);
@@ -187,9 +187,9 @@ export function generateClinicalReportPDF({
   doc.text('PULSE PRESSURE & MAP', 110, startY + 4.5);
   doc.setFontSize(10.5);
   doc.setFont('helvetica', 'bold');
-  doc.text(`PP: ${avgPP} mmHg`, 110, startY + 10.5);
+  doc.text(validCount > 0 ? `PP: ${avgPP} mmHg` : 'PP: –', 110, startY + 10.5);
   doc.setFontSize(6.5);
-  doc.text(`MAP: ${avgMAP} mmHg • Nadi ${avgPulse} BPM`, 110, startY + 14.5);
+  doc.text(validCount > 0 ? `MAP: ${avgMAP} mmHg • Nadi ${avgPulse ? `${avgPulse} BPM` : '–'}` : 'MAP: –', 110, startY + 14.5);
 
   // Stat Box 4: Total & Compliance
   const compliance = stats.targetComplianceRate ?? (validCount > 0 ? 85 : 0);
@@ -387,7 +387,7 @@ function buildWeeklyStats(report: WeeklyReport): BPSummaryStats {
 
   const avg = (values: number[]) => values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : 0;
   const validReadings = readings.filter((r) => !r.isExcludedFromAverages);
-  const avgReadings = validReadings.length > 0 ? validReadings : readings;
+  const avgReadings = validReadings;
   const avgSystolic = avg(avgReadings.map((r) => r.systolic));
   const avgDiastolic = avg(avgReadings.map((r) => r.diastolic));
   const validPulses = avgReadings.map((r) => r.pulse).filter((p): p is number => typeof p === 'number' && !isNaN(p));
@@ -402,8 +402,8 @@ function buildWeeklyStats(report: WeeklyReport): BPSummaryStats {
     avgSystolic: Math.round(avgSystolic),
     avgDiastolic: Math.round(avgDiastolic),
     avgPulse,
-    avgMAP: Math.round(avg(avgReadings.map((r) => calculateMAP(r.systolic, r.diastolic)))),
-    avgPulsePressure: Math.round(avgSystolic - avgDiastolic),
+    avgMAP: avgReadings.length ? Math.round(avg(avgReadings.map((r) => calculateMAP(r.systolic, r.diastolic)))) : 0,
+    avgPulsePressure: avgReadings.length ? Math.round(avgSystolic - avgDiastolic) : 0,
     targetComplianceRate: report.adherence,
     maxSystolic: report.maxSystolic,
     minSystolic: report.minSystolic,
