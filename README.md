@@ -22,7 +22,7 @@ AortaLink v3.0 is **engineered to Software-as-a-Medical-Device (SaMD) discipline
 > [!TIP]
 > **Syarat Penggunaan Mode Riset:** Wajib mengantongi persetujuan Komisi Etik Penelitian Kesehatan (KEPK) terakreditasi dan memiliki dokter spesialis berlisensi sebagai Principal Investigator (PI) atau pembimbing klinis. Diaktifkan di dalam aplikasi menggunakan Study ID resmi protokol penelitian dan informed consent partisipan ter-pseudonimisasi.
 
-**Default guideline:** ESH 2023 / PERHI (hypertension ≥140/90 office, ≥135/85 home). ACC/AHA 2025 and ESC 2024 will be selectable ([#15](https://github.com/fk0u/AortaLink/issues/15)).
+**Default guideline:** ESH 2023 / PERHI (hypertension ≥140/90 office, ≥135/85 home). ACC/AHA 2025 and ESC 2024 are selectable per profile ([#15](https://github.com/fk0u/AortaLink/issues/15)).
 
 ---
 
@@ -30,6 +30,7 @@ AortaLink v3.0 is **engineered to Software-as-a-Medical-Device (SaMD) discipline
 
 | Document | Contents |
 | :--- | :--- |
+| [`docs/v3/REGULATORY_POSITIONING.md`](docs/v3/REGULATORY_POSITIONING.md) | Regulatory positioning (non-alkes vs SaMD under Kepmenkes 951/2026), intended use, contraindications, and UU PDP |
 | [`docs/v3/FLOW_NOTES.md`](docs/v3/FLOW_NOTES.md) | v3.0 user flow (7 steps: access → auth → FHIR onboarding → BP telemetry → Health Score → care routing → knowledge base) |
 | [`docs/v3/RESEARCH_ANALYSIS.md`](docs/v3/RESEARCH_ANALYSIS.md) | Research & gap analysis: guidelines, aortic disease, FHIR/SATUSEHAT, Bluetooth, regulation |
 | [`docs/v3/CLINICAL_REVIEW.md`](docs/v3/CLINICAL_REVIEW.md) | Simulated multi-persona clinical pre-review (not clinical validation) |
@@ -83,7 +84,7 @@ npm run test:ml
 | `Observation` (laboratory) | LOINC `3084-1` | Urate [Mass/volume] in Serum or Plasma (*asam urat*) |
 | `MedicationRequest` | RxNorm / free text | Medication regimen |
 
-The export does not yet pass the official HL7 validator (non-standard fields, empty extensions, `fullUrl` format). That is a v3.0 blocker tracked in [#11](https://github.com/fk0u/AortaLink/issues/11).
+The export is validated against the official HL7 FHIR validator ($validate) in CI with 0 errors ([#11](https://github.com/fk0u/AortaLink/issues/11)).
 
 ---
 
