@@ -27,34 +27,40 @@ interface ResearchState {
   withdraw: () => void;
 }
 
+let isSubscribed = false;
+
 export const useResearchStore = create<ResearchState>((set, get) => {
-  // Subscribe to external/core changes
-  subscribeReleaseMode((newMode) => {
-    set({
-      mode: newMode,
-      isActive: newMode === 'research',
-      studyId: getResearchStudyId(),
-      consentRecord: getResearchConsentRecord()
-    });
-  });
+  // Subscribe to external/core changes and cross-tab sync once
+  if (!isSubscribed) {
+    isSubscribed = true;
 
-  // Cross-tab synchronization
-  if (typeof window !== 'undefined') {
-    window.addEventListener('storage', (e) => {
-      if (
-        e.key === 'aortalink_release_mode' ||
-        e.key === 'aortalink_study_id' ||
-        e.key === 'aortalink_consent_record'
-      ) {
-        get().refreshState();
-      }
+    subscribeReleaseMode((newMode) => {
+      useResearchStore.setState({
+        mode: newMode,
+        isActive: newMode === 'research',
+        studyId: getResearchStudyId(),
+        consentRecord: getResearchConsentRecord()
+      });
     });
 
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        get().refreshState();
-      }
-    });
+    // Cross-tab synchronization
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (e) => {
+        if (
+          e.key === 'aortalink_release_mode' ||
+          e.key === 'aortalink_study_id' ||
+          e.key === 'aortalink_consent_record'
+        ) {
+          useResearchStore.getState().refreshState();
+        }
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          useResearchStore.getState().refreshState();
+        }
+      });
+    }
   }
 
   return {

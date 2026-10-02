@@ -52,30 +52,40 @@ export const ResearchConsentModal: React.FC = () => {
   };
 
   const handleExportCSV = async () => {
-    const allReadings = await db.readings.toArray();
-    const csv = exportPseudonymizedCSV(allReadings);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `aortalink-research-${studyId || 'study'}-${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const allReadings = await db.readings.toArray();
+      const csv = exportPseudonymizedCSV(allReadings);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `aortalink-research-${studyId || 'study'}-${Date.now()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[ResearchConsentModal] CSV export error:', err);
+      setErrorMsg('Gagal mengekspor data CSV: ' + (err instanceof Error ? err.message : String(err)));
+    }
   };
 
   const handleExportFHIR = async () => {
-    const allReadings = await db.readings.toArray();
-    const allProfiles = await db.profiles.toArray();
-    const activeProf = allProfiles[0];
-    const bundle = exportPseudonymizedFHIRBundle(allReadings, activeProf);
-    const json = JSON.stringify(bundle, null, 2);
-    const blob = new Blob([json], { type: 'application/fhir+json;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `aortalink-research-bundle-${studyId || 'study'}-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const allReadings = await db.readings.toArray();
+      const allProfiles = await db.profiles.toArray();
+      const activeProf = allProfiles[0];
+      const bundle = exportPseudonymizedFHIRBundle(allReadings, activeProf);
+      const json = JSON.stringify(bundle, null, 2);
+      const blob = new Blob([json], { type: 'application/fhir+json;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `aortalink-research-bundle-${studyId || 'study'}-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[ResearchConsentModal] FHIR export error:', err);
+      setErrorMsg('Gagal mengekspor berkas FHIR: ' + (err instanceof Error ? err.message : String(err)));
+    }
   };
 
   return (

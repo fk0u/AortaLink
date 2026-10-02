@@ -164,10 +164,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
         diastolic: 84,
         pulse: 76,
         dippingPercent: '+12.1%',
-        status: 'Morning Surge (Jadwal Konsumsi CCB)',
+        status: 'Morning Surge (Fase Pagi Hari)',
         icon: Sun,
         themeBadge: 'bg-amber-50 text-amber-800 border-amber-200',
-        note: 'Lonjakan kortisol & tonus simpatis fisiologis saat bangun tidur. Waktu optimal pemberian Amlodipine 5mg untuk mengontrol tekanan darah 24 jam.'
+        note: 'Lonjakan kortisol & tonus simpatis fisiologis saat bangun tidur. Waktu pencatatan tensi rutin sebelum memulai aktivitas.'
       };
     } else if (hour >= 10 && hour <= 17) {
       return {
@@ -370,8 +370,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
                     <span className="text-xs font-bold text-slate-900">Contoh Pengguna (62 Tahun)</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Regimen</span>
-                    <span className="text-xs font-bold text-purple-700">CCB Pagi + ARB Malam</span>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Jadwal</span>
+                    <span className="text-xs font-bold text-purple-700">Pencatatan Terjadwal</span>
                   </div>
                 </div>
 
