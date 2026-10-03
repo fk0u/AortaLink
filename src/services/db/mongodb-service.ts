@@ -1,4 +1,4 @@
-import { db, NOTES_ENCODING_RAW, withSyncMetadataSuppressed, type SyncTombstone } from '../../db';
+import { db, NOTES_ENCODING_RAW, withSyncMetadataSuppressed, newSyncId, type SyncTombstone } from '../../db';
 import { decodeLegacyEscapedText } from '../../security/sanitizer';
 import { useAppStore } from '../../store/useAppStore';
 import { entitiesToFhirBundle, fhirBundleToEntities } from '../fhir/fhir-contract-adapters';
@@ -328,22 +328,45 @@ export class MongoDbAtlasService {
         const hasFhirBundle = Boolean(data.fhirBundle && data.fhirBundle.resourceType === 'Bundle');
         const fhirEntities = hasFhirBundle ? fhirBundleToEntities(data.fhirBundle) : null;
 
+        const getItemKey = (item: any): string => {
+          if (item.id !== undefined && item.id !== null && item.id !== '') {
+            return String(item.id);
+          }
+          if (item.syncId) return String(item.syncId);
+          if (item.timestamp) {
+            return item.profileId ? `${item.profileId}::${item.timestamp}` : String(item.timestamp);
+          }
+          return '';
+        };
+
         const mergeWithFhir = <T extends { id?: any; syncId?: string; timestamp?: string }>(
           flatList: T[] | undefined,
           fhirList: T[] | undefined
         ): T[] => {
           const flat = Array.isArray(flatList) ? flatList : [];
           const fhir = Array.isArray(fhirList) ? fhirList : [];
-          if (flat.length === 0) return fhir;
+          if (flat.length === 0) {
+            return fhir.map((item) => {
+              if (item.id === undefined || item.id === null || item.id === '') {
+                (item as any).id = item.syncId || newSyncId();
+              }
+              return item;
+            });
+          }
           if (fhir.length === 0) return flat;
 
-          const existingKeys = new Set(
-            flat.map((item) => String(item.id ?? item.syncId ?? item.timestamp ?? ''))
-          );
-          const additional = fhir.filter((item) => {
-            const key = String(item.id ?? item.syncId ?? item.timestamp ?? '');
-            return key && !existingKeys.has(key);
-          });
+          const existingKeys = new Set(flat.map(getItemKey).filter(Boolean));
+          const additional = fhir
+            .map((item) => {
+              if (item.id === undefined || item.id === null || item.id === '') {
+                (item as any).id = item.syncId || newSyncId();
+              }
+              return item;
+            })
+            .filter((item) => {
+              const key = getItemKey(item);
+              return key ? !existingKeys.has(key) : true;
+            });
           return [...flat, ...additional];
         };
 

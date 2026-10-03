@@ -510,7 +510,7 @@ export function exportReadingsToFHIRBundle(readings: BPReading[], profile?: Prof
  */
 export function normalizeLabQuantity(code: string, rawVal: number, unit?: string, ucumCode?: string): number {
   const u = (unit || ucumCode || '').toLowerCase().trim();
-  if (u === 'mmol/l' || u === 'mmol/l') {
+  if (u === 'mmol/l' || u === 'mmol/liter') {
     // Total cholesterol, LDL, HDL: 1 mmol/L = 38.67 mg/dL
     if (code === '2093-3' || code === '13457-7' || code === '2085-9') {
       return Math.round(rawVal * 38.67 * 10) / 10;
@@ -670,9 +670,9 @@ export function medicationFromFHIR(req: FhirMedicationRequest): Partial<Medicati
   const coding = req.medicationCodeableConcept?.coding?.[0];
 
   const instruction = req.dosageInstruction?.[0]?.text || '';
-  const doseMatch = instruction.match(/Dose:\s*([^.]+)/);
-  const scheduleMatch = instruction.match(/Schedule:\s*([^.]+)/);
-  const purposeMatch = instruction.match(/Purpose:\s*(.+)/);
+  const doseMatch = instruction.match(/Dose:\s*(.+?)(?:\.\s*Schedule:|\.\s*Purpose:|$)/i);
+  const scheduleMatch = instruction.match(/Schedule:\s*(.+?)(?:\.\s*Purpose:|$)/i);
+  const purposeMatch = instruction.match(/Purpose:\s*(.+)$/i);
 
   let drugClassFromExt: string | undefined;
   let purposeFromExt: string | undefined;
@@ -703,7 +703,7 @@ export function medicationFromFHIR(req: FhirMedicationRequest): Partial<Medicati
     name = coding.display.split(' ')[0];
   }
 
-  const dosage = dosageFromExt || (doseMatch ? doseMatch[1].trim() : (coding?.display?.match(/\d+\s*(?:mg|mcg|g)/i)?.[0] || '1 tablet'));
+  const dosage = dosageFromExt || (doseMatch ? doseMatch[1].trim() : (coding?.display?.match(/\d+(?:\.\d+)?\s*(?:mg|mcg|g)/i)?.[0] || '1 tablet'));
   const purpose = purposeFromExt || (purposeMatch ? purposeMatch[1].trim() : 'Hipertensi');
 
   return {

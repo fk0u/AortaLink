@@ -382,22 +382,63 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
         : 0;
 
       if (incomingBundleTime >= existingBundleTime) {
-        // Collect active tombstones to filter deleted records from bundle entries
+        // Collect active tombstones scoped by table to filter deleted records from bundle entries
         const allTombstones = await activeDb.collection('tombstones').find({ userId }).toArray();
-        const incomingDeletedIds = new Set(
-          [...allTombstones, ...sourceTombstones].map((t) => String(t.recordId || t.id || '')).filter(Boolean)
-        );
+        const deletedByTable = new Map();
+        for (const t of [...allTombstones, ...sourceTombstones]) {
+          const tbl = t.table || t.tableName;
+          const rid = String(t.recordId || t.id || '');
+          if (tbl && rid) {
+            if (!deletedByTable.has(tbl)) deletedByTable.set(tbl, new Set());
+            deletedByTable.get(tbl).add(rid);
+          }
+        }
 
         const sanitizedEntries = Array.isArray(fhirBundle.entry)
           ? fhirBundle.entry.filter((entry) => {
               const res = entry?.resource;
               if (!res) return false;
-              const resId = String(res.id || '');
-              if (incomingDeletedIds.has(resId)) return false;
-              if (Array.isArray(res.identifier)) {
-                for (const ident of res.identifier) {
-                  if (ident?.value && incomingDeletedIds.has(String(ident.value))) {
-                    return false;
+
+              let targetTable = null;
+              let targetSystem = null;
+
+              if (res.resourceType === 'Patient') {
+                targetTable = 'profiles';
+                targetSystem = 'http://aortalink.app/fhir/identifier/profile-id';
+              } else if (res.resourceType === 'Observation') {
+                const isBp = res.code?.coding?.some((c) => c.code === '85354-9') ||
+                  (Array.isArray(res.component) && res.component.some((c) => c.code?.coding?.some((cod) => cod.code === '8480-6')));
+                if (isBp) {
+                  targetTable = 'readings';
+                  targetSystem = 'http://aortalink.app/fhir/identifier/reading-id';
+                } else {
+                  targetTable = 'labResults';
+                  targetSystem = 'http://aortalink.app/fhir/identifier/lab-id';
+                }
+              } else if (res.resourceType === 'MedicationRequest') {
+                targetTable = 'medications';
+                targetSystem = 'http://aortalink.app/fhir/identifier/medication-id';
+              } else if (res.resourceType === 'Condition') {
+                targetTable = 'conditions';
+                targetSystem = 'http://aortalink.app/fhir/identifier/condition-id';
+              } else if (res.resourceType === 'FamilyMemberHistory') {
+                targetTable = 'familyHistory';
+                targetSystem = 'http://aortalink.app/fhir/identifier/family-history-id';
+              } else if (res.resourceType === 'Immunization') {
+                targetTable = 'immunizations';
+                targetSystem = 'http://aortalink.app/fhir/identifier/immunization-id';
+              }
+
+              if (targetTable && deletedByTable.has(targetTable)) {
+                const deletedIds = deletedByTable.get(targetTable);
+                const resId = String(res.id || '');
+                if (resId && deletedIds.has(resId)) return false;
+
+                if (Array.isArray(res.identifier)) {
+                  for (const ident of res.identifier) {
+                    if (ident?.value && (!targetSystem || ident.system === targetSystem) && deletedIds.has(String(ident.value))) {
+                      return false;
+                    }
                   }
                 }
               }

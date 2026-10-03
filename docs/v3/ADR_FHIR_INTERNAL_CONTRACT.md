@@ -71,7 +71,7 @@ Diputuskan untuk menerapkan **Pola Adapter Batas Sistem (System Boundary Adapter
    - `BPReading` ⟷ `Observation` (Vital Signs BP Profile LOINC `85354-9`, systolic `8480-6`, diastolic `8462-4`, heart rate `8867-4`)
    - `LabResult` ⟷ `Observation[]` (LOINC lab panel: ureum `3091-6`, kreatinin `2160-0`, lipid panel, HbA1c, D-dimer, troponin)
    - `Profile` (Tinggi, Berat, BMI, Merokok, Alkohol) ⟷ `Observation[]` (LOINC `8302-2`, `29463-7`, `39156-5`, `72166-2`, `11331-6`)
-   - `MedicationItem` ⟷ `MedicationRequest` (Status active, intent order, dosage, timing; stopped state tracking direncanakan pada Step 05/06)
+   - `MedicationItem` ⟷ `MedicationRequest` (Status active, intent order, dosage, timing; pelacakan status stopped/selesai direncanakan pada iterasi medication management v3.1)
    - `ConditionItem` ⟷ `Condition` (Category problem-list-item/comorbidity, ICD-10-WHO + SNOMED CT)
    - `FamilyMemberHistoryItem` ⟷ `FamilyMemberHistory` (Relationship SNOMED CT, condition ICD-10)
    - `ImmunizationItem` ⟷ `Immunization` (CDC CVX vaccine coding)

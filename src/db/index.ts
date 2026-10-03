@@ -196,12 +196,15 @@ export class AortaLinkDatabase extends Dexie {
           const obsList = await obsTable.toArray();
           const readingsTable = tx.table('readings');
           const existingReadings = await readingsTable.toArray();
-          const existingTimestamps = new Set(existingReadings.map((r: any) => r.timestamp));
+          const existingKeys = new Set(existingReadings.map((r: any) => `${r.profileId || 'default-patient'}::${r.timestamp}`));
 
           for (const obs of obsList) {
             const isBp = obs.code?.coding?.some((c: any) => c.code === '85354-9') ||
               (Array.isArray(obs.component) && obs.component.some((c: any) => c.code?.coding?.some((cod: any) => cod.code === '8480-6')));
-            if (isBp && obs.effectiveDateTime && !existingTimestamps.has(obs.effectiveDateTime)) {
+            const ref = obs.subject?.reference || '';
+            const pId = ref.replace(/^urn:uuid:/, '').replace(/^Patient\//, '') || 'default-patient';
+            const dedupKey = `${pId}::${obs.effectiveDateTime}`;
+            if (isBp && obs.effectiveDateTime && !existingKeys.has(dedupKey)) {
               let sys = 0;
               let dia = 0;
               let pul = 0;
@@ -213,18 +216,16 @@ export class AortaLinkDatabase extends Dexie {
                 else if (code === '8867-4') pul = val;
               }
               if (sys > 0 && dia > 0) {
-                const ref = obs.subject?.reference || '';
-                const pId = ref.replace(/^urn:uuid:/, '').replace(/^Patient\//, '');
                 await readingsTable.add({
                   id: obs.id || newSyncId(),
-                  profileId: pId || 'default-patient',
+                  profileId: pId,
                   systolic: sys,
                   diastolic: dia,
-                  pulse: pul,
+                  ...(pul > 0 ? { pulse: pul } : {}),
                   timestamp: obs.effectiveDateTime,
                   notes: obs.note?.[0]?.text
                 });
-                existingTimestamps.add(obs.effectiveDateTime);
+                existingKeys.add(dedupKey);
               }
             }
           }

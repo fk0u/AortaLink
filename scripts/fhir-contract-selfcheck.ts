@@ -289,7 +289,9 @@ assert.equal(parsedMmol.ldlCholesterol, 116, '3.0 mmol/L LDL should normalize to
 console.log('✓ UCUM unit normalization (mmol/L -> mg/dL) passed');
 
 // D. Fasting blood sugar LOINC 1558-6 verified in exported bundle
-const fbsObs = bundle.entry.find((e: any) => e.resource?.code?.coding?.some((c: any) => c.code === '1558-6'));
+const fbsObs = bundle.entry.find((e: any) =>
+  e.resource?.code?.coding?.some((c: any) => c.system === 'http://loinc.org' && c.code === '1558-6')
+);
 assert.ok(fbsObs, 'Fasting blood sugar must use LOINC 1558-6');
 console.log('✓ Fasting blood sugar uses LOINC 1558-6');
 
