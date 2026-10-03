@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, BookOpen, ExternalLink, Calendar, CheckCircle, Tag } from 'lucide-react';
+import { ChevronDown, ChevronUp, BookOpen, ExternalLink, Calendar, CheckCircle2 as CheckCircle, Tag } from '../icons/AppIcons.tsx';
 import { KnowledgeItem, ContentTier, EvidenceLevel, KnowledgeTopic } from '../../types/knowledge-base';
 
 interface KnowledgeArticleCardProps {

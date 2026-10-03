@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Clock, AlertTriangle, Activity, Calendar as CalendarIcon, ChevronRight } from 'lucide-react';
+import { Clock, AlertTriangle, Activity, Calendar as CalendarIcon, ChevronRight } from '../icons/AppIcons.tsx';
 import { db } from '../../db';
 import { KnowledgeBaseService } from '../../services/knowledge-base/knowledge-base-service';
 import { SurveillanceSchedule } from '../../types/knowledge-base';
