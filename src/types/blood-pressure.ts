@@ -320,6 +320,8 @@ export interface FhirObservation {
     code: string;
   };
   component?: FhirObservationComponent[];
+  valueCodeableConcept?: FhirCodeableConcept;
+  derivedFrom?: Array<{ reference: string }>;
   interpretation?: FhirCodeableConcept[];
   note?: Array<{ text: string }>;
   extension?: Array<{
@@ -422,7 +424,7 @@ export interface SmartOnFhirConfig {
 // ===========================================================================
 
 export type ConditionCategory = 'aorta_risk' | 'comorbidity' | 'past_history';
-export type ClinicalStatus = 'active' | 'recurrence' | 'relapse' | 'remission' | 'resolved';
+export type ClinicalStatus = 'active' | 'recurrence' | 'relapse' | 'inactive' | 'remission' | 'resolved';
 export type VerificationStatus = 'confirmed' | 'provisional' | 'differential' | 'unconfirmed';
 
 export interface AortaMeasurementDetails {
@@ -522,6 +524,7 @@ export interface FhirFamilyMemberHistory {
     display?: string;
   };
   relationship: FhirCodeableConcept;
+  date?: string;
   deceasedBoolean?: boolean;
   deceasedAge?: {
     value: number;

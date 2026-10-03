@@ -1,40 +1,36 @@
+/* Step 03: Onboarding Health Screening Modal — Non-blocking, FHIR R4 aligned */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAppStore } from '../../store/useAppStore';
-import { useProfiles } from '../../hooks/useProfiles';
-import { db, newSyncId } from '../../db';
+import {
+  X,
+  Shield,
+  ChevronRight,
+  ChevronLeft,
+  Check,
+  AlertTriangle,
+  Scale,
+  Cigarette,
+  Syringe,
+  Users,
+  Sparkles
+} from '../icons/AppIcons.tsx';
+import { useAppStore } from '../../store/useAppStore.ts';
+import { useProfiles } from '../../hooks/useProfiles.ts';
+import { db } from '../../db/index.ts';
 import {
   calculateBMI,
   AORTA_RISK_FACTORS_CATALOG,
   CARDIO_IMMUNIZATIONS_CATALOG,
-  evaluateScreeningRisk,
-  AortaRiskFactorMeta,
-  VaccineMeta
-} from '../../services/screening/screening-service';
-import {
-  ConditionItem,
-  FamilyMemberHistoryItem,
-  ImmunizationItem,
-  AortaMeasurementDetails
-} from '../../types/blood-pressure';
-import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
-import {
-  X,
-  Heart,
-  Activity,
-  Shield,
-  User,
-  Users,
-  Check,
-  ChevronRight,
-  ChevronLeft,
-  Sparkles,
-  Info,
-  Scale,
-  Cigarette,
-  Syringe,
-  AlertTriangle
-} from '../icons/AppIcons';
+  fetchProfileScreeningData,
+  saveScreeningCondition,
+  deleteScreeningCondition,
+  saveScreeningFamilyHistory,
+  deleteScreeningFamilyHistory,
+  saveScreeningImmunization,
+  deleteScreeningImmunization
+} from '../../services/screening/screening-service.ts';
+import type { AortaMeasurementDetails } from '../../types/blood-pressure.ts';
+import { playClickSound, playSuccessChime } from '../../utils/audio-fx.ts';
 
 export const HealthScreeningModal: React.FC = () => {
   const isOpen = useAppStore((state) => state.isScreeningModalOpen);
@@ -54,14 +50,9 @@ export const HealthScreeningModal: React.FC = () => {
   const [alcoholConsumption, setAlcoholConsumption] = useState<'none' | 'occasional' | 'moderate' | 'heavy' | 'unknown'>('none');
   const [substanceUseHistory, setSubstanceUseHistory] = useState<boolean>(false);
 
-  // Step 3: 16 Aorta Risk Factors (Map of key -> boolean)
+  // Step 3: Aorta Risk Factors (Map of key -> boolean) & Per-Condition Aorta Details
   const [selectedConditions, setSelectedConditions] = useState<Record<string, boolean>>({});
-  const [aortaDetails, setAortaDetails] = useState<AortaMeasurementDetails>({
-    diameterMm: undefined,
-    segment: 'ascending',
-    modality: 'cta',
-    measurementMethod: 'inner_to_inner'
-  });
+  const [aortaDetailsMap, setAortaDetailsMap] = useState<Record<string, AortaMeasurementDetails>>({});
 
   // Step 4: Family History
   const [familyAneurysm, setFamilyAneurysm] = useState<boolean>(false);
@@ -72,15 +63,17 @@ export const HealthScreeningModal: React.FC = () => {
   // Step 5: Immunizations (Map of vaccineCode -> boolean)
   const [selectedVaccines, setSelectedVaccines] = useState<Record<string, boolean>>({
     FLU: false,
-    PCV: false,
+    PCV13: false,
+    PPSV23: false,
     COVID19: false,
-    TET: false
+    TDAP: false
   });
 
-  // Load existing profile screening data on open
+  // Load existing profile screening data on open with clean initialization (no leakage from prior profile)
   useEffect(() => {
     if (!isOpen || !activeProfile) return;
 
+    setStep(1);
     setHeightCm(activeProfile.heightCm ?? '');
     setWeightKg(activeProfile.weightKg ?? '');
     setSmokingStatus(activeProfile.smokingStatus ?? 'never');
@@ -89,40 +82,62 @@ export const HealthScreeningModal: React.FC = () => {
 
     async function loadData() {
       if (!activeProfile) return;
-      const [existingConds, existingFmhs, existingImms] = await Promise.all([
-        db.conditions.where('profileId').equals(activeProfile.id).toArray(),
-        db.familyHistory.where('profileId').equals(activeProfile.id).toArray(),
-        db.immunizations.where('profileId').equals(activeProfile.id).toArray()
-      ]);
+      const { conditions: existingConds, familyHistory: existingFmhs, immunizations: existingImms } =
+        await fetchProfileScreeningData(activeProfile.id);
 
       const condMap: Record<string, boolean> = {};
+      const detailsMap: Record<string, AortaMeasurementDetails> = {};
+
       for (const c of existingConds) {
-        const found = AORTA_RISK_FACTORS_CATALOG.find((m) => m.icd10Code === c.code);
-        if (found) condMap[found.key] = true;
-        if (c.aortaDetails) setAortaDetails(c.aortaDetails);
+        // Match exclusively on Condition targetResource to avoid shadowing between personal aorta history and family aneurysm
+        const found = AORTA_RISK_FACTORS_CATALOG.find(
+          (m) => m.targetResource === 'Condition' && m.icd10Code === c.code
+        );
+        if (found) {
+          condMap[found.key] = true;
+          if (c.aortaDetails) {
+            detailsMap[found.key] = c.aortaDetails;
+          }
+        }
       }
       setSelectedConditions(condMap);
+      setAortaDetailsMap(detailsMap);
+
+      let hasAneurysm = false;
+      let aneurysmRel: any = 'FTH';
+      let hasDissection = false;
+      let dissectionRel: any = 'FTH';
 
       for (const f of existingFmhs) {
         if (f.conditionCode === 'I71.9') {
-          setFamilyAneurysm(true);
+          hasAneurysm = true;
           if (['FTH', 'MTH', 'SIB', 'CHILD'].includes(f.relationship)) {
-            setFamilyAneurysmRel(f.relationship as any);
+            aneurysmRel = f.relationship as any;
           }
         }
         if (f.conditionCode === 'I71.0') {
-          setFamilyDissection(true);
+          hasDissection = true;
           if (['FTH', 'MTH', 'SIB', 'CHILD'].includes(f.relationship)) {
-            setFamilyDissectionRel(f.relationship as any);
+            dissectionRel = f.relationship as any;
           }
         }
       }
+      setFamilyAneurysm(hasAneurysm);
+      setFamilyAneurysmRel(aneurysmRel);
+      setFamilyDissection(hasDissection);
+      setFamilyDissectionRel(dissectionRel);
 
-      const immMap: Record<string, boolean> = {};
+      const immMap: Record<string, boolean> = {
+        FLU: false,
+        PCV13: false,
+        PPSV23: false,
+        COVID19: false,
+        TDAP: false
+      };
       for (const im of existingImms) {
         immMap[im.vaccineCode] = im.status === 'completed';
       }
-      setSelectedVaccines((prev) => ({ ...prev, ...immMap }));
+      setSelectedVaccines(immMap);
     }
 
     loadData().catch(console.error);
@@ -143,8 +158,8 @@ export const HealthScreeningModal: React.FC = () => {
     setSelectedVaccines((prev) => ({ ...prev, [code]: !prev[code] }));
   };
 
-  const saveScreeningProgress = async (finalSave = false) => {
-    if (!activeProfile) return;
+  const saveScreeningProgress = async (finalSave = false): Promise<boolean> => {
+    if (!activeProfile) return false;
     setIsSaving(true);
 
     try {
@@ -152,8 +167,8 @@ export const HealthScreeningModal: React.FC = () => {
 
       // 1. Update Profile Anthropometry & Lifestyle
       await db.profiles.update(activeProfile.id, {
-        heightCm: typeof heightCm === 'number' ? heightCm : undefined,
-        weightKg: typeof weightKg === 'number' ? weightKg : undefined,
+        heightCm: typeof heightCm === 'number' && Number.isFinite(heightCm) && heightCm > 0 ? heightCm : undefined,
+        weightKg: typeof weightKg === 'number' && Number.isFinite(weightKg) && weightKg > 0 ? weightKg : undefined,
         bmi: bmiEval ? bmiEval.bmi : undefined,
         smokingStatus,
         alcoholConsumption,
@@ -161,7 +176,7 @@ export const HealthScreeningModal: React.FC = () => {
         ...(finalSave ? { screeningCompletedAt: now } : {})
       });
 
-      // 2. Persist Conditions
+      // 2. Persist Conditions through scoped repository layer
       const existingConds = await db.conditions.where('profileId').equals(activeProfile.id).toArray();
       const existingCondMap = new Map(existingConds.map((c) => [c.code, c]));
 
@@ -169,30 +184,27 @@ export const HealthScreeningModal: React.FC = () => {
         if (factor.targetResource !== 'Condition') continue;
         const isChecked = !!selectedConditions[factor.key];
         const existing = existingCondMap.get(factor.icd10Code);
+        const factorDetails = aortaDetailsMap[factor.key];
+        const hasValidDetails =
+          factor.supportsAortaDetails &&
+          factorDetails &&
+          typeof factorDetails.diameterMm === 'number' &&
+          Number.isFinite(factorDetails.diameterMm) &&
+          factorDetails.diameterMm > 0;
 
-        if (isChecked && !existing) {
-          await db.conditions.put({
-            id: newSyncId(),
-            profileId: activeProfile.id,
+        if (isChecked) {
+          await saveScreeningCondition(activeProfile.id, {
+            ...(existing ? { id: existing.id } : {}),
             code: factor.icd10Code,
             snomedCode: factor.snomedCode,
             category: 'aorta_risk',
             name: factor.name,
             clinicalStatus: 'active',
             verificationStatus: 'confirmed',
-            recordedDate: now,
-            updatedAt: now,
-            ...(factor.supportsAortaDetails && aortaDetails.diameterMm ? { aortaDetails } : {})
+            aortaDetails: hasValidDetails ? factorDetails : undefined
           });
-        } else if (isChecked && existing) {
-          if (factor.supportsAortaDetails && aortaDetails.diameterMm) {
-            await db.conditions.update(existing.id, {
-              aortaDetails,
-              updatedAt: now
-            });
-          }
         } else if (!isChecked && existing) {
-          await db.conditions.delete(existing.id);
+          await deleteScreeningCondition(activeProfile.id, existing.id);
         }
       }
 
@@ -208,37 +220,31 @@ export const HealthScreeningModal: React.FC = () => {
         CHILD: 'Anak Kandung'
       };
 
-      if (familyAneurysm && !fmhAneurysm) {
-        await db.familyHistory.put({
-          id: newSyncId(),
-          profileId: activeProfile.id,
+      if (familyAneurysm) {
+        await saveScreeningFamilyHistory(activeProfile.id, {
+          ...(fmhAneurysm ? { id: fmhAneurysm.id } : {}),
           relationship: familyAneurysmRel,
           relationshipDisplay: relLabels[familyAneurysmRel] || 'Keluarga Inti',
           conditionCode: 'I71.9',
           conditionName: 'Aneurisma Aorta',
-          snomedCode: '233985008',
-          recordedDate: now,
-          updatedAt: now
+          snomedCode: '233985008'
         });
       } else if (!familyAneurysm && fmhAneurysm) {
-        await db.familyHistory.delete(fmhAneurysm.id);
+        await deleteScreeningFamilyHistory(activeProfile.id, fmhAneurysm.id);
       }
 
-      if (familyDissection && !fmhDissection) {
-        await db.familyHistory.put({
-          id: newSyncId(),
-          profileId: activeProfile.id,
+      if (familyDissection) {
+        await saveScreeningFamilyHistory(activeProfile.id, {
+          ...(fmhDissection ? { id: fmhDissection.id } : {}),
           relationship: familyDissectionRel,
           relationshipDisplay: relLabels[familyDissectionRel] || 'Keluarga Inti',
           conditionCode: 'I71.0',
           conditionName: 'Diseksi Aorta / Sudden Death',
           snomedCode: '308540004',
-          contributedToDeath: true,
-          recordedDate: now,
-          updatedAt: now
+          contributedToDeath: true
         });
       } else if (!familyDissection && fmhDissection) {
-        await db.familyHistory.delete(fmhDissection.id);
+        await deleteScreeningFamilyHistory(activeProfile.id, fmhDissection.id);
       }
 
       // 4. Persist Immunizations
@@ -249,20 +255,17 @@ export const HealthScreeningModal: React.FC = () => {
         const isChecked = !!selectedVaccines[vac.code];
         const existing = existingImmMap.get(vac.code);
 
-        if (isChecked && !existing) {
-          await db.immunizations.put({
-            id: newSyncId(),
-            profileId: activeProfile.id,
+        if (isChecked) {
+          await saveScreeningImmunization(activeProfile.id, {
+            ...(existing ? { id: existing.id } : {}),
             vaccineCode: vac.code,
             vaccineName: vac.name,
             cvxCode: vac.cvxCode,
             occurrenceDateTime: now,
-            status: 'completed',
-            recordedDate: now,
-            updatedAt: now
+            status: 'completed'
           });
         } else if (!isChecked && existing) {
-          await db.immunizations.delete(existing.id);
+          await deleteScreeningImmunization(activeProfile.id, existing.id);
         }
       }
 
@@ -275,6 +278,7 @@ export const HealthScreeningModal: React.FC = () => {
         });
         closeModal();
       }
+      return true;
     } catch (err: any) {
       console.error('Failed to save health screening:', err);
       addToast({
@@ -282,6 +286,7 @@ export const HealthScreeningModal: React.FC = () => {
         title: 'Gagal Menyimpan',
         message: err.message || 'Terjadi kesalahan saat menyimpan skrining.'
       });
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -289,11 +294,12 @@ export const HealthScreeningModal: React.FC = () => {
 
   const handleNext = async () => {
     playClickSound();
-    await saveScreeningProgress(false);
+    const isFinal = step === 5;
+    const ok = await saveScreeningProgress(isFinal);
+    if (!ok) return; // Do not advance if save failed
+
     if (step < 5) {
       setStep((s) => s + 1);
-    } else {
-      await saveScreeningProgress(true);
     }
   };
 
@@ -304,8 +310,10 @@ export const HealthScreeningModal: React.FC = () => {
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     playClickSound();
+    // Persist current entered progress before advancing/closing without setting screeningCompletedAt
+    await saveScreeningProgress(false);
     if (step < 5) {
       setStep((s) => s + 1);
     } else {
@@ -341,13 +349,23 @@ export const HealthScreeningModal: React.FC = () => {
                   </span>
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Langkah {step} dari 5: {step === 1 ? 'Antropometri & BMI' : step === 2 ? 'Gaya Hidup' : step === 3 ? '16 Faktor Risiko Aorta' : step === 4 ? 'Riwayat Keluarga' : 'Imunisasi'}
+                  Langkah {step} dari 5:{' '}
+                  {step === 1
+                    ? 'Antropometri & BMI'
+                    : step === 2
+                    ? 'Gaya Hidup'
+                    : step === 3
+                    ? 'Faktor Risiko Aorta'
+                    : step === 4
+                    ? 'Riwayat Keluarga'
+                    : 'Imunisasi'}
                 </p>
               </div>
             </div>
             <button
               type="button"
               onClick={closeModal}
+              aria-label="Tutup skrining"
               className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition-colors"
             >
               <X size={16} />
@@ -366,46 +384,42 @@ export const HealthScreeningModal: React.FC = () => {
             ))}
           </div>
 
-          {/* Body Content */}
-          <div className="p-6 overflow-y-auto space-y-5 flex-1">
+          {/* Modal Body / Scrollable */}
+          <div className="p-6 overflow-y-auto flex-1 space-y-6">
             {/* STEP 1: Anthropometry */}
             {step === 1 && (
               <div className="space-y-4">
-                <div className="p-3.5 rounded-2xl bg-sky-50/70 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/50 flex items-start gap-3">
-                  <Scale className="w-5 h-5 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-sky-900 dark:text-sky-200 leading-relaxed">
-                    Tinggi dan berat badan digunakan untuk menghitung Indeks Massa Tubuh (BMI) sesuai kriteria standar <strong>Asia-Pasifik WHO</strong> dan memetakan observasi vital signs ke standar HL7 FHIR (LOINC <code>8302-2</code> &amp; <code>29463-7</code>).
+                <div className="p-3.5 rounded-2xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-800/50 flex items-start gap-3">
+                  <Scale className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-teal-900 dark:text-teal-200 leading-relaxed">
+                    Pengukuran tinggi dan berat badan digunakan untuk mengklasifikasikan <strong>Indeks Massa Tubuh (BMI)</strong> sesuai batas potong Asia-Pasifik (WHO/Kemenkes).
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-black text-slate-700 dark:text-slate-300">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
                       Tinggi Badan (cm)
                     </label>
                     <input
                       type="number"
-                      min={50}
-                      max={250}
                       placeholder="Contoh: 170"
                       value={heightCm}
                       onChange={(e) => setHeightCm(e.target.value === '' ? '' : Number(e.target.value))}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#2c2c2e] text-slate-800 dark:text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.04] text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500"
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-black text-slate-700 dark:text-slate-300">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
                       Berat Badan (kg)
                     </label>
                     <input
                       type="number"
-                      min={20}
-                      max={300}
                       placeholder="Contoh: 68"
                       value={weightKg}
                       onChange={(e) => setWeightKg(e.target.value === '' ? '' : Number(e.target.value))}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#2c2c2e] text-slate-800 dark:text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.04] text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500"
                     />
                   </div>
                 </div>
@@ -414,19 +428,13 @@ export const HealthScreeningModal: React.FC = () => {
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-2"
+                    className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] space-y-2"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-500">Hasil Indeks Massa Tubuh:</span>
-                      <span className={`text-xs font-black px-2.5 py-0.5 rounded-full border ${bmiEval.badgeColor}`}>
-                        {bmiEval.label}
+                      <span className="text-xs font-bold text-slate-500">Estimasi BMI Anda</span>
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-black border ${bmiEval.badgeColor}`}>
+                        {bmiEval.bmi} kg/m² • {bmiEval.label}
                       </span>
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-black font-mono text-slate-900 dark:text-white">
-                        {bmiEval.bmi}
-                      </span>
-                      <span className="text-xs font-bold text-slate-400">kg/m²</span>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                       {bmiEval.clinicalAdvice}
@@ -438,79 +446,80 @@ export const HealthScreeningModal: React.FC = () => {
 
             {/* STEP 2: Lifestyle */}
             {step === 2 && (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 flex items-start gap-3">
                   <Cigarette className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
-                    Merokok dan paparan stimulan merupakan faktor modifikasi terpenting pada kesehatan vaskular dan pembentukan aneurisma aorta.
+                    Merokok tembakau merupakan <strong>faktor risiko eksternal terkuat</strong> untuk pembesaran dan robekan aneurisma aorta. Data ini dicatat dalam standar FHIR Social History.
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-700 dark:text-slate-300">
-                    Riwayat Merokok Tembakau (LOINC <code>72166-2</code>)
+                {/* Smoking Status */}
+                <div>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-2">
+                    Status Merokok Tembakau
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {[
-                      { val: 'never', label: 'Bukan Perokok' },
-                      { val: 'former', label: 'Mantan Perokok' },
-                      { val: 'current', label: 'Perokok Aktif' }
+                      { val: 'never', label: 'Bukan Perokok', desc: 'Tidak pernah merokok rutin' },
+                      { val: 'former', label: 'Mantan Perokok', desc: 'Sudah berhenti merokok' },
+                      { val: 'current', label: 'Perokok Aktif', desc: 'Merokok setiap hari / rutin' },
+                      { val: 'unknown', label: 'Tidak Tahu / Ragu', desc: 'Tidak ingin menjawab' }
                     ].map((opt) => (
                       <button
                         key={opt.val}
                         type="button"
-                        onClick={() => {
-                          playClickSound();
-                          setSmokingStatus(opt.val as any);
-                        }}
-                        className={`p-2.5 rounded-xl text-xs font-bold transition-all border ${
+                        onClick={() => setSmokingStatus(opt.val as any)}
+                        className={`p-3 rounded-2xl border text-left transition-all ${
                           smokingStatus === opt.val
-                            ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-700 shadow-sm'
-                            : 'bg-slate-50 dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/5'
+                            ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-400 dark:border-amber-600 ring-2 ring-amber-500/20'
+                            : 'bg-slate-50/50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/5'
                         }`}
                       >
-                        {opt.label}
+                        <div className="text-xs font-black text-slate-900 dark:text-slate-100">{opt.label}</div>
+                        <div className="text-[10px] text-slate-500 mt-0.5">{opt.desc}</div>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-700 dark:text-slate-300">
-                    Konsumsi Alkohol
+                {/* Alcohol Consumption */}
+                <div>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-2">
+                    Riwayat Konsumsi Alkohol
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {[
-                      { val: 'none', label: 'Tidak Mengonsumsi' },
-                      { val: 'occasional', label: 'Sesekali' },
-                      { val: 'frequent', label: 'Rutin / Sering' }
+                      { val: 'none', label: 'Tidak Ada', desc: 'Tidak mengonsumsi alkohol' },
+                      { val: 'occasional', label: 'Jarang / Sosial', desc: 'Hanya acara tertentu (<1x/bulan)' },
+                      { val: 'moderate', label: 'Sedang', desc: '1–2 kali per minggu' },
+                      { val: 'heavy', label: 'Sering / Berat', desc: 'Hampir setiap hari' }
                     ].map((opt) => (
                       <button
                         key={opt.val}
                         type="button"
-                        onClick={() => {
-                          playClickSound();
-                          setAlcoholConsumption(opt.val as any);
-                        }}
-                        className={`p-2.5 rounded-xl text-xs font-bold transition-all border ${
+                        onClick={() => setAlcoholConsumption(opt.val as any)}
+                        className={`p-3 rounded-2xl border text-left transition-all ${
                           alcoholConsumption === opt.val
-                            ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 shadow-sm'
-                            : 'bg-slate-50 dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/5'
+                            ? 'bg-teal-50 dark:bg-teal-950/30 border-teal-400 dark:border-teal-600 ring-2 ring-teal-500/20'
+                            : 'bg-slate-50/50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/5'
                         }`}
                       >
-                        {opt.label}
+                        <div className="text-xs font-black text-slate-900 dark:text-slate-100">{opt.label}</div>
+                        <div className="text-[10px] text-slate-500 mt-0.5">{opt.desc}</div>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 flex items-center justify-between">
-                  <div className="space-y-0.5 pr-3">
-                    <span className="text-xs font-black text-slate-800 dark:text-slate-200 block">
-                      Riwayat Paparan Stimulan
+                {/* Stimulants Exposure */}
+                <div className="p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] flex items-center justify-between gap-3">
+                  <div>
+                    <span className="text-xs font-black text-slate-900 dark:text-slate-100 block">
+                      Riwayat Paparan Stimulan / Zat Tertentu
                     </span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                      Pernah terpapar amfetamin/kokain (pemicu diseksi aorta akut pada usia muda).
+                    <span className="text-[11px] text-slate-500 block leading-relaxed mt-0.5">
+                      Pernah terpapar amfetamin/kokain/obat stimulan kuat yang memicu lonjakan tekanan darah mendadak?
                     </span>
                   </div>
                   <button
@@ -533,7 +542,7 @@ export const HealthScreeningModal: React.FC = () => {
               </div>
             )}
 
-            {/* STEP 3: 16 Aorta Risk Factors */}
+            {/* STEP 3: Aorta Risk Factors */}
             {step === 3 && (
               <div className="space-y-3.5">
                 <div className="p-3.5 rounded-2xl bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-800/50 flex items-start gap-3">
@@ -546,6 +555,13 @@ export const HealthScreeningModal: React.FC = () => {
                 <div className="space-y-2">
                   {AORTA_RISK_FACTORS_CATALOG.filter((f) => f.targetResource === 'Condition').map((factor) => {
                     const isChecked = !!selectedConditions[factor.key];
+                    const factorDetails = aortaDetailsMap[factor.key] || {
+                      diameterMm: undefined,
+                      segment: 'ascending',
+                      modality: 'cta',
+                      measurementMethod: 'inner_to_inner'
+                    };
+
                     return (
                       <div
                         key={factor.key}
@@ -584,7 +600,7 @@ export const HealthScreeningModal: React.FC = () => {
                           </button>
                         </div>
 
-                        {/* Structured Aorta Dimension Form */}
+                        {/* Structured Aorta Dimension Form (Scoped per condition) */}
                         {isChecked && factor.supportsAortaDetails && (
                           <motion.div
                             initial={{ opacity: 0, height: 0 }}
@@ -593,7 +609,7 @@ export const HealthScreeningModal: React.FC = () => {
                           >
                             <div className="flex items-center gap-1.5 text-[11px] font-black text-rose-800 dark:text-rose-300">
                               <Sparkles size={12} />
-                              Metadata Dimensi Aorta Terstruktur:
+                              Metadata Dimensi Aorta Terstruktur ({factor.name}):
                             </div>
                             <div className="grid grid-cols-2 gap-2.5">
                               <div>
@@ -603,13 +619,17 @@ export const HealthScreeningModal: React.FC = () => {
                                 <input
                                   type="number"
                                   placeholder="Contoh: 42"
-                                  value={aortaDetails.diameterMm ?? ''}
-                                  onChange={(e) =>
-                                    setAortaDetails((prev) => ({
+                                  value={factorDetails.diameterMm ?? ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value === '' ? undefined : Number(e.target.value);
+                                    setAortaDetailsMap((prev) => ({
                                       ...prev,
-                                      diameterMm: e.target.value === '' ? undefined : Number(e.target.value)
-                                    }))
-                                  }
+                                      [factor.key]: {
+                                        ...factorDetails,
+                                        diameterMm: val
+                                      }
+                                    }));
+                                  }}
                                   className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-xs bg-white dark:bg-[#1c1c1e] text-slate-800 dark:text-slate-100 font-semibold"
                                 />
                               </div>
@@ -618,10 +638,17 @@ export const HealthScreeningModal: React.FC = () => {
                                   Segmen Aorta
                                 </label>
                                 <select
-                                  value={aortaDetails.segment}
-                                  onChange={(e) =>
-                                    setAortaDetails((prev) => ({ ...prev, segment: e.target.value as any }))
-                                  }
+                                  value={factorDetails.segment || 'ascending'}
+                                  onChange={(e) => {
+                                    const seg = e.target.value as any;
+                                    setAortaDetailsMap((prev) => ({
+                                      ...prev,
+                                      [factor.key]: {
+                                        ...factorDetails,
+                                        segment: seg
+                                      }
+                                    }));
+                                  }}
                                   className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-xs bg-white dark:bg-[#1c1c1e] text-slate-800 dark:text-slate-100 font-semibold"
                                 >
                                   <option value="ascending">Asendens / Akar Aorta</option>
@@ -658,7 +685,7 @@ export const HealthScreeningModal: React.FC = () => {
                         Aneurisma Aorta pada Keluarga Inti
                       </span>
                       <span className="text-[11px] text-slate-500 block">
-                        Pernahkah keluarga inti didiagnosis pelebaran/aneurisma aorta?
+                        Pernahkah orang tua, saudara kandung, atau anak menderita aneurisma?
                       </span>
                     </div>
                     <button
@@ -667,34 +694,38 @@ export const HealthScreeningModal: React.FC = () => {
                         playClickSound();
                         setFamilyAneurysm(!familyAneurysm);
                       }}
-                      className={`w-10 h-5 rounded-full transition-colors relative flex items-center p-0.5 shrink-0 ${
+                      className={`w-12 h-6 rounded-full transition-colors relative flex items-center p-0.5 ${
                         familyAneurysm ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
                       }`}
                     >
                       <div
-                        className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                          familyAneurysm ? 'translate-x-5' : 'translate-x-0'
+                        className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                          familyAneurysm ? 'translate-x-6' : 'translate-x-0'
                         }`}
                       />
                     </button>
                   </div>
+
                   {familyAneurysm && (
                     <div className="pt-2 border-t border-slate-200 dark:border-white/10 flex items-center gap-2">
-                      <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
-                        Hubungan:
-                      </span>
-                      {(['FTH', 'MTH', 'SIB', 'CHILD'] as const).map((code) => (
+                      <span className="text-xs font-bold text-slate-500">Hubungan:</span>
+                      {[
+                        { code: 'FTH', label: 'Ayah' },
+                        { code: 'MTH', label: 'Ibu' },
+                        { code: 'SIB', label: 'Saudara' },
+                        { code: 'CHILD', label: 'Anak' }
+                      ].map((rel) => (
                         <button
-                          key={code}
+                          key={rel.code}
                           type="button"
-                          onClick={() => setFamilyAneurysmRel(code)}
-                          className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
-                            familyAneurysmRel === code
+                          onClick={() => setFamilyAneurysmRel(rel.code as any)}
+                          className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${
+                            familyAneurysmRel === rel.code
                               ? 'bg-indigo-600 text-white border-indigo-600'
-                              : 'bg-white dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10'
+                              : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300'
                           }`}
                         >
-                          {code === 'FTH' ? 'Ayah' : code === 'MTH' ? 'Ibu' : code === 'SIB' ? 'Saudara' : 'Anak'}
+                          {rel.label}
                         </button>
                       ))}
                     </div>
@@ -706,10 +737,10 @@ export const HealthScreeningModal: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-xs font-black text-slate-900 dark:text-slate-100 block">
-                        Diseksi Aorta / Sudden Death &lt;50 Tahun
+                        Diseksi Aorta / Meninggal Mendadak (&lt;50 th)
                       </span>
                       <span className="text-[11px] text-slate-500 block">
-                        Pernahkah keluarga inti mengalami robekan aorta atau henti jantung mendadak usia muda?
+                        Riwayat robekan aorta atau kematian vaskular muda tanpa sebab jelas
                       </span>
                     </div>
                     <button
@@ -718,34 +749,38 @@ export const HealthScreeningModal: React.FC = () => {
                         playClickSound();
                         setFamilyDissection(!familyDissection);
                       }}
-                      className={`w-10 h-5 rounded-full transition-colors relative flex items-center p-0.5 shrink-0 ${
-                        familyDissection ? 'bg-rose-600' : 'bg-slate-300 dark:bg-slate-700'
+                      className={`w-12 h-6 rounded-full transition-colors relative flex items-center p-0.5 ${
+                        familyDissection ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
                       }`}
                     >
                       <div
-                        className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                          familyDissection ? 'translate-x-5' : 'translate-x-0'
+                        className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                          familyDissection ? 'translate-x-6' : 'translate-x-0'
                         }`}
                       />
                     </button>
                   </div>
+
                   {familyDissection && (
                     <div className="pt-2 border-t border-slate-200 dark:border-white/10 flex items-center gap-2">
-                      <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
-                        Hubungan:
-                      </span>
-                      {(['FTH', 'MTH', 'SIB', 'CHILD'] as const).map((code) => (
+                      <span className="text-xs font-bold text-slate-500">Hubungan:</span>
+                      {[
+                        { code: 'FTH', label: 'Ayah' },
+                        { code: 'MTH', label: 'Ibu' },
+                        { code: 'SIB', label: 'Saudara' },
+                        { code: 'CHILD', label: 'Anak' }
+                      ].map((rel) => (
                         <button
-                          key={code}
+                          key={rel.code}
                           type="button"
-                          onClick={() => setFamilyDissectionRel(code)}
-                          className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
-                            familyDissectionRel === code
-                              ? 'bg-rose-600 text-white border-rose-600'
-                              : 'bg-white dark:bg-[#2c2c2e] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10'
+                          onClick={() => setFamilyDissectionRel(rel.code as any)}
+                          className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${
+                            familyDissectionRel === rel.code
+                              ? 'bg-indigo-600 text-white border-indigo-600'
+                              : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300'
                           }`}
                         >
-                          {code === 'FTH' ? 'Ayah' : code === 'MTH' ? 'Ibu' : code === 'SIB' ? 'Saudara' : 'Anak'}
+                          {rel.label}
                         </button>
                       ))}
                     </div>

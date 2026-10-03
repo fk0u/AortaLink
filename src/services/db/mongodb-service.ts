@@ -82,7 +82,10 @@ export class MongoDbAtlasService {
         fhirMedicationRequests,
         fhirMedicationStatements,
         ascvdProfiles,
-        clinicalNotes
+        clinicalNotes,
+        conditions,
+        familyHistory,
+        immunizations
       ] = await Promise.all([
         db.readings.toArray(),
         db.medications.toArray(),
@@ -99,7 +102,10 @@ export class MongoDbAtlasService {
         db.fhirMedicationRequests.toArray(),
         db.fhirMedicationStatements.toArray(),
         db.ascvdProfiles.toArray(),
-        db.clinicalNotes.toArray()
+        db.clinicalNotes.toArray(),
+        db.conditions.toArray(),
+        db.familyHistory.toArray(),
+        db.immunizations.toArray()
       ]);
 
       // Deletions recorded since the last successful push must travel too,
@@ -136,6 +142,9 @@ export class MongoDbAtlasService {
           fhirMedicationStatements,
           ascvdProfiles,
           clinicalNotes,
+          conditions,
+          familyHistory,
+          immunizations,
           tombstones,
           userSettings
         })
@@ -327,6 +336,9 @@ export class MongoDbAtlasService {
         totalRestored += await restoreTable(cloudData.fhirMedicationStatements, db.fhirMedicationStatements, 'fhirMedicationStatements');
         totalRestored += await restoreTable(cloudData.ascvdProfiles, db.ascvdProfiles, 'ascvdProfiles');
         totalRestored += await restoreTable(cloudData.clinicalNotes, db.clinicalNotes, 'clinicalNotes');
+        totalRestored += await restoreTable(cloudData.conditions, db.conditions, 'conditions');
+        totalRestored += await restoreTable(cloudData.familyHistory, db.familyHistory, 'familyHistory');
+        totalRestored += await restoreTable(cloudData.immunizations, db.immunizations, 'immunizations');
 
         if (legacyReadingTombstones.length > 0) {
           await db.syncTombstones.bulkPut(legacyReadingTombstones);
@@ -419,7 +431,10 @@ const TABLE_NAME_TO_DB: Record<string, { get: (key: any) => Promise<any>; delete
   fhirMedicationRequests: db.fhirMedicationRequests,
   fhirMedicationStatements: db.fhirMedicationStatements,
   ascvdProfiles: db.ascvdProfiles,
-  clinicalNotes: db.clinicalNotes
+  clinicalNotes: db.clinicalNotes,
+  conditions: db.conditions,
+  familyHistory: db.familyHistory,
+  immunizations: db.immunizations
 };
 
 export const mongoDbAtlasService = new MongoDbAtlasService();

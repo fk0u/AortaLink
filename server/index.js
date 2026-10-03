@@ -349,6 +349,9 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       fhirMedicationStatements = [],
       ascvdProfiles = [],
       clinicalNotes = [],
+      conditions = [],
+      familyHistory = [],
+      immunizations = [],
       tombstones = [],
       userSettings = null
     } = req.body;
@@ -440,7 +443,10 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       upsertCollection('fhir_medication_requests', fhirMedicationRequests, 'fhirMedicationRequests'),
       upsertCollection('fhir_medication_statements', fhirMedicationStatements, 'fhirMedicationStatements'),
       upsertCollection('ascvd_profiles', ascvdProfiles, 'ascvdProfiles'),
-      upsertCollection('clinical_notes', clinicalNotes, 'clinicalNotes')
+      upsertCollection('clinical_notes', clinicalNotes, 'clinicalNotes'),
+      upsertCollection('conditions', conditions, 'conditions'),
+      upsertCollection('family_history', familyHistory, 'familyHistory'),
+      upsertCollection('immunizations', immunizations, 'immunizations')
     ]);
     for (const result of syncResults) {
       totalSynced += result.applied;
@@ -466,7 +472,10 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       fhirMedicationRequests: 'fhir_medication_requests',
       fhirMedicationStatements: 'fhir_medication_statements',
       ascvdProfiles: 'ascvd_profiles',
-      clinicalNotes: 'clinical_notes'
+      clinicalNotes: 'clinical_notes',
+      conditions: 'conditions',
+      familyHistory: 'family_history',
+      immunizations: 'immunizations'
     };
     if (Array.isArray(tombstones) && tombstones.length > 0) {
       for (const t of tombstones) {
@@ -567,6 +576,9 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
       activeDb.collection('fhir_medication_statements').find({ userId }).toArray(),
       activeDb.collection('ascvd_profiles').find({ userId }).toArray(),
       activeDb.collection('clinical_notes').find({ userId }).toArray(),
+      activeDb.collection('conditions').find({ userId }).toArray(),
+      activeDb.collection('family_history').find({ userId }).toArray(),
+      activeDb.collection('immunizations').find({ userId }).toArray(),
       activeDb.collection('tombstones').find({ userId }, { projection: { _id: 0, userId: 0 } }).toArray(),
       activeDb.collection('user_settings').findOne({ userId })
     ]);
@@ -588,6 +600,9 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
       fhirMedicationStatements.length +
       ascvdProfiles.length +
       clinicalNotes.length +
+      conditions.length +
+      familyHistory.length +
+      immunizations.length +
       (userSettingsDoc ? 1 : 0);
 
     return res.json({
@@ -609,6 +624,9 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
         fhirMedicationStatements,
         ascvdProfiles,
         clinicalNotes,
+        conditions,
+        familyHistory,
+        immunizations,
         tombstones,
         userSettings: userSettingsDoc || null
       },
@@ -655,7 +673,10 @@ app.delete('/api/profiles/:profileId', authenticateToken, async (req, res) => {
       activeDb.collection('fhir_medication_requests').deleteMany({ profileId, userId }),
       activeDb.collection('fhir_medication_statements').deleteMany({ profileId, userId }),
       activeDb.collection('ascvd_profiles').deleteMany({ profileId, userId }),
-      activeDb.collection('clinical_notes').deleteMany({ profileId, userId })
+      activeDb.collection('clinical_notes').deleteMany({ profileId, userId }),
+      activeDb.collection('conditions').deleteMany({ profileId, userId }),
+      activeDb.collection('family_history').deleteMany({ profileId, userId }),
+      activeDb.collection('immunizations').deleteMany({ profileId, userId })
     ]);
 
     return res.json({

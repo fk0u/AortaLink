@@ -120,7 +120,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               </div>
               <div>
                 <h2 className="text-base font-black text-slate-900 dark:text-slate-100">Selamat datang di AortaLink</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Tiga langkah singkat untuk mulai memantau dengan benar.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Empat langkah singkat untuk mulai memantau dengan benar.</p>
               </div>
             </div>
 

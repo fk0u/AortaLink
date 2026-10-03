@@ -21,11 +21,20 @@ export interface BmiEvaluation {
 }
 
 export function calculateBMI(heightCm?: number, weightKg?: number): BmiEvaluation | null {
-  if (!heightCm || !weightKg || heightCm <= 0 || weightKg <= 0) {
+  if (
+    heightCm === undefined ||
+    weightKg === undefined ||
+    !Number.isFinite(heightCm) ||
+    !Number.isFinite(weightKg) ||
+    heightCm <= 0 ||
+    weightKg <= 0
+  ) {
     return null;
   }
   const heightM = heightCm / 100;
   const rawBmi = weightKg / (heightM * heightM);
+  if (!Number.isFinite(rawBmi)) return null;
+
   const bmi = Math.round(rawBmi * 10) / 10;
 
   if (bmi < 18.5) {
@@ -74,7 +83,7 @@ export function calculateBMI(heightCm?: number, weightKg?: number): BmiEvaluatio
 }
 
 // ===========================================================================
-// 16 Aorta & Vascular Risk Factors Catalog (CLINICAL_REVIEW.md:253-270)
+// Aorta & Vascular Risk Factors Catalog (CLINICAL_REVIEW.md:253-270)
 // ===========================================================================
 
 export interface AortaRiskFactorMeta {
@@ -175,14 +184,24 @@ export const AORTA_RISK_FACTORS_CATALOG: AortaRiskFactorMeta[] = [
     snomedCode: '7305005'
   },
   {
-    key: 'vasculitis',
-    name: 'Vaskulitis (Takayasu / Giant Cell Arteritis)',
-    question: 'Pernahkah Anda didiagnosis penyakit peradangan pembuluh darah (Takayasu Arteritis / GCA)?',
-    clinicalNote: 'Arteritis granulomatosa pada cabang aorta yang dapat melemahkan atau mempersempit dinding pembuluh.',
+    key: 'takayasu_arteritis',
+    name: 'Arteritis Takayasu',
+    question: 'Pernahkah Anda didiagnosis Arteritis Takayasu (penyempitan atau radang cabang aorta)?',
+    clinicalNote: 'Arteritis granulomatosa pada cabang aorta yang dapat melemahkan atau mempersempit lumen pembuluh.',
     group: 'vascular',
     targetResource: 'Condition',
     icd10Code: 'M31.4',
     snomedCode: '400130008'
+  },
+  {
+    key: 'giant_cell_arteritis',
+    name: 'Giant Cell Arteritis (GCA)',
+    question: 'Pernahkah Anda didiagnosis Giant Cell Arteritis (Arteritis Sel Raksasa / Temporal)?',
+    clinicalNote: 'Vaskulitis arteri besar pada usia lanjut dengan risiko keterlibatan arkus aorta dan aneurisma.',
+    group: 'vascular',
+    targetResource: 'Condition',
+    icd10Code: 'M31.5',
+    snomedCode: '69865005'
   },
   {
     key: 'personal_aorta_history',
@@ -226,19 +245,39 @@ export const AORTA_RISK_FACTORS_CATALOG: AortaRiskFactorMeta[] = [
     snomedCode: '423441005'
   },
   {
-    key: 'atherosclerosis',
-    name: 'Penyakit Aterosklerotik (PJK / Stroke / PAD)',
-    question: 'Apakah Anda memiliki riwayat penyumbatan jantung (PJK), stroke, atau penyakit arteri perifer?',
-    clinicalNote: 'Plak aterosklerosis melemahkan lapisan tunika media pembuluh darah besar.',
+    key: 'cad_pjk',
+    name: 'Penyakit Jantung Koroner (PJK / Riwayat Serangan Jantung)',
+    question: 'Pernahkah Anda didiagnosis penyakit jantung koroner (PJK), pasang ring, atau serangan jantung?',
+    clinicalNote: 'Aterosklerosis koroner mencerminkan beban plak vaskular sistemik yang juga melemahkan dinding aorta.',
     group: 'vascular',
     targetResource: 'Condition',
     icd10Code: 'I25.1',
-    snomedCode: '399211009'
+    snomedCode: '53741008'
+  },
+  {
+    key: 'stroke_cva',
+    name: 'Stroke / TIA (Serangan Stroke Ringan)',
+    question: 'Pernahkah Anda mengalami stroke iskemik atau serangan stroke ringan (TIA)?',
+    clinicalNote: 'Penyakit serebrovaskular aterotrombotik adalah indikator penyakit vaskular aterosklerotik luas.',
+    group: 'vascular',
+    targetResource: 'Condition',
+    icd10Code: 'I64',
+    snomedCode: '230690007'
+  },
+  {
+    key: 'pad_peripheral',
+    name: 'Penyakit Arteri Perifer (PAD / Nyeri Betis Saat Jalan)',
+    question: 'Pernahkah Anda didiagnosis penyumbatan arteri tungkai (PAD) atau nyeri betis saat berjalan (klaudikasio)?',
+    clinicalNote: 'PAD sangat berkorelasi kuat dengan prevalensi aneurisma aorta abdominalis (AAA).',
+    group: 'vascular',
+    targetResource: 'Condition',
+    icd10Code: 'I73.9',
+    snomedCode: '399957001'
   },
   {
     key: 'advanced_age_male',
     name: 'Demografi Usia & Jenis Kelamin',
-    question: 'Usia pria >55 tahun atau wanita >65 tahun dengan riwayat kardiovaskular?',
+    question: 'Usia pria ≥55 tahun atau wanita ≥65 tahun (diambil otomatis dari profil)?',
     clinicalNote: 'Insiden aneurisma aorta meningkat tajam seiring pertambahan usia dan elastisitas arteri yang menurun.',
     group: 'lifestyle',
     targetResource: 'ProfileObservation',
@@ -271,28 +310,35 @@ export interface VaccineMeta {
 export const CARDIO_IMMUNIZATIONS_CATALOG: VaccineMeta[] = [
   {
     code: 'FLU',
-    name: 'Influenza Tahunan',
+    name: 'Influenza (Inactivated, Split / Subunit)',
     description: 'Mencegah infeksi saluran napas akut yang dapat memicu lonjakan tekanan darah dan dekompensasi kardiovaskular.',
     frequency: '1 dosis setiap tahun',
     cvxCode: '140'
   },
   {
-    code: 'PCV',
-    name: 'Pneumokokus (PCV13 / PPSV23)',
-    description: 'Melindungi dari infeksi paru Streptococcus pneumoniae berat pada pasien kardiovaskular kronis.',
+    code: 'PCV13',
+    name: 'Pneumokokus Konjugat (PCV13)',
+    description: 'Melindungi dari 13 serotipe Streptococcus pneumoniae berat pada pasien kardiovaskular kronis.',
     frequency: 'Sesuai jadwal dokter (dewasa berisiko tinggi)',
     cvxCode: '133'
   },
   {
+    code: 'PPSV23',
+    name: 'Pneumokokus Polisakarida (PPSV23)',
+    description: 'Melindungi dari 23 serotipe pneumokokus untuk proteksi jangka panjang pasien penyakit vaskular.',
+    frequency: 'Sesuai anjuran klinis',
+    cvxCode: '33'
+  },
+  {
     code: 'COVID19',
-    name: 'COVID-19 Booster',
+    name: 'COVID-19 Booster (mRNA)',
     description: 'Mencegah komplikasi vaskulitis dan miokarditis akibat infeksi SARS-CoV-2 berat.',
     frequency: 'Sesuai rekomendasi Kemenkes RI',
     cvxCode: '208'
   },
   {
-    code: 'TET',
-    name: 'Tetanus / Td / Tdap',
+    code: 'TDAP',
+    name: 'Tdap (Tetanus, Difteri, Pertusis Aselular)',
     description: 'Imunisasi penguat berkala untuk proteksi infeksi sistemik.',
     frequency: 'Setiap 10 tahun',
     cvxCode: '115'
@@ -322,9 +368,12 @@ export function evaluateScreeningRisk(
   familyHistories: FamilyMemberHistoryItem[] = [],
   immunizations: ImmunizationItem[] = []
 ): ScreeningSummary {
-  const activeConditions = conditions.filter((c) => c.clinicalStatus !== 'resolved');
+  // Exclude resolved, inactive, or in-remission conditions from active burden
+  const activeConditions = conditions.filter(
+    (c) => c.clinicalStatus !== 'resolved' && c.clinicalStatus !== 'inactive' && c.clinicalStatus !== 'remission'
+  );
   const aortaConditions = activeConditions.filter((c) => c.category === 'aorta_risk');
-  
+
   const positiveFactors: string[] = [];
   const clinicalHighlights: string[] = [];
   const lifestyleAlerts: string[] = [];
@@ -333,7 +382,7 @@ export function evaluateScreeningRisk(
   const hasSyndromicAortaRisk = activeConditions.some((c) => syndromicCodes.includes(c.code));
   const hasPersonalAortaHistory = activeConditions.some((c) => c.code === 'I71.9' || c.code.startsWith('I71'));
 
-  // 1. Process Conditions
+  // 1. Process Active Clinical Conditions
   for (const c of activeConditions) {
     positiveFactors.push(c.name);
     if (syndromicCodes.includes(c.code)) {
@@ -367,6 +416,28 @@ export function evaluateScreeningRisk(
     positiveFactors.push('Mantan Perokok');
   }
 
+  // Evaluate substance use history while avoiding double count if F15.1 Condition is already logged
+  if (profile.substanceUseHistory) {
+    const hasStimulantCondition = activeConditions.some((c) => c.code === 'F15.1');
+    if (!hasStimulantCondition) {
+      lifestyleAlerts.push('Riwayat paparan zat stimulan: berisiko memicu lonjakan katekolamin mendadak pada dinding pembuluh.');
+      positiveFactors.push('Riwayat Paparan Stimulan');
+    }
+  }
+
+  // 4. Age & Sex Demographics
+  if (typeof profile.age === 'number' && profile.gender) {
+    const isHighRiskAge =
+      (profile.gender === 'male' && profile.age >= 55) ||
+      (profile.gender === 'female' && profile.age >= 65);
+    if (isHighRiskAge) {
+      positiveFactors.push(`Demografi Usia Berisiko (${profile.gender === 'male' ? 'Pria ≥55' : 'Wanita ≥65'} th)`);
+      clinicalHighlights.push(
+        `Usia ${profile.age} tahun (${profile.gender === 'male' ? 'pria' : 'wanita'}): elastisitas aorta berkurang seiring usia, prioritaskan kontrol tensi berkala.`
+      );
+    }
+  }
+
   return {
     profileId: profile.id,
     totalConditions: activeConditions.length,
@@ -382,7 +453,7 @@ export function evaluateScreeningRisk(
 }
 
 // ===========================================================================
-// Database Repository Layer
+// Database Repository Layer (Scoped to Profile & Preserves recordedDate)
 // ===========================================================================
 
 export async function fetchProfileScreeningData(profileId: string) {
@@ -399,52 +470,121 @@ export async function saveScreeningCondition(
   profileId: string,
   condition: Omit<ConditionItem, 'id' | 'profileId' | 'recordedDate'> & { id?: string }
 ): Promise<ConditionItem> {
-  const id = condition.id || newSyncId();
-  const recordedDate = new Date().toISOString();
+  const now = new Date().toISOString();
+  let id = condition.id;
+  let recordedDate = now;
+
+  if (id) {
+    const existing = await db.conditions.get(id);
+    if (existing) {
+      if (existing.profileId !== profileId) {
+        throw new Error(`Akses ditolak: Rekam kondisi ${id} bukan milik profil ${profileId}`);
+      }
+      recordedDate = existing.recordedDate || now;
+    }
+  } else {
+    id = newSyncId();
+  }
+
   const record: ConditionItem = {
     ...condition,
     id,
     profileId,
     recordedDate,
-    updatedAt: recordedDate
+    updatedAt: now
   };
 
   await db.conditions.put(record);
   return record;
 }
 
+export async function deleteScreeningCondition(profileId: string, id: string): Promise<void> {
+  const existing = await db.conditions.get(id);
+  if (!existing) return;
+  if (existing.profileId !== profileId) {
+    throw new Error(`Akses ditolak: Rekam kondisi ${id} bukan milik profil ${profileId}`);
+  }
+  await db.conditions.delete(id);
+}
+
 export async function saveScreeningFamilyHistory(
   profileId: string,
   history: Omit<FamilyMemberHistoryItem, 'id' | 'profileId' | 'recordedDate'> & { id?: string }
 ): Promise<FamilyMemberHistoryItem> {
-  const id = history.id || newSyncId();
-  const recordedDate = new Date().toISOString();
+  const now = new Date().toISOString();
+  let id = history.id;
+  let recordedDate = now;
+
+  if (id) {
+    const existing = await db.familyHistory.get(id);
+    if (existing) {
+      if (existing.profileId !== profileId) {
+        throw new Error(`Akses ditolak: Rekam riwayat keluarga ${id} bukan milik profil ${profileId}`);
+      }
+      recordedDate = existing.recordedDate || now;
+    }
+  } else {
+    id = newSyncId();
+  }
+
   const record: FamilyMemberHistoryItem = {
     ...history,
     id,
     profileId,
     recordedDate,
-    updatedAt: recordedDate
+    updatedAt: now
   };
 
   await db.familyHistory.put(record);
   return record;
 }
 
+export async function deleteScreeningFamilyHistory(profileId: string, id: string): Promise<void> {
+  const existing = await db.familyHistory.get(id);
+  if (!existing) return;
+  if (existing.profileId !== profileId) {
+    throw new Error(`Akses ditolak: Rekam riwayat keluarga ${id} bukan milik profil ${profileId}`);
+  }
+  await db.familyHistory.delete(id);
+}
+
 export async function saveScreeningImmunization(
   profileId: string,
   immunization: Omit<ImmunizationItem, 'id' | 'profileId' | 'recordedDate'> & { id?: string }
 ): Promise<ImmunizationItem> {
-  const id = immunization.id || newSyncId();
-  const recordedDate = new Date().toISOString();
+  const now = new Date().toISOString();
+  let id = immunization.id;
+  let recordedDate = now;
+
+  if (id) {
+    const existing = await db.immunizations.get(id);
+    if (existing) {
+      if (existing.profileId !== profileId) {
+        throw new Error(`Akses ditolak: Rekam imunisasi ${id} bukan milik profil ${profileId}`);
+      }
+      recordedDate = existing.recordedDate || now;
+    }
+  } else {
+    id = newSyncId();
+  }
+
   const record: ImmunizationItem = {
     ...immunization,
     id,
     profileId,
     recordedDate,
-    updatedAt: recordedDate
+    updatedAt: now
   };
 
   await db.immunizations.put(record);
   return record;
+}
+
+export async function deleteScreeningImmunization(profileId: string, id: string): Promise<void> {
+  const existing = await db.immunizations.get(id);
+  if (!existing) return;
+  if (existing.profileId !== profileId) {
+    throw new Error(`Akses ditolak: Rekam imunisasi ${id} bukan milik profil ${profileId}`);
+  }
+  await db.immunizations.delete(id);
 }

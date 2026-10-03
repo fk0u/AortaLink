@@ -9,6 +9,7 @@ import type {
   FhirMedicationRequest,
   MedicationSchedule,
   ConditionItem,
+  ConditionCategory,
   FamilyMemberHistoryItem,
   ImmunizationItem,
   FhirCondition,
@@ -574,11 +575,17 @@ export function convertConditionToFHIR(condition: ConditionItem, profile?: Profi
     },
     ...(condition.onsetDateTime ? { onsetDateTime: condition.onsetDateTime } : {}),
     recordedDate: condition.recordedDate || new Date().toISOString(),
-    ...(condition.notes ? { note: [{ text: condition.notes }] } : {})
+    ...(condition.notes ? { note: [{ text: condition.notes }] } : {}),
+    extension: [
+      {
+        url: 'https://aortalink.health/fhir/StructureDefinition/condition-category',
+        valueString: condition.category
+      }
+    ]
   };
 
   if (condition.aortaDetails) {
-    const ext: Array<{ url: string; valueString?: string; valueDecimal?: number }> = [];
+    const ext = fhir.extension || [];
     if (condition.aortaDetails.diameterMm !== undefined) {
       ext.push({
         url: 'https://aortalink.health/fhir/StructureDefinition/aorta-diameter-mm',
@@ -603,9 +610,7 @@ export function convertConditionToFHIR(condition: ConditionItem, profile?: Profi
         valueString: condition.aortaDetails.measurementMethod
       });
     }
-    if (ext.length > 0) {
-      fhir.extension = ext;
-    }
+    fhir.extension = ext;
   }
 
   return fhir;
@@ -637,13 +642,16 @@ export function conditionFromFHIR(fhir: FhirCondition): ConditionItem {
     }
   }
 
+  const categoryExt = fhir.extension?.find((e) => e.url.endsWith('condition-category'));
+  const category = (categoryExt?.valueString as ConditionCategory) || 'aorta_risk';
+
   return {
     id: fhir.id || '',
     profileId,
     code: primaryCoding?.code || 'unknown',
     codeSystem: primaryCoding?.system,
     snomedCode: snomedCoding?.code,
-    category: 'aorta_risk',
+    category,
     name: fhir.code.text || primaryCoding?.display || 'Kondisi Medis',
     clinicalStatus,
     ...(verificationStatus ? { verificationStatus } : {}),
@@ -682,8 +690,8 @@ export function convertFamilyHistoryToFHIR(
       ],
       text: history.relationshipDisplay
     },
-    ...(history.deceased !== undefined ? { deceasedBoolean: history.deceased } : {}),
-    ...(history.deceasedAge !== undefined
+    date: history.recordedDate,
+    ...(history.deceasedAge !== undefined && history.deceasedAge > 0
       ? {
           deceasedAge: {
             value: history.deceasedAge,
@@ -692,6 +700,8 @@ export function convertFamilyHistoryToFHIR(
             code: 'a'
           }
         }
+      : history.deceased !== undefined
+      ? { deceasedBoolean: history.deceased }
       : {}),
     condition: [
       {
@@ -731,6 +741,9 @@ export function familyHistoryFromFHIR(fhir: FhirFamilyMemberHistory): FamilyMemb
   const snomedCoding = cond?.code.coding?.find((c) => c.system === 'http://snomed.info/sct');
   const primaryCoding = icd10Coding || cond?.code.coding?.[0];
 
+  const hasDeceasedAge = fhir.deceasedAge?.value !== undefined;
+  const deceased = hasDeceasedAge ? true : fhir.deceasedBoolean;
+
   return {
     id: fhir.id || '',
     profileId,
@@ -739,10 +752,10 @@ export function familyHistoryFromFHIR(fhir: FhirFamilyMemberHistory): FamilyMemb
     conditionCode: primaryCoding?.code || 'unknown',
     conditionName: cond?.code.text || primaryCoding?.display || 'Kondisi Keluarga',
     ...(snomedCoding?.code ? { snomedCode: snomedCoding.code } : {}),
-    ...(fhir.deceasedBoolean !== undefined ? { deceased: fhir.deceasedBoolean } : {}),
-    ...(fhir.deceasedAge?.value !== undefined ? { deceasedAge: fhir.deceasedAge.value } : {}),
+    ...(deceased !== undefined ? { deceased } : {}),
+    ...(hasDeceasedAge ? { deceasedAge: fhir.deceasedAge!.value } : {}),
     ...(cond?.contributedToDeath !== undefined ? { contributedToDeath: cond.contributedToDeath } : {}),
-    recordedDate: new Date().toISOString()
+    recordedDate: fhir.date || new Date().toISOString()
   };
 }
 
@@ -915,14 +928,7 @@ export function convertAnthropometryToFHIR(profile: Profile): {
         system: 'http://unitsofmeasure.org',
         code: 'kg/m2'
       },
-      ...(derivedFrom.length > 0
-        ? {
-            extension: derivedFrom.map((d) => ({
-              url: 'http://hl7.org/fhir/StructureDefinition/observation-derivedFrom',
-              valueString: d.reference
-            }))
-          }
-        : {})
+      ...(derivedFrom.length > 0 ? { derivedFrom } : {})
     };
   }
 
@@ -965,22 +971,32 @@ export function convertSocialHistoryToFHIR(profile: Profile): FhirObservation[] 
       },
       subject: subjectRef,
       effectiveDateTime,
-      interpretation: [
-        {
-          coding: [
-            {
-              system: 'http://snomed.info/sct',
-              code: sInfo.code,
-              display: sInfo.display
-            }
-          ],
-          text: profile.smokingStatus === 'current' ? 'Perokok Aktif' : profile.smokingStatus === 'former' ? 'Mantan Perokok' : 'Bukan Perokok'
-        }
-      ]
+      valueCodeableConcept: {
+        coding: [
+          {
+            system: 'http://snomed.info/sct',
+            code: sInfo.code,
+            display: sInfo.display
+          }
+        ],
+        text: profile.smokingStatus === 'current' ? 'Perokok Aktif' : profile.smokingStatus === 'former' ? 'Mantan Perokok' : 'Bukan Perokok'
+      }
     });
   }
 
   if (profile.alcoholConsumption && profile.alcoholConsumption !== 'unknown') {
+    const snomedAlcoholMap: Record<string, { code: string; display: string; text: string }> = {
+      none: { code: '266917007', display: 'Non-drinker', text: 'Tidak Mengonsumsi' },
+      occasional: { code: '228273003', display: 'Light drinker', text: 'Jarang / Kadang-kadang' },
+      moderate: { code: '228274009', display: 'Moderate drinker', text: 'Moderat / Sedang' },
+      heavy: { code: '228275005', display: 'Heavy drinker', text: 'Sering / Berat' }
+    };
+    const aInfo = snomedAlcoholMap[profile.alcoholConsumption] || {
+      code: '266917007',
+      display: 'Non-drinker',
+      text: profile.alcoholConsumption
+    };
+
     obsList.push({
       resourceType: 'Observation',
       id: toValidUuid(`${profile.id}-alcohol`, 'obs-alcohol'),
@@ -1003,7 +1019,16 @@ export function convertSocialHistoryToFHIR(profile: Profile): FhirObservation[] 
       },
       subject: subjectRef,
       effectiveDateTime,
-      note: [{ text: `Konsumsi alkohol: ${profile.alcoholConsumption}` }]
+      valueCodeableConcept: {
+        coding: [
+          {
+            system: 'http://snomed.info/sct',
+            code: aInfo.code,
+            display: aInfo.display
+          }
+        ],
+        text: aInfo.text
+      }
     });
   }
 

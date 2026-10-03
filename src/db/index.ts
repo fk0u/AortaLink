@@ -332,7 +332,7 @@ db.use({
 });
 
 /**
- * Completely clears all 16 local tables in Dexie.js to prevent data leakage between accounts.
+ * Completely clears all 19 local tables in Dexie.js to prevent data leakage between accounts.
  * Runs with sync metadata suppressed: wiping another account's data must not
  * tombstone it, and local tombstones are wiped with it.
  */
@@ -356,6 +356,9 @@ export async function clearLocalEhrDatabase() {
         db.fhirMedicationStatements.clear(),
         db.ascvdProfiles.clear(),
         db.clinicalNotes.clear(),
+        db.conditions.clear(),
+        db.familyHistory.clear(),
+        db.immunizations.clear(),
         db.syncTombstones.clear()
       ]);
     });
