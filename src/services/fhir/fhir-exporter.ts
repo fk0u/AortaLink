@@ -670,9 +670,13 @@ export function medicationFromFHIR(req: FhirMedicationRequest): Partial<Medicati
   const coding = req.medicationCodeableConcept?.coding?.[0];
 
   const instruction = req.dosageInstruction?.[0]?.text || '';
-  const doseMatch = instruction.match(/Dose:\s*(.+?)(?:\.\s*Schedule:|\.\s*Purpose:|$)/i);
-  const scheduleMatch = instruction.match(/Schedule:\s*(.+?)(?:\.\s*Purpose:|$)/i);
-  const purposeMatch = instruction.match(/Purpose:\s*(.+)$/i);
+  const doseMatch = instruction.match(/Dose:\s*([\s\S]+?)(?:\.?\s*(?:Schedule|Purpose):|\.?\s*$)/i);
+  const scheduleMatch = instruction.match(/Schedule:\s*([\s\S]+?)(?:\.?\s*Purpose:|\.?\s*$)/i);
+  const purposeMatch = instruction.match(/Purpose:\s*([\s\S]+?)(?:\.?\s*$)/i);
+
+  const cleanDose = doseMatch ? doseMatch[1].replace(/[.,;\s]+$/, '').trim() : '';
+  const cleanSchedule = scheduleMatch ? scheduleMatch[1].replace(/[.,;\s]+$/, '').trim() : '';
+  const cleanPurpose = purposeMatch ? purposeMatch[1].replace(/[.,;\s]+$/, '').trim() : '';
 
   let drugClassFromExt: string | undefined;
   let purposeFromExt: string | undefined;
@@ -687,7 +691,7 @@ export function medicationFromFHIR(req: FhirMedicationRequest): Partial<Medicati
   }
 
   const validSchedules: MedicationSchedule[] = ['pagi', 'siang', 'sore', 'malam', 'pagi_malam', 'sesuai_kebutuhan'];
-  const rawSchedule = scheduleFromExt || (scheduleMatch ? scheduleMatch[1].trim() : '');
+  const rawSchedule = scheduleFromExt || cleanSchedule;
   const schedule: MedicationSchedule = (validSchedules.includes(rawSchedule as MedicationSchedule) ? rawSchedule : 'pagi') as MedicationSchedule;
 
   const localIdStr = req.identifier?.find((i: any) => i.system === 'http://aortalink.app/fhir/identifier/medication-id')?.value;
@@ -703,8 +707,8 @@ export function medicationFromFHIR(req: FhirMedicationRequest): Partial<Medicati
     name = coding.display.split(' ')[0];
   }
 
-  const dosage = dosageFromExt || (doseMatch ? doseMatch[1].trim() : (coding?.display?.match(/\d+(?:\.\d+)?\s*(?:mg|mcg|g)/i)?.[0] || '1 tablet'));
-  const purpose = purposeFromExt || (purposeMatch ? purposeMatch[1].trim() : 'Hipertensi');
+  const dosage = dosageFromExt || cleanDose || (coding?.display?.match(/\d+(?:\.\d+)?\s*(?:mg|mcg|g)/i)?.[0] || '1 tablet');
+  const purpose = purposeFromExt || cleanPurpose || 'Hipertensi';
 
   return {
     ...(parsedId !== undefined ? { id: parsedId } : {}),

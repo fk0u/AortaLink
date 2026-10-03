@@ -326,6 +326,23 @@ assert.equal(twoDrawsEntities.labResults?.[0]?.id, 101);
 assert.equal(twoDrawsEntities.labResults?.[1]?.id, 102);
 console.log('✓ Stable lab draw grouping by identifier passed');
 
+// F. Robust MedicationRequest parsing (multiline, decimal dosage, trailing punctuation)
+const multilineMedReq: any = {
+  resourceType: 'MedicationRequest',
+  id: 'med-multi-1',
+  status: 'active',
+  intent: 'order',
+  medicationCodeableConcept: { text: 'Amlodipine (CCB)' },
+  dosageInstruction: [
+    { text: 'Dose: 2.5 mg.\nSchedule: malam.\nPurpose: Hipertensi Primer' }
+  ]
+};
+const parsedMultiMed = fhirTableAdapters.medications.fromFhir(multilineMedReq);
+assert.equal(parsedMultiMed.dosage, '2.5 mg', 'Decimal dosage 2.5 mg must be preserved');
+assert.equal(parsedMultiMed.schedule, 'malam', 'Schedule with trailing period must resolve to malam');
+assert.equal(parsedMultiMed.purpose, 'Hipertensi Primer');
+console.log('✓ Multiline medication parsing with decimal dosage passed');
+
 // ---------------------------------------------------------------------------
 // 6. HL7 FHIR Validator / HAPI Cloud Test
 // ---------------------------------------------------------------------------
