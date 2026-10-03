@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, BookOpen, Filter, Stethoscope } from 'lucide-react';
+import { X, Search, BookOpen, Filter, Stethoscope } from '../icons/AppIcons.tsx';
 import { KnowledgeBaseService } from '../../services/knowledge-base/knowledge-base-service';
 import { KnowledgeTopic, ContentTier, KnowledgeItem } from '../../types/knowledge-base';
 import { KnowledgeArticleCard } from './KnowledgeArticleCard';
