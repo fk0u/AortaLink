@@ -33,3 +33,39 @@ export interface SurveillanceSchedule {
   guidelineRef: string;
   notes?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Step 07 Content Ingestion Pipeline (Issue #19)
+// ---------------------------------------------------------------------------
+
+export type ReviewStatus = 'draft' | 'under_review' | 'approved' | 'rejected' | 'expired';
+
+export interface IngestionAllowlistSource {
+  id: string;
+  name: string;
+  domain: string;
+  description: string;
+  licenseNote: string;
+  robotsCompliant: boolean;
+  isActive: boolean;
+}
+
+export interface DraftContentItem extends KnowledgeItem {
+  status: ReviewStatus;
+  ingestionSourceId: string;
+  ingestedAt: string; // ISO 8601
+  expiresAt: string;  // ISO 8601
+  clinicalReviewNotes?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+}
+
+export interface IngestionExecutionResult {
+  sourceId: string;
+  totalCandidateItems: number;
+  acceptedDrafts: number;
+  rejectedDueToAllowlist: number;
+  rejectedDueToDisallowedTerms: number;
+  drafts: DraftContentItem[];
+}
+
