@@ -1,6 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import { decodeLegacyEscapedText } from '../security/sanitizer.ts';
-import type { Profile, BPReading, Reminder, HabitLog, GamificationState, SodiumLog, SleepLog, MedicationLog, MedicationItem, LabResult, FhirPatient, FhirObservation, FhirMedicationRequest, FhirMedicationStatement, AscvdProfile, ClinicalNote, ConditionItem, FamilyMemberHistoryItem, ImmunizationItem } from '../types/blood-pressure.ts';
+import type { Profile, BPReading, Reminder, HabitLog, GamificationState, SodiumLog, SleepLog, MedicationLog, MedicationItem, LabResult, FhirPatient, FhirObservation, FhirMedicationRequest, FhirMedicationStatement, AscvdProfile, ClinicalNote, ConditionItem, FamilyMemberHistoryItem, ImmunizationItem, DiagnosticReportItem } from '../types/blood-pressure.ts';
 
 export class AortaLinkDatabase extends Dexie {
   profiles!: Table<Profile, string>;
@@ -28,6 +28,9 @@ export class AortaLinkDatabase extends Dexie {
   conditions!: Table<ConditionItem, string>;
   familyHistory!: Table<FamilyMemberHistoryItem, string>;
   immunizations!: Table<ImmunizationItem, string>;
+
+  // V13: Diagnostic Reports & Aorta Imaging (Issue #20)
+  diagnosticReports!: Table<DiagnosticReportItem, number>;
 
   // V8: Sync bookkeeping — user deletions that must propagate to other devices
   syncTombstones!: Table<SyncTombstone, [string, string]>;
@@ -234,6 +237,11 @@ export class AortaLinkDatabase extends Dexie {
         // Table already absent or empty — safe to proceed
       }
     });
+
+    // Version 13: Diagnostic Reports & Aorta Imaging (Issue #20)
+    this.version(13).stores({
+      diagnosticReports: '++id, syncId, profileId, effectiveDateTime, modality, category, clientUpdatedAt'
+    });
   }
 }
 
@@ -286,7 +294,8 @@ export const SYNCED_TABLES = [
   'clinicalNotes',
   'conditions',
   'familyHistory',
-  'immunizations'
+  'immunizations',
+  'diagnosticReports'
 ] as const;
 
 let syncMetadataSuppressed = false;
@@ -407,6 +416,7 @@ export async function clearLocalEhrDatabase() {
         db.conditions.clear(),
         db.familyHistory.clear(),
         db.immunizations.clear(),
+        db.diagnosticReports.clear(),
         db.syncTombstones.clear()
       ]);
     });

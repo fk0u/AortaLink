@@ -350,6 +350,7 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       conditions = [],
       familyHistory = [],
       immunizations = [],
+      diagnosticReports = [],
       tombstones = [],
       userSettings = null
     } = req.body;
@@ -370,6 +371,7 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
     const sourceConditions = (Array.isArray(conditions) && conditions.length > 0) ? conditions : (appState?.conditions || []);
     const sourceFamilyHistory = (Array.isArray(familyHistory) && familyHistory.length > 0) ? familyHistory : (appState?.familyHistory || []);
     const sourceImmunizations = (Array.isArray(immunizations) && immunizations.length > 0) ? immunizations : (appState?.immunizations || []);
+    const sourceDiagnosticReports = (Array.isArray(diagnosticReports) && diagnosticReports.length > 0) ? diagnosticReports : (appState?.diagnosticReports || []);
     const sourceTombstones = (Array.isArray(tombstones) && tombstones.length > 0) ? tombstones : (appState?.tombstones || []);
     const effectiveUserSettings = userSettings || appState?.userSettings || null;
 
@@ -408,13 +410,22 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
               } else if (res.resourceType === 'Observation') {
                 const isBp = res.code?.coding?.some((c) => c.code === '85354-9') ||
                   (Array.isArray(res.component) && res.component.some((c) => c.code?.coding?.some((cod) => cod.code === '8480-6')));
+                const isAortaDiameter = res.code?.coding?.some((c) =>
+                  ['18015-8', '79549-2', '79547-6', '79546-8', '79548-4', '93656-7'].includes(c.code)
+                );
                 if (isBp) {
                   targetTable = 'readings';
                   targetSystem = 'http://aortalink.app/fhir/identifier/reading-id';
+                } else if (isAortaDiameter) {
+                  targetTable = 'diagnosticReports';
+                  targetSystem = 'http://aortalink.app/fhir/identifier/diagnostic-report-obs-id';
                 } else {
                   targetTable = 'labResults';
                   targetSystem = 'http://aortalink.app/fhir/identifier/lab-id';
                 }
+              } else if (res.resourceType === 'DiagnosticReport') {
+                targetTable = 'diagnosticReports';
+                targetSystem = 'http://aortalink.app/fhir/identifier/diagnostic-report-id';
               } else if (res.resourceType === 'MedicationRequest') {
                 targetTable = 'medications';
                 targetSystem = 'http://aortalink.app/fhir/identifier/medication-id';
@@ -436,8 +447,18 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
 
                 if (Array.isArray(res.identifier)) {
                   for (const ident of res.identifier) {
-                    if (ident?.value && (!targetSystem || ident.system === targetSystem) && deletedIds.has(String(ident.value))) {
-                      return false;
+                    if (ident?.value) {
+                      const valStr = String(ident.value);
+                      if ((!targetSystem || ident.system === targetSystem) && deletedIds.has(valStr)) {
+                        return false;
+                      }
+                      // Handle linked diameter observation identifier deletion when parent report is deleted
+                      if (targetTable === 'diagnosticReports' && ident.system === 'http://aortalink.app/fhir/identifier/diagnostic-report-obs-id') {
+                        const parentPrefix = valStr.split('-obs-')[0];
+                        if (parentPrefix && deletedIds.has(parentPrefix)) {
+                          return false;
+                        }
+                      }
                     }
                   }
                 }
@@ -547,7 +568,8 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       upsertCollection('clinical_notes', sourceClinicalNotes, 'clinicalNotes'),
       upsertCollection('conditions', sourceConditions, 'conditions'),
       upsertCollection('family_history', sourceFamilyHistory, 'familyHistory'),
-      upsertCollection('immunizations', sourceImmunizations, 'immunizations')
+      upsertCollection('immunizations', sourceImmunizations, 'immunizations'),
+      upsertCollection('diagnostic_reports', sourceDiagnosticReports, 'diagnosticReports')
     ]);
     for (const result of syncResults) {
       totalSynced += result.applied;
@@ -572,7 +594,8 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       clinicalNotes: 'clinical_notes',
       conditions: 'conditions',
       familyHistory: 'family_history',
-      immunizations: 'immunizations'
+      immunizations: 'immunizations',
+      diagnosticReports: 'diagnostic_reports'
     };
     if (Array.isArray(sourceTombstones) && sourceTombstones.length > 0) {
       for (const t of sourceTombstones) {
@@ -653,6 +676,7 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
       conditions,
       familyHistory,
       immunizations,
+      diagnosticReports,
       tombstones,
       userSettingsDoc,
       fhirBundleDoc
@@ -672,6 +696,7 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
       activeDb.collection('conditions').find({ userId }).toArray(),
       activeDb.collection('family_history').find({ userId }).toArray(),
       activeDb.collection('immunizations').find({ userId }).toArray(),
+      activeDb.collection('diagnostic_reports').find({ userId }).toArray(),
       activeDb.collection('tombstones').find({ userId }, { projection: { _id: 0, userId: 0 } }).toArray(),
       activeDb.collection('user_settings').findOne({ userId }),
       activeDb.collection('fhir_bundles').findOne({ userId })
@@ -693,6 +718,7 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
       conditions.length +
       familyHistory.length +
       immunizations.length +
+      diagnosticReports.length +
       (userSettingsDoc ? 1 : 0);
 
     return res.json({
@@ -725,6 +751,7 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
         conditions,
         familyHistory,
         immunizations,
+        diagnosticReports,
         tombstones,
         userSettings: userSettingsDoc || null
       },

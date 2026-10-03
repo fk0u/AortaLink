@@ -14,6 +14,7 @@ import {
   convertImmunizationToFHIR,
   convertAnthropometryToFHIR,
   convertSocialHistoryToFHIR,
+  convertDiagnosticReportToFHIR,
   exportCompleteFHIRBundle
 } from '../../services/fhir/fhir-exporter';
 import { useAppStore } from '../../store/useAppStore';
@@ -31,7 +32,7 @@ export const FhirResourceInspectorModal: React.FC<FhirResourceInspectorModalProp
   const { activeProfileId, activeProfile } = useProfiles();
   const addToast = useAppStore((state) => state.addToast);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<'bundle' | 'patient' | 'observations' | 'medications' | 'screening'>('bundle');
+  const [activeTab, setActiveTab] = useState<'bundle' | 'patient' | 'observations' | 'medications' | 'screening' | 'imaging'>('bundle');
 
   const readings = useLiveQuery(
     () => (activeProfileId ? db.readings.where('profileId').equals(activeProfileId).toArray() : []),
@@ -63,6 +64,11 @@ export const FhirResourceInspectorModal: React.FC<FhirResourceInspectorModalProp
     [activeProfileId]
   ) || [];
 
+  const diagnosticReports = useLiveQuery(
+    () => (activeProfileId ? db.diagnosticReports.where('profileId').equals(activeProfileId).toArray() : []),
+    [activeProfileId]
+  ) || [];
+
   const fhirBundle = exportCompleteFHIRBundle({
     profile: activeProfile || undefined,
     readings,
@@ -70,7 +76,8 @@ export const FhirResourceInspectorModal: React.FC<FhirResourceInspectorModalProp
     medications,
     conditions,
     familyHistory,
-    immunizations
+    immunizations,
+    diagnosticReports
   });
 
   const fhirPatient = {
@@ -98,6 +105,7 @@ export const FhirResourceInspectorModal: React.FC<FhirResourceInspectorModalProp
     ...familyHistory.map((f) => convertFamilyHistoryToFHIR(f, activeProfile || undefined)),
     ...immunizations.map((i) => convertImmunizationToFHIR(i, activeProfile || undefined))
   ];
+  const fhirDiagnosticReports = diagnosticReports.flatMap((dr) => convertDiagnosticReportToFHIR(dr, activeProfile || undefined));
 
   const getCurrentJson = () => {
     switch (activeTab) {
@@ -111,6 +119,8 @@ export const FhirResourceInspectorModal: React.FC<FhirResourceInspectorModalProp
         return JSON.stringify(fhirMedRequests, null, 2);
       case 'screening':
         return JSON.stringify(fhirScreening, null, 2);
+      case 'imaging':
+        return JSON.stringify(fhirDiagnosticReports, null, 2);
       default:
         return '';
     }
@@ -218,6 +228,17 @@ export const FhirResourceInspectorModal: React.FC<FhirResourceInspectorModalProp
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               Conditions, Family History & Vaccines ({fhirScreening.length})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('imaging')}
+              className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                activeTab === 'imaging' ? 'bg-teal-500 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              Imaging & DiagnosticReports ({diagnosticReports.length})
             </button>
           </div>
 

@@ -156,7 +156,8 @@ export const ProfileModal: React.FC = () => {
         db.clinicalNotes.where('profileId').equals(idToDelete).delete(),
         db.conditions.where('profileId').equals(idToDelete).delete(),
         db.familyHistory.where('profileId').equals(idToDelete).delete(),
-        db.immunizations.where('profileId').equals(idToDelete).delete()
+        db.immunizations.where('profileId').equals(idToDelete).delete(),
+        db.diagnosticReports.where('profileId').equals(idToDelete).delete()
       ]);
 
       // 2. Delete from MongoDB Atlas Cloud

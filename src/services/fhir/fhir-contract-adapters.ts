@@ -14,12 +14,14 @@ import type {
   ConditionItem,
   FamilyMemberHistoryItem,
   ImmunizationItem,
+  DiagnosticReportItem,
   FhirPatient,
   FhirObservation,
   FhirMedicationRequest,
   FhirCondition,
   FhirFamilyMemberHistory,
-  FhirImmunization
+  FhirImmunization,
+  FhirDiagnosticReport
 } from '../../types/blood-pressure.ts';
 
 import {
@@ -40,6 +42,8 @@ import {
   immunizationFromFHIR,
   convertAnthropometryToFHIR,
   convertSocialHistoryToFHIR,
+  convertDiagnosticReportToFHIR,
+  diagnosticReportFromFHIR,
   type FHIRBundleResource,
   type FHIRBundleEntry
 } from './fhir-exporter.ts';
@@ -52,6 +56,7 @@ export interface ClinicalEntitiesSnapshot {
   conditions?: ConditionItem[];
   familyHistory?: FamilyMemberHistoryItem[];
   immunizations?: ImmunizationItem[];
+  diagnosticReports?: DiagnosticReportItem[];
 }
 
 /**
@@ -124,7 +129,8 @@ export function entitiesToFhirBundle(snapshot: ClinicalEntitiesSnapshot): FHIRBu
     medications = [],
     conditions = [],
     familyHistory = [],
-    immunizations = []
+    immunizations = [],
+    diagnosticReports = []
   } = snapshot;
 
   const entries: FHIRBundleEntry[] = [];
@@ -259,6 +265,29 @@ export function entitiesToFhirBundle(snapshot: ClinicalEntitiesSnapshot): FHIRBu
     });
   }
 
+  // 8. Diagnostic Reports -> DiagnosticReport + Aortic Diameter Observations
+  for (const dr of diagnosticReports) {
+    const matchingProfile = profiles.find((p) => p.id === dr.profileId);
+    const [reportRes, ...drObsList] = convertDiagnosticReportToFHIR(dr, matchingProfile);
+    const ref = getPatientRef(dr.profileId);
+    if (ref) {
+      reportRes.subject.reference = ref;
+    }
+    entries.push({
+      fullUrl: `urn:uuid:${reportRes.id}`,
+      resource: reportRes
+    });
+    for (const o of drObsList) {
+      if (ref) {
+        o.subject.reference = ref;
+      }
+      entries.push({
+        fullUrl: `urn:uuid:${o.id}`,
+        resource: o
+      });
+    }
+  }
+
   return {
     resourceType: 'Bundle',
     type: 'collection',
@@ -292,6 +321,8 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
   const conditions: ConditionItem[] = [];
   const familyHistory: FamilyMemberHistoryItem[] = [];
   const immunizations: ImmunizationItem[] = [];
+  const aortaObsMap = new Map<string, FhirObservation>();
+  const diagnosticReportEntries: FhirDiagnosticReport[] = [];
 
   // Pass 1: Extract Patients
   for (const entry of bundle.entry) {
@@ -359,6 +390,17 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
           break;
         }
 
+        // Aorta diameter measurement LOINCs (for DiagnosticReport)
+        const aortaCodes = ['18015-8', '79549-2', '79547-6', '79546-8', '79548-4', '93656-7'];
+        if (code && aortaCodes.includes(code)) {
+          if (obs.id) {
+            aortaObsMap.set(obs.id.toLowerCase(), obs);
+            const uuid = extractRefUuid(obs.id);
+            if (uuid) aortaObsMap.set(uuid, obs);
+          }
+          break;
+        }
+
         // Blood Pressure Panel LOINC 85354-9 or components
         const hasBpComponents = Array.isArray(obs.component) && obs.component.some((c) =>
           c.code?.coding?.some((cod) => cod.code === '8480-6' || cod.code === '8462-4')
@@ -375,7 +417,9 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
         const labCodes = [
           '3084-1', '2160-0', '3091-6', '2093-3', '13457-7', '2085-9',
           '2571-8', '1558-6', '2345-7', '4548-4', '2823-3', '2951-2',
-          '33914-3', '48642-3', '48643-1', '48065-7', '6598-7'
+          '33914-3', '48642-3', '48643-1', '48065-7', '55398-2', '48066-5',
+          '48067-3', '7799-0', '89579-7', '10839-9', '6598-7', '67151-1',
+          '42757-5', '30522-7'
         ];
         if (code && labCodes.includes(code)) {
           const labId = obs.identifier?.find((i: any) => i.system === 'http://aortalink.app/fhir/identifier/lab-id')?.value;
@@ -440,6 +484,11 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
         break;
       }
 
+      case 'DiagnosticReport': {
+        diagnosticReportEntries.push(res as FhirDiagnosticReport);
+        break;
+      }
+
       default:
         break;
     }
@@ -470,6 +519,40 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
     labResults.push(lab);
   }
 
+  // Pass 5: Reconstitute DiagnosticReports with referenced observations
+  const usedReportIds = new Set<number>();
+  const diagnosticReports: DiagnosticReportItem[] = [];
+  for (const diagRes of diagnosticReportEntries) {
+    const pId = resolveProfileId(diagRes.subject?.reference);
+    const matchedObs: FhirObservation[] = [];
+    for (const refObj of diagRes.result || []) {
+      const uuid = extractRefUuid(refObj.reference);
+      if (uuid && aortaObsMap.has(uuid)) {
+        matchedObs.push(aortaObsMap.get(uuid)!);
+      }
+    }
+    if (matchedObs.length === 0 && diagRes.subject?.reference) {
+      for (const obs of aortaObsMap.values()) {
+        if (resolveProfileId(obs.subject?.reference) === pId && obs.effectiveDateTime === diagRes.effectiveDateTime) {
+          matchedObs.push(obs);
+        }
+      }
+    }
+
+    const item = diagnosticReportFromFHIR(diagRes, matchedObs);
+    let reportId = item.id;
+    if (reportId === undefined && diagRes.id && /^\d+$/.test(diagRes.id)) {
+      reportId = Number(diagRes.id);
+    }
+    if (reportId === undefined || usedReportIds.has(reportId)) {
+      reportId = usedReportIds.size > 0 ? Math.max(...usedReportIds) + 1 : 1;
+    }
+    usedReportIds.add(reportId);
+    item.id = reportId;
+    item.profileId = pId;
+    diagnosticReports.push(item);
+  }
+
   return {
     profiles: Array.from(profilesMap.values()),
     readings,
@@ -477,7 +560,8 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
     medications,
     conditions,
     familyHistory,
-    immunizations
+    immunizations,
+    diagnosticReports
   };
 }
 
@@ -512,5 +596,9 @@ export const fhirTableAdapters = {
   immunizations: {
     toFhir: convertImmunizationToFHIR,
     fromFhir: immunizationFromFHIR
+  },
+  diagnosticReports: {
+    toFhir: convertDiagnosticReportToFHIR,
+    fromFhir: diagnosticReportFromFHIR
   }
 };

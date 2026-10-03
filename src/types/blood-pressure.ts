@@ -112,7 +112,57 @@ export interface LabResult {
   potassium?: number; // Kalium Serum K+ (mEq/L) - Normal 3.5-5.0
   sodium?: number; // Natrium Serum Na+ (mEq/L) - Normal 135-145
   proteinuria?: 'negatif' | 'trace' | '+1' | '+2' | '+3'; // Urin Lengkap
+  // Cardiovascular Biomarkers (v3.0 - Issue #20)
+  dDimer?: number; // D-dimer (ug/mL or ng/mL FEU)
+  dDimerUnit?: 'ug/mL' | 'ng/mL' | 'mg/L';
+  dDimerType?: 'FEU' | 'DDU';
+  dDimerLoinc?: string; // LOINC code from source lab (default: 48065-7)
+  troponinI?: number; // Troponin I (ng/mL or pg/mL)
+  troponinT?: number; // Troponin T (ng/mL or pg/mL)
+  troponinUnit?: 'ng/mL' | 'pg/mL' | 'ng/L';
+  troponinLoinc?: string; // LOINC code from source lab (e.g. 89579-7 hs-cTnI, 6598-7 hs-cTnT)
+  hsCrp?: number; // High-sensitivity CRP (mg/L, LOINC 30522-7)
+  sourceLabCodes?: Record<string, string>; // Map of analyte -> source lab LOINC code
   notes?: string;
+}
+
+export type ImagingModality = 'CTA' | 'ECHO' | 'XRAY' | 'MRI';
+
+export interface AorticMeasurements {
+  aorticRoot?: number; // mm (LOINC 18015-8: Aortic root diameter)
+  ascendingAorta?: number; // mm (LOINC 79549-2: Ascending aorta diameter)
+  aorticArch?: number; // mm (LOINC 79547-6: Aortic arch diameter)
+  descendingAorta?: number; // mm (LOINC 79546-8: Descending aorta diameter)
+  abdominalAorta?: number; // mm (LOINC 79548-4: Abdominal aorta diameter)
+  maxDiameter?: number; // mm (LOINC 93656-7: Thoracic and abdominal aorta diameter max)
+  rootDiameterMm?: number;
+  ascendingAortaMm?: number;
+  aorticArchMm?: number;
+  descendingAortaMm?: number;
+  abdominalAortaMm?: number;
+  maxDiameterMm?: number;
+}
+
+export interface DiagnosticReportItem {
+  id?: number;
+  syncId?: string;
+  profileId: string;
+  effectiveDateTime: string; // ISO 8601
+  modality: ImagingModality | 'LAB';
+  code?: string; // LOINC code for procedure (e.g. '36642-7', '18053-9', '36643-5')
+  codeDisplay?: string; // e.g. "CT Angiografi Aorta", "Ekokardiografi", "Rontgen Dada"
+  category?: 'RAD' | 'LAB' | 'CARD' | 'radiology' | 'cardiovascular';
+  conclusion?: string; // Kesimpulan/impresi laporan
+  findings?: string; // Temuan radiologi detail
+  aorticMeasurements?: AorticMeasurements;
+  measurements?: AorticMeasurements;
+  sourceFacility?: string;
+  performerName?: string;
+  conclusionCode?: string[]; // SNOMED / ICD-10 codes
+  notes?: string;
+  clientUpdatedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type DippingPattern = 'dipper' | 'non_dipper' | 'riser' | 'extreme_dipper';
@@ -244,6 +294,7 @@ export interface BackupDataFormat {
   conditions?: ConditionItem[];
   familyHistory?: FamilyMemberHistoryItem[];
   immunizations?: ImmunizationItem[];
+  diagnosticReports?: DiagnosticReportItem[];
   fhirBundle?: any;
   /** @deprecated ADR 002: Replaced by fhirBundle & fhir-contract-adapters */
   fhirPatients?: FhirPatient[];
@@ -597,5 +648,50 @@ export interface FhirImmunization {
   };
   occurrenceDateTime: string;
   recorded?: string;
+}
+
+export interface FhirDiagnosticReport {
+  resourceType: 'DiagnosticReport';
+  id?: string;
+  meta?: {
+    versionId?: string;
+    lastUpdated?: string;
+    profile?: string[];
+  };
+  identifier?: Array<{
+    system?: string;
+    value?: string;
+  }>;
+  status: 'registered' | 'partial' | 'preliminary' | 'final' | 'amended' | 'corrected' | 'appended' | 'cancelled' | 'entered-in-error' | 'unknown';
+  category?: FhirCodeableConcept[];
+  code: FhirCodeableConcept;
+  subject: {
+    reference: string;
+    display?: string;
+  };
+  effectiveDateTime?: string;
+  issued?: string;
+  performer?: Array<{
+    reference?: string;
+    display?: string;
+  }>;
+  result?: Array<{
+    reference: string;
+    display?: string;
+  }>;
+  conclusion?: string;
+  conclusionCode?: FhirCodeableConcept[];
+  extension?: Array<{
+    url: string;
+    valueString?: string;
+    valueDecimal?: number;
+    valueBoolean?: boolean;
+    valueQuantity?: {
+      value: number;
+      unit: string;
+      system: string;
+      code: string;
+    };
+  }>;
 }
 

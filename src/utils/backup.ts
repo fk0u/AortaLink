@@ -9,14 +9,30 @@ export function createBackupFilename(exportedAt = new Date()): string {
 }
 
 export async function createBackupPayload(): Promise<BackupDataFormat> {
-  const [profiles, readings, reminders, habits, medications, medicationLogs, labResults] = await Promise.all([
+  const [
+    profiles,
+    readings,
+    reminders,
+    habits,
+    medications,
+    medicationLogs,
+    labResults,
+    conditions,
+    familyHistory,
+    immunizations,
+    diagnosticReports
+  ] = await Promise.all([
     db.profiles.toArray(),
     db.readings.toArray(),
     db.reminders.toArray(),
     db.habits.toArray(),
     db.medications.toArray(),
     db.medicationLogs.toArray(),
-    db.labResults.toArray()
+    db.labResults.toArray(),
+    db.conditions.toArray(),
+    db.familyHistory.toArray(),
+    db.immunizations.toArray(),
+    db.diagnosticReports.toArray()
   ]);
 
   return {
@@ -28,7 +44,11 @@ export async function createBackupPayload(): Promise<BackupDataFormat> {
     habits,
     medications,
     medicationLogs,
-    labResults
+    labResults,
+    conditions,
+    familyHistory,
+    immunizations,
+    diagnosticReports
   };
 }
 
@@ -62,6 +82,10 @@ export function normalizeBackupPayload(input: unknown): BackupDataFormat {
     medications?: unknown;
     medicationLogs?: unknown;
     labResults?: unknown;
+    conditions?: unknown;
+    familyHistory?: unknown;
+    immunizations?: unknown;
+    diagnosticReports?: unknown;
   };
 
   const profiles = ensureArray<Profile>(payload.profiles);
@@ -80,7 +104,11 @@ export function normalizeBackupPayload(input: unknown): BackupDataFormat {
     habits: ensureArray<HabitLog>(payload.habits),
     medications: ensureArray<import('../types/blood-pressure').MedicationItem>(payload.medications),
     medicationLogs: ensureArray<import('../types/blood-pressure').MedicationLog>(payload.medicationLogs),
-    labResults: ensureArray<import('../types/blood-pressure').LabResult>(payload.labResults)
+    labResults: ensureArray<import('../types/blood-pressure').LabResult>(payload.labResults),
+    conditions: ensureArray<import('../types/blood-pressure').ConditionItem>(payload.conditions),
+    familyHistory: ensureArray<import('../types/blood-pressure').FamilyMemberHistoryItem>(payload.familyHistory),
+    immunizations: ensureArray<import('../types/blood-pressure').ImmunizationItem>(payload.immunizations),
+    diagnosticReports: ensureArray<import('../types/blood-pressure').DiagnosticReportItem>(payload.diagnosticReports)
   };
 }
 
@@ -97,6 +125,7 @@ export async function restoreBackupPayload(payload: BackupDataFormat) {
     ...(payload.labResults ? { labResults: payload.labResults } : {}),
     ...(payload.conditions ? { conditions: payload.conditions } : {}),
     ...(payload.familyHistory ? { familyHistory: payload.familyHistory } : {}),
-    ...(payload.immunizations ? { immunizations: payload.immunizations } : {})
+    ...(payload.immunizations ? { immunizations: payload.immunizations } : {}),
+    ...(payload.diagnosticReports ? { diagnosticReports: payload.diagnosticReports } : {})
   });
 }
