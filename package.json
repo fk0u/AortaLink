@@ -18,6 +18,7 @@
     "test:guidelines": "node --experimental-strip-types --no-warnings scripts/guideline-selfcheck.ts",
     "test:ble": "node --experimental-strip-types --no-warnings scripts/bluetooth-telemetry-selfcheck.ts",
     "test:screening": "node --experimental-strip-types --no-warnings scripts/health-screening-selfcheck.ts",
+    "test:contract": "node --experimental-strip-types --no-warnings scripts/fhir-contract-selfcheck.ts",
     "cleanup:duplicates": "node scripts/cleanup-legacy-duplicate-readings.js",
     "preview": "rsbuild preview"
   },

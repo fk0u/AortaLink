@@ -48,3 +48,6 @@ jobs:
 
       - name: Health Screening & Aorta Risk Selfcheck
         run: npm run test:screening
+
+      - name: HL7 FHIR R4 Internal Data Contract & Boundary Selfcheck
+        run: npm run test:contract

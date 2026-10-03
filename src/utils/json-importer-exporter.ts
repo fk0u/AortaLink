@@ -10,9 +10,15 @@ import {
   MedicationItem,
   MedicationLog,
   LabResult,
-  FhirPatient,
-  FhirObservation
+  ConditionItem,
+  FamilyMemberHistoryItem,
+  ImmunizationItem
 } from '../types/blood-pressure';
+import {
+  entitiesToFhirBundle,
+  fhirBundleToEntities
+} from '../services/fhir/fhir-contract-adapters';
+import type { FHIRBundleResource } from '../services/fhir/fhir-exporter';
 
 export function createAortaLinkJsonFilename(exportedAt = new Date()): string {
   const stamp = exportedAt.toISOString().slice(0, 10);
@@ -20,7 +26,18 @@ export function createAortaLinkJsonFilename(exportedAt = new Date()): string {
 }
 
 export async function exportFullAortaLinkJsonPayload(): Promise<BackupDataFormat> {
-  const [profiles, readings, reminders, habits, medications, medicationLogs, labResults, fhirPatients, fhirObservations] = await Promise.all([
+  const [
+    profiles,
+    readings,
+    reminders,
+    habits,
+    medications,
+    medicationLogs,
+    labResults,
+    conditions,
+    familyHistory,
+    immunizations
+  ] = await Promise.all([
     db.profiles.toArray(),
     db.readings.toArray(),
     db.reminders.toArray(),
@@ -28,12 +45,23 @@ export async function exportFullAortaLinkJsonPayload(): Promise<BackupDataFormat
     db.medications.toArray(),
     db.medicationLogs.toArray(),
     db.labResults.toArray(),
-    db.fhirPatients.toArray(),
-    db.fhirObservations.toArray()
+    db.conditions.toArray(),
+    db.familyHistory.toArray(),
+    db.immunizations.toArray()
   ]);
 
+  const fhirBundle = entitiesToFhirBundle({
+    profiles,
+    readings,
+    labResults,
+    medications,
+    conditions,
+    familyHistory,
+    immunizations
+  });
+
   return {
-    version: '2.0.0',
+    version: '3.0.0',
     exportedAt: new Date().toISOString(),
     profiles,
     readings,
@@ -42,8 +70,10 @@ export async function exportFullAortaLinkJsonPayload(): Promise<BackupDataFormat
     medications,
     medicationLogs,
     labResults,
-    fhirPatients,
-    fhirObservations
+    conditions,
+    familyHistory,
+    immunizations,
+    fhirBundle
   };
 }
 
@@ -62,11 +92,61 @@ export function downloadJsonBlob(filename: string, payload: unknown) {
 
 export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{ success: boolean; recordCount: number; message: string }> {
   try {
-    const payload = JSON.parse(jsonString) as Partial<BackupDataFormat>;
-    if (!payload || typeof payload !== 'object') {
+    const rawParsed = JSON.parse(jsonString);
+    if (!rawParsed || typeof rawParsed !== 'object') {
       throw new Error('Format berkas JSON tidak valid.');
     }
 
+    // Direct HL7 FHIR R4 Bundle Import Support
+    const isDirectFhirBundle = rawParsed.resourceType === 'Bundle' && Array.isArray(rawParsed.entry);
+    const bundleToRestore: FHIRBundleResource | null = isDirectFhirBundle
+      ? (rawParsed as FHIRBundleResource)
+      : (rawParsed.fhirBundle && rawParsed.fhirBundle.resourceType === 'Bundle' ? rawParsed.fhirBundle : null);
+
+    if (bundleToRestore) {
+      const extracted = fhirBundleToEntities(bundleToRestore);
+      const profiles = extracted.profiles || [];
+      if (profiles.length === 0) {
+        throw new Error('Bundle FHIR R4 harus memiliki minimal 1 resource Patient.');
+      }
+
+      const readings = (extracted.readings || []).filter(
+        (r) => r && validateBPRange(r.systolic, r.diastolic, r.pulse).valid
+      );
+
+      const localDataToReplace: any = {
+        profiles,
+        readings,
+        medications: extracted.medications || [],
+        labResults: extracted.labResults || [],
+        conditions: extracted.conditions || [],
+        familyHistory: extracted.familyHistory || [],
+        immunizations: extracted.immunizations || []
+      };
+      if (Array.isArray(rawParsed.reminders)) localDataToReplace.reminders = rawParsed.reminders;
+      if (Array.isArray(rawParsed.habits)) localDataToReplace.habits = rawParsed.habits;
+      if (Array.isArray(rawParsed.medicationLogs)) localDataToReplace.medicationLogs = rawParsed.medicationLogs;
+
+      await replaceAllLocalData(localDataToReplace);
+
+      const total =
+        profiles.length +
+        readings.length +
+        (extracted.medications?.length || 0) +
+        (extracted.labResults?.length || 0) +
+        (extracted.conditions?.length || 0) +
+        (extracted.familyHistory?.length || 0) +
+        (extracted.immunizations?.length || 0);
+
+      return {
+        success: true,
+        recordCount: total,
+        message: `Impor HL7 FHIR R4 Bundle berhasil! ${profiles.length} profil, ${readings.length} data tensi, ${extracted.medications?.length || 0} obat, ${extracted.labResults?.length || 0} hasil lab, dan ${extracted.conditions?.length || 0} riwayat/kondisi klinis dipulihkan.`
+      };
+    }
+
+    // Standard Backup JSON Restore
+    const payload = rawParsed as Partial<BackupDataFormat>;
     const profiles = Array.isArray(payload.profiles) ? payload.profiles : [];
     if (profiles.length === 0) {
       throw new Error('Backup JSON harus memiliki minimal 1 profil pasien.');
@@ -83,68 +163,13 @@ export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{
     }));
     const reminders = Array.isArray(payload.reminders) ? payload.reminders : [];
     const habits = Array.isArray(payload.habits) ? payload.habits : [];
-    let medications = Array.isArray(payload.medications) ? payload.medications : [];
+    const medications = Array.isArray(payload.medications) ? payload.medications : [];
     const medicationLogs = Array.isArray(payload.medicationLogs) ? payload.medicationLogs : [];
     const labResults = Array.isArray(payload.labResults) ? payload.labResults : [];
-    let fhirPatients = Array.isArray(payload.fhirPatients) ? payload.fhirPatients : [];
-    let fhirObservations = Array.isArray(payload.fhirObservations) ? payload.fhirObservations : [];
+    const conditions = Array.isArray(payload.conditions) ? payload.conditions : [];
+    const familyHistory = Array.isArray(payload.familyHistory) ? payload.familyHistory : [];
+    const immunizations = Array.isArray(payload.immunizations) ? payload.immunizations : [];
 
-    // Auto-Upgrade v1.x payload: Generate FHIR Patients if missing
-    if (fhirPatients.length === 0) {
-      fhirPatients = profiles.map((p) => ({
-        resourceType: 'Patient',
-        id: p.id,
-        identifier: [{ system: 'https://aortalink.health/fhir/sid/patient', value: p.id }],
-        active: true,
-        name: [{ text: p.name }],
-        gender: (p.gender === 'male' || p.gender === 'female') ? p.gender : 'unknown'
-      }));
-    }
-
-    // Auto-Upgrade v1.x payload: Generate FHIR Observations from readings if missing
-    if (fhirObservations.length === 0 && readings.length > 0) {
-      fhirObservations = readings.map((r, idx) => ({
-        resourceType: 'Observation',
-        id: `obs-bp-import-${r.id || idx + 1}`,
-        status: 'final',
-        category: [
-          {
-            coding: [
-              {
-                system: 'http://terminology.hl7.org/CodeSystem/observation-category',
-                code: 'vital-signs',
-                display: 'Vital Signs'
-              }
-            ]
-          }
-        ],
-        code: {
-          coding: [
-            {
-              system: 'http://loinc.org',
-              code: '85354-9',
-              display: 'Blood pressure panel with device'
-            }
-          ],
-          text: 'Tekanan Darah Sistolik/Diastolik'
-        },
-        subject: { reference: `Patient/${r.profileId}` },
-        effectiveDateTime: r.timestamp,
-        component: [
-          {
-            code: { coding: [{ system: 'http://loinc.org', code: '8480-6', display: 'Systolic blood pressure' }] },
-            valueQuantity: { value: r.systolic, unit: 'mmHg', system: 'http://unitsofmeasure.org', code: 'mm[Hg]' }
-          },
-          {
-            code: { coding: [{ system: 'http://loinc.org', code: '8462-4', display: 'Diastolic blood pressure' }] },
-            valueQuantity: { value: r.diastolic, unit: 'mmHg', system: 'http://unitsofmeasure.org', code: 'mm[Hg]' }
-          }
-        ]
-      }));
-    }
-
-    // Replaces exactly the tables this backup format carries; deletions are
-    // tombstoned so the cloud doesn't resurrect them on the next sync.
     await replaceAllLocalData({
       profiles,
       readings,
@@ -153,16 +178,17 @@ export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{
       medications,
       medicationLogs,
       labResults,
-      fhirPatients,
-      fhirObservations
+      conditions,
+      familyHistory,
+      immunizations
     });
 
-    const totalRecords = profiles.length + readings.length + reminders.length;
+    const totalRecords = profiles.length + readings.length + reminders.length + conditions.length;
     const discardedMsg = discardedReadingsCount > 0 ? ` (${discardedReadingsCount} data tensi tidak valid diabaikan)` : '';
     return {
       success: true,
       recordCount: totalRecords,
-      message: `Pemulihan JSON v1.1 / v2.0 Berhasil! Terpulihkan ${profiles.length} profil, ${readings.length} pengukuran tensi${discardedMsg}, dan ${reminders.length} pengingat.`
+      message: `Pemulihan JSON v3.0 Berhasil! Terpulihkan ${profiles.length} profil, ${readings.length} pengukuran tensi${discardedMsg}, ${conditions.length} kondisi klinis, dan ${reminders.length} pengingat.`
     };
   } catch (err: any) {
     return {

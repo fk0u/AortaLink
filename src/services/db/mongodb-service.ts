@@ -1,6 +1,7 @@
-import { db, NOTES_ENCODING_RAW, withSyncMetadataSuppressed, type SyncTombstone } from '../../db';
+import { db, NOTES_ENCODING_RAW, withSyncMetadataSuppressed, newSyncId, type SyncTombstone } from '../../db';
 import { decodeLegacyEscapedText } from '../../security/sanitizer';
 import { useAppStore } from '../../store/useAppStore';
+import { entitiesToFhirBundle, fhirBundleToEntities } from '../fhir/fhir-contract-adapters';
 
 export interface SyncPushResult {
   success: boolean;
@@ -51,7 +52,8 @@ export class MongoDbAtlasService {
   }
 
   /**
-   * Push ALL 14 local Dexie.js records & userSettings to MongoDB Atlas Cloud Cluster
+   * Push ALL local Dexie.js records & userSettings to MongoDB Atlas Cloud Cluster
+   * Packages clinical data into a standardized HL7 FHIR R4 Bundle (ADR 002)
    */
   public async pushUserData(): Promise<SyncPushResult> {
     try {
@@ -77,10 +79,6 @@ export class MongoDbAtlasService {
         gamification,
         profiles,
         reminders,
-        fhirPatients,
-        fhirObservations,
-        fhirMedicationRequests,
-        fhirMedicationStatements,
         ascvdProfiles,
         clinicalNotes,
         conditions,
@@ -97,16 +95,23 @@ export class MongoDbAtlasService {
         db.gamification.toArray(),
         db.profiles.toArray(),
         db.reminders.toArray(),
-        db.fhirPatients.toArray(),
-        db.fhirObservations.toArray(),
-        db.fhirMedicationRequests.toArray(),
-        db.fhirMedicationStatements.toArray(),
         db.ascvdProfiles.toArray(),
         db.clinicalNotes.toArray(),
         db.conditions.toArray(),
         db.familyHistory.toArray(),
         db.immunizations.toArray()
       ]);
+
+      // Package clinical data into canonical HL7 FHIR R4 Bundle (ADR 002)
+      const fhirBundle = entitiesToFhirBundle({
+        profiles,
+        readings,
+        labResults,
+        medications,
+        conditions,
+        familyHistory,
+        immunizations
+      });
 
       // Deletions recorded since the last successful push must travel too,
       // or they would resurrect on other devices.
@@ -126,6 +131,17 @@ export class MongoDbAtlasService {
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
+          fhirBundle,
+          appState: {
+            reminders,
+            habits,
+            sodiumLogs,
+            sleepLogs,
+            gamification,
+            ascvdProfiles,
+            clinicalNotes,
+            userSettings
+          },
           readings,
           medications,
           medicationLogs,
@@ -136,10 +152,6 @@ export class MongoDbAtlasService {
           gamification,
           profiles,
           reminders,
-          fhirPatients,
-          fhirObservations,
-          fhirMedicationRequests,
-          fhirMedicationStatements,
           ascvdProfiles,
           clinicalNotes,
           conditions,
@@ -310,35 +322,91 @@ export class MongoDbAtlasService {
           }
         }
 
-        totalRestored += await restoreTable(cloudData.profiles, db.profiles, 'profiles');
-        // UUID readings first, so a legacy numeric copy finds its migrated
-        // twin locally instead of being rekeyed into a duplicate.
-        const cloudReadings: any[] = Array.isArray(cloudData.readings) ? cloudData.readings : [];
+        // ADR 002: Dual-stack restoration. Flat records preserve rich app metadata
+        // (position, arm, target systolic/diastolic, local IDs); FHIR Bundle provides
+        // interoperability and catches any external FHIR resources.
+        const hasFhirBundle = Boolean(data.fhirBundle && data.fhirBundle.resourceType === 'Bundle');
+        const fhirEntities = hasFhirBundle ? fhirBundleToEntities(data.fhirBundle) : null;
+
+        const getItemKey = (item: any): string => {
+          if (item.id !== undefined && item.id !== null && item.id !== '') {
+            return String(item.id);
+          }
+          if (item.syncId) return String(item.syncId);
+          if (item.timestamp) {
+            return item.profileId ? `${item.profileId}::${item.timestamp}` : String(item.timestamp);
+          }
+          return '';
+        };
+
+        const mergeWithFhir = <T extends { id?: any; syncId?: string; timestamp?: string }>(
+          flatList: T[] | undefined,
+          fhirList: T[] | undefined
+        ): T[] => {
+          const flat = Array.isArray(flatList) ? flatList : [];
+          const fhir = Array.isArray(fhirList) ? fhirList : [];
+          if (flat.length === 0) {
+            return fhir.map((item) => {
+              if (item.id === undefined || item.id === null || item.id === '') {
+                (item as any).id = item.syncId || newSyncId();
+              }
+              return item;
+            });
+          }
+          if (fhir.length === 0) return flat;
+
+          const existingKeys = new Set(flat.map(getItemKey).filter(Boolean));
+          const additional = fhir
+            .map((item) => {
+              if (item.id === undefined || item.id === null || item.id === '') {
+                (item as any).id = item.syncId || newSyncId();
+              }
+              return item;
+            })
+            .filter((item) => {
+              const key = getItemKey(item);
+              return key ? !existingKeys.has(key) : true;
+            });
+          return [...flat, ...additional];
+        };
+
+        const profilesToRestore = mergeWithFhir(cloudData.profiles, fhirEntities?.profiles);
+        totalRestored += await restoreTable(profilesToRestore, db.profiles, 'profiles');
+
+        const readingsToRestore = mergeWithFhir(cloudData.readings, fhirEntities?.readings);
         totalRestored += await restoreTable(
           [
-            ...cloudReadings.filter((r) => typeof r?.id === 'string'),
-            ...cloudReadings.filter((r) => typeof r?.id !== 'string')
+            ...readingsToRestore.filter((r: any) => typeof r?.id === 'string'),
+            ...readingsToRestore.filter((r: any) => typeof r?.id !== 'string')
           ],
           db.readings,
           'readings'
         );
-        totalRestored += await restoreTable(cloudData.medications, db.medications, 'medications');
+
+        const medsToRestore = mergeWithFhir(cloudData.medications, fhirEntities?.medications);
+        totalRestored += await restoreTable(medsToRestore, db.medications, 'medications');
+
         totalRestored += await restoreTable(cloudData.medicationLogs, db.medicationLogs, 'medicationLogs');
-        totalRestored += await restoreTable(cloudData.labResults, db.labResults, 'labResults');
+
+        const labsToRestore = mergeWithFhir(cloudData.labResults, fhirEntities?.labResults);
+        totalRestored += await restoreTable(labsToRestore, db.labResults, 'labResults');
+
         totalRestored += await restoreTable(cloudData.habits, db.habits, 'habits');
         totalRestored += await restoreTable(cloudData.sodiumLogs, db.sodiumLogs, 'sodiumLogs');
         totalRestored += await restoreTable(cloudData.sleepLogs, db.sleepLogs, 'sleepLogs');
         totalRestored += await restoreTable(cloudData.gamification, db.gamification, 'gamification');
         totalRestored += await restoreTable(cloudData.reminders, db.reminders, 'reminders');
-        totalRestored += await restoreTable(cloudData.fhirPatients, db.fhirPatients, 'fhirPatients');
-        totalRestored += await restoreTable(cloudData.fhirObservations, db.fhirObservations, 'fhirObservations');
-        totalRestored += await restoreTable(cloudData.fhirMedicationRequests, db.fhirMedicationRequests, 'fhirMedicationRequests');
-        totalRestored += await restoreTable(cloudData.fhirMedicationStatements, db.fhirMedicationStatements, 'fhirMedicationStatements');
         totalRestored += await restoreTable(cloudData.ascvdProfiles, db.ascvdProfiles, 'ascvdProfiles');
         totalRestored += await restoreTable(cloudData.clinicalNotes, db.clinicalNotes, 'clinicalNotes');
-        totalRestored += await restoreTable(cloudData.conditions, db.conditions, 'conditions');
-        totalRestored += await restoreTable(cloudData.familyHistory, db.familyHistory, 'familyHistory');
-        totalRestored += await restoreTable(cloudData.immunizations, db.immunizations, 'immunizations');
+
+        const condsToRestore = mergeWithFhir(cloudData.conditions, fhirEntities?.conditions);
+        totalRestored += await restoreTable(condsToRestore, db.conditions, 'conditions');
+
+        const famToRestore = mergeWithFhir(cloudData.familyHistory, fhirEntities?.familyHistory);
+        totalRestored += await restoreTable(famToRestore, db.familyHistory, 'familyHistory');
+
+        const immToRestore = mergeWithFhir(cloudData.immunizations, fhirEntities?.immunizations);
+        totalRestored += await restoreTable(immToRestore, db.immunizations, 'immunizations');
 
         if (legacyReadingTombstones.length > 0) {
           await db.syncTombstones.bulkPut(legacyReadingTombstones);
@@ -426,10 +494,6 @@ const TABLE_NAME_TO_DB: Record<string, { get: (key: any) => Promise<any>; delete
   sleepLogs: db.sleepLogs,
   gamification: db.gamification,
   reminders: db.reminders,
-  fhirPatients: db.fhirPatients,
-  fhirObservations: db.fhirObservations,
-  fhirMedicationRequests: db.fhirMedicationRequests,
-  fhirMedicationStatements: db.fhirMedicationStatements,
   ascvdProfiles: db.ascvdProfiles,
   clinicalNotes: db.clinicalNotes,
   conditions: db.conditions,

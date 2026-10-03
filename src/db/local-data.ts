@@ -24,7 +24,7 @@ const AUTO_INCREMENT_TABLES: ReadonlySet<SyncedTableName> = new Set<SyncedTableN
 ]);
 
 /** Tables that every fresh database gets seeded with; they are not "user data". */
-const SEED_ONLY_TABLES: ReadonlySet<SyncedTableName> = new Set<SyncedTableName>(['profiles', 'gamification', 'fhirPatients']);
+const SEED_ONLY_TABLES: ReadonlySet<SyncedTableName> = new Set<SyncedTableName>(['profiles', 'gamification']);
 
 // ---------------------------------------------------------------------------
 // Local data owner
@@ -225,11 +225,9 @@ export async function replaceAllLocalData(data: LocalDataSnapshot): Promise<void
       for (const name of SYNCED_TABLES) {
         if (input[name] || name === 'profiles' || name === 'gamification') continue;
         const table = db.table(name);
-        const orphanKeys = name === 'fhirPatients'
-          ? (await table.toCollection().primaryKeys()).filter((key) => !profileIds.has(String(key)))
-          : await table
-              .filter((row: { profileId?: string }) => typeof row.profileId === 'string' && !profileIds.has(row.profileId))
-              .primaryKeys();
+        const orphanKeys = await table
+          .filter((row: { profileId?: string }) => typeof row.profileId === 'string' && !profileIds.has(row.profileId))
+          .primaryKeys();
         if (orphanKeys.length > 0) await table.bulkDelete(orphanKeys);
       }
     }
