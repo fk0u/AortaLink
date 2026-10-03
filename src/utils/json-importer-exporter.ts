@@ -12,7 +12,8 @@ import {
   LabResult,
   ConditionItem,
   FamilyMemberHistoryItem,
-  ImmunizationItem
+  ImmunizationItem,
+  DiagnosticReportItem
 } from '../types/blood-pressure';
 import {
   entitiesToFhirBundle,
@@ -36,7 +37,8 @@ export async function exportFullAortaLinkJsonPayload(): Promise<BackupDataFormat
     labResults,
     conditions,
     familyHistory,
-    immunizations
+    immunizations,
+    diagnosticReports
   ] = await Promise.all([
     db.profiles.toArray(),
     db.readings.toArray(),
@@ -47,7 +49,8 @@ export async function exportFullAortaLinkJsonPayload(): Promise<BackupDataFormat
     db.labResults.toArray(),
     db.conditions.toArray(),
     db.familyHistory.toArray(),
-    db.immunizations.toArray()
+    db.immunizations.toArray(),
+    db.diagnosticReports.toArray()
   ]);
 
   const fhirBundle = entitiesToFhirBundle({
@@ -57,7 +60,8 @@ export async function exportFullAortaLinkJsonPayload(): Promise<BackupDataFormat
     medications,
     conditions,
     familyHistory,
-    immunizations
+    immunizations,
+    diagnosticReports
   });
 
   return {
@@ -73,6 +77,7 @@ export async function exportFullAortaLinkJsonPayload(): Promise<BackupDataFormat
     conditions,
     familyHistory,
     immunizations,
+    diagnosticReports,
     fhirBundle
   };
 }
@@ -121,7 +126,8 @@ export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{
         labResults: extracted.labResults || [],
         conditions: extracted.conditions || [],
         familyHistory: extracted.familyHistory || [],
-        immunizations: extracted.immunizations || []
+        immunizations: extracted.immunizations || [],
+        diagnosticReports: extracted.diagnosticReports || []
       };
       if (Array.isArray(rawParsed.reminders)) localDataToReplace.reminders = rawParsed.reminders;
       if (Array.isArray(rawParsed.habits)) localDataToReplace.habits = rawParsed.habits;
@@ -136,12 +142,13 @@ export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{
         (extracted.labResults?.length || 0) +
         (extracted.conditions?.length || 0) +
         (extracted.familyHistory?.length || 0) +
-        (extracted.immunizations?.length || 0);
+        (extracted.immunizations?.length || 0) +
+        (extracted.diagnosticReports?.length || 0);
 
       return {
         success: true,
         recordCount: total,
-        message: `Impor HL7 FHIR R4 Bundle berhasil! ${profiles.length} profil, ${readings.length} data tensi, ${extracted.medications?.length || 0} obat, ${extracted.labResults?.length || 0} hasil lab, dan ${extracted.conditions?.length || 0} riwayat/kondisi klinis dipulihkan.`
+        message: `Impor HL7 FHIR R4 Bundle berhasil! ${profiles.length} profil, ${readings.length} data tensi, ${extracted.medications?.length || 0} obat, ${extracted.labResults?.length || 0} hasil lab, ${extracted.conditions?.length || 0} riwayat/kondisi klinis, dan ${extracted.diagnosticReports?.length || 0} laporan radiologi/imaging dipulihkan.`
       };
     }
 
@@ -169,6 +176,7 @@ export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{
     const conditions = Array.isArray(payload.conditions) ? payload.conditions : [];
     const familyHistory = Array.isArray(payload.familyHistory) ? payload.familyHistory : [];
     const immunizations = Array.isArray(payload.immunizations) ? payload.immunizations : [];
+    const diagnosticReports = Array.isArray(payload.diagnosticReports) ? payload.diagnosticReports : [];
 
     await replaceAllLocalData({
       profiles,
@@ -180,15 +188,16 @@ export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{
       labResults,
       conditions,
       familyHistory,
-      immunizations
+      immunizations,
+      diagnosticReports
     });
 
-    const totalRecords = profiles.length + readings.length + reminders.length + conditions.length;
+    const totalRecords = profiles.length + readings.length + reminders.length + conditions.length + diagnosticReports.length;
     const discardedMsg = discardedReadingsCount > 0 ? ` (${discardedReadingsCount} data tensi tidak valid diabaikan)` : '';
     return {
       success: true,
       recordCount: totalRecords,
-      message: `Pemulihan JSON v3.0 Berhasil! Terpulihkan ${profiles.length} profil, ${readings.length} pengukuran tensi${discardedMsg}, ${conditions.length} kondisi klinis, dan ${reminders.length} pengingat.`
+      message: `Pemulihan JSON v3.0 Berhasil! Terpulihkan ${profiles.length} profil, ${readings.length} pengukuran tensi${discardedMsg}, ${conditions.length} kondisi klinis, ${diagnosticReports.length} laporan radiologi, dan ${reminders.length} pengingat.`
     };
   } catch (err: any) {
     return {

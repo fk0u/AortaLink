@@ -408,6 +408,9 @@ export class MongoDbAtlasService {
         const immToRestore = mergeWithFhir(cloudData.immunizations, fhirEntities?.immunizations);
         totalRestored += await restoreTable(immToRestore, db.immunizations, 'immunizations');
 
+        const diagToRestore = mergeWithFhir(cloudData.diagnosticReports, fhirEntities?.diagnosticReports);
+        totalRestored += await restoreTable(diagToRestore, db.diagnosticReports, 'diagnosticReports');
+
         if (legacyReadingTombstones.length > 0) {
           await db.syncTombstones.bulkPut(legacyReadingTombstones);
         }

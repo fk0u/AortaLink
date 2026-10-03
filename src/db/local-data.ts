@@ -20,7 +20,8 @@ const AUTO_INCREMENT_TABLES: ReadonlySet<SyncedTableName> = new Set<SyncedTableN
   'medicationLogs',
   'labResults',
   'ascvdProfiles',
-  'clinicalNotes'
+  'clinicalNotes',
+  'diagnosticReports'
 ]);
 
 /** Tables that every fresh database gets seeded with; they are not "user data". */

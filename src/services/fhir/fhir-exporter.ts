@@ -14,7 +14,11 @@ import type {
   ImmunizationItem,
   FhirCondition,
   FhirFamilyMemberHistory,
-  FhirImmunization
+  FhirImmunization,
+  DiagnosticReportItem,
+  FhirDiagnosticReport,
+  AorticMeasurements,
+  ImagingModality
 } from '../../types/blood-pressure.ts';
 import { classifyBP } from '../../utils/bp-classifier.ts';
 
@@ -26,7 +30,8 @@ export interface FHIRBundleEntry {
     | FhirMedicationRequest
     | FhirCondition
     | FhirFamilyMemberHistory
-    | FhirImmunization;
+    | FhirImmunization
+    | FhirDiagnosticReport;
 }
 
 export interface FHIRBundleResource {
@@ -395,6 +400,24 @@ export function convertLabResultToFHIR(lab: LabResult, profile?: Profile): FhirO
   if (lab.eGfr !== undefined) {
     obsList.push(createLabObs('egfr', '33914-3', 'Glomerular filtration rate/1.73 sq M.predicted', 'eGFR', lab.eGfr, 'mL/min/1.73m2', 'mL/min/{1.73_m2}'));
   }
+  if (lab.dDimer !== undefined) {
+    const loinc = lab.dDimerLoinc || '48065-7';
+    const unit = lab.dDimerUnit || 'ug/mL';
+    obsList.push(createLabObs('ddimer', loinc, 'Fibrin D-dimer FEU [Mass/volume] in Platelet poor plasma', `D-dimer (${lab.dDimerType || 'FEU'})`, lab.dDimer, unit, unit));
+  }
+  if (lab.troponinI !== undefined) {
+    const loinc = lab.troponinLoinc || '89579-7';
+    const unit = lab.troponinUnit || 'ng/mL';
+    obsList.push(createLabObs('trop-i', loinc, 'Troponin I.cardiac [Mass/volume] in Serum or Plasma', 'Troponin I', lab.troponinI, unit, unit));
+  }
+  if (lab.troponinT !== undefined) {
+    const loinc = lab.troponinLoinc || '6598-7';
+    const unit = lab.troponinUnit || 'ng/mL';
+    obsList.push(createLabObs('trop-t', loinc, 'Troponin T.cardiac [Mass/volume] in Serum or Plasma', 'Troponin T', lab.troponinT, unit, unit));
+  }
+  if (lab.hsCrp !== undefined) {
+    obsList.push(createLabObs('hscrp', '30522-7', 'C reactive protein [Mass/volume] in Serum or Plasma by High sensitivity method', 'hs-CRP', lab.hsCrp, 'mg/L', 'mg/L'));
+  }
 
   return obsList;
 }
@@ -603,9 +626,22 @@ export function labResultFromFHIR(observations: FhirObservation[]): LabResult {
   let potassium: number | undefined;
   let sodium: number | undefined;
   let eGfr: number | undefined;
+  let dDimer: number | undefined;
+  let dDimerUnit: 'ug/mL' | 'ng/mL' | 'mg/L' | undefined;
+  let dDimerLoinc: string | undefined;
+  let troponinI: number | undefined;
+  let troponinT: number | undefined;
+  let troponinUnit: 'ng/mL' | 'pg/mL' | 'ng/L' | undefined;
+  let troponinLoinc: string | undefined;
+  let hsCrp: number | undefined;
+  let sourceLabCodes: Record<string, string> | undefined;
   let timestamp = new Date().toISOString();
   let profileId = '';
   let id: number | undefined;
+
+  const dDimerCodes = ['48065-7', '55398-2', '48066-5', '48067-3', '7799-0'];
+  const tropICodes = ['89579-7', '10839-9', '42757-5'];
+  const tropTCodes = ['6598-7', '67151-1'];
 
   for (const obs of observations) {
     if (!profileId && obs.subject?.reference) {
@@ -642,6 +678,29 @@ export function labResultFromFHIR(observations: FhirObservation[]): LabResult {
     else if (code === '2823-3') potassium = val;
     else if (code === '2951-2') sodium = val;
     else if (code === '33914-3' || code === '48642-3' || code === '48643-1') eGfr = val;
+    else if (code && dDimerCodes.includes(code)) {
+      dDimer = rawVal;
+      dDimerLoinc = code;
+      dDimerUnit = (obs.valueQuantity?.unit as any) || 'ug/mL';
+      if (!sourceLabCodes) sourceLabCodes = {};
+      sourceLabCodes.dDimer = code;
+    } else if (code && tropICodes.includes(code)) {
+      troponinI = rawVal;
+      troponinLoinc = code;
+      troponinUnit = (obs.valueQuantity?.unit as any) || 'ng/mL';
+      if (!sourceLabCodes) sourceLabCodes = {};
+      sourceLabCodes.troponinI = code;
+    } else if (code && tropTCodes.includes(code)) {
+      troponinT = rawVal;
+      troponinLoinc = code;
+      troponinUnit = (obs.valueQuantity?.unit as any) || 'ng/mL';
+      if (!sourceLabCodes) sourceLabCodes = {};
+      sourceLabCodes.troponinT = code;
+    } else if (code === '30522-7') {
+      hsCrp = rawVal;
+      if (!sourceLabCodes) sourceLabCodes = {};
+      sourceLabCodes.hsCrp = code;
+    }
   }
 
   return {
@@ -659,7 +718,12 @@ export function labResultFromFHIR(observations: FhirObservation[]): LabResult {
     ...(hba1c !== undefined ? { hba1c } : {}),
     ...(potassium !== undefined ? { potassium } : {}),
     ...(sodium !== undefined ? { sodium } : {}),
-    ...(eGfr !== undefined ? { eGfr } : {})
+    ...(eGfr !== undefined ? { eGfr } : {}),
+    ...(dDimer !== undefined ? { dDimer, dDimerUnit, dDimerLoinc } : {}),
+    ...(troponinI !== undefined ? { troponinI, troponinUnit, troponinLoinc } : {}),
+    ...(troponinT !== undefined ? { troponinT, troponinUnit, troponinLoinc } : {}),
+    ...(hsCrp !== undefined ? { hsCrp } : {}),
+    ...(sourceLabCodes ? { sourceLabCodes } : {})
   };
 }
 
@@ -1306,6 +1370,237 @@ export function convertSocialHistoryToFHIR(profile: Profile): FhirObservation[] 
   return obsList;
 }
 
+/**
+ * Convert DiagnosticReportItem (Imaging/Complex tests) to HL7 FHIR R4 DiagnosticReport & Observations.
+ */
+export function convertDiagnosticReportToFHIR(
+  report: DiagnosticReportItem,
+  profile?: Profile
+): [FhirDiagnosticReport, ...FhirObservation[]] {
+  const patientId = toValidUuid(report.profileId || profile?.id || 'default-patient', 'patient');
+  const reportUuid = toValidUuid(report.id ? `diag-${report.id}` : (report.syncId || `diag-${report.effectiveDateTime || Date.now()}`), 'diag');
+  const observations: FhirObservation[] = [];
+  const resultRefs: Array<{ reference: string; display?: string }> = [];
+
+  // If measurements are present, generate standard Observations for each measured segment
+  const m = report.measurements || report.aorticMeasurements;
+  if (m) {
+    const createAortaObs = (subId: string, loinc: string, display: string, val: number): FhirObservation => {
+      const obsId = toValidUuid(`${reportUuid}-${subId}`, 'obs-aorta');
+      resultRefs.push({ reference: `urn:uuid:${obsId}`, display: `${display}: ${val} mm` });
+      return {
+        resourceType: 'Observation',
+        id: obsId,
+        meta: { profile: ['http://hl7.org/fhir/StructureDefinition/Observation'] },
+        status: 'final',
+        category: [
+          {
+            coding: [
+              {
+                system: 'http://terminology.hl7.org/CodeSystem/observation-category',
+                code: 'imaging',
+                display: 'Imaging'
+              }
+            ]
+          }
+        ],
+        code: {
+          coding: [{ system: 'http://loinc.org', code: loinc, display }],
+          text: display
+        },
+        subject: { reference: `urn:uuid:${patientId}`, display: profile?.name || 'Patient' },
+        effectiveDateTime: report.effectiveDateTime,
+        valueQuantity: {
+          value: val,
+          unit: 'mm',
+          system: 'http://unitsofmeasure.org',
+          code: 'mm'
+        }
+      };
+    };
+
+    const rootVal = m.rootDiameterMm ?? m.aorticRoot;
+    const ascVal = m.ascendingAortaMm ?? m.ascendingAorta;
+    const archVal = m.aorticArchMm ?? m.aorticArch;
+    const descVal = m.descendingAortaMm ?? m.descendingAorta;
+    const abdVal = m.abdominalAortaMm ?? m.abdominalAorta;
+    const maxVal = m.maxDiameterMm ?? m.maxDiameter;
+
+    if (rootVal !== undefined) {
+      observations.push(createAortaObs('root', '18015-8', 'Aortic root diameter', rootVal));
+    }
+    if (ascVal !== undefined) {
+      observations.push(createAortaObs('asc', '79549-2', 'Ascending aorta diameter', ascVal));
+    }
+    if (archVal !== undefined) {
+      observations.push(createAortaObs('arch', '79547-6', 'Aortic arch diameter', archVal));
+    }
+    if (descVal !== undefined) {
+      observations.push(createAortaObs('desc', '79546-8', 'Descending aorta diameter', descVal));
+    }
+    if (abdVal !== undefined) {
+      observations.push(createAortaObs('abd', '79548-4', 'Abdominal aorta diameter', abdVal));
+    }
+    if (maxVal !== undefined) {
+      observations.push(createAortaObs('max', '93656-7', 'Maximum aortic diameter', maxVal));
+    }
+  }
+
+  const categoryCode = report.category === 'LAB' ? 'LAB' : report.category === 'CARD' ? 'CARD' : 'RAD';
+  const categoryDisplay = report.category === 'LAB' ? 'Laboratory' : report.category === 'CARD' ? 'Cardiology' : 'Radiology';
+
+  const fhirReport: FhirDiagnosticReport = {
+    resourceType: 'DiagnosticReport',
+    id: reportUuid,
+    meta: {
+      profile: ['http://hl7.org/fhir/StructureDefinition/DiagnosticReport'],
+      ...(report.createdAt ? { lastUpdated: report.createdAt } : {})
+    },
+    identifier: [
+      ...(report.id !== undefined
+        ? [{ system: 'http://aortalink.app/fhir/identifier/diagnostic-report-id', value: String(report.id) }]
+        : []),
+      ...(report.syncId
+        ? [{ system: 'http://aortalink.app/fhir/identifier/sync-id', value: report.syncId }]
+        : [])
+    ],
+    status: 'final',
+    category: [
+      {
+        coding: [
+          {
+            system: 'http://terminology.hl7.org/CodeSystem/v2-0074',
+            code: categoryCode,
+            display: categoryDisplay
+          }
+        ]
+      }
+    ],
+    code: {
+      coding: [
+        {
+          system: 'http://loinc.org',
+          code: report.code || '36642-7',
+          display: report.codeDisplay || 'Imaging Aorta'
+        }
+      ],
+      text: report.codeDisplay || 'Imaging Aorta'
+    },
+    subject: {
+      reference: `urn:uuid:${patientId}`,
+      display: profile?.name || 'Patient'
+    },
+    effectiveDateTime: report.effectiveDateTime,
+    issued: report.createdAt || report.effectiveDateTime,
+    ...(report.performerName ? { performer: [{ display: report.performerName }] } : {}),
+    ...(resultRefs.length > 0 ? { result: resultRefs } : {}),
+    conclusion: report.conclusion,
+    ...(report.findings || report.modality
+      ? {
+          extension: [
+            ...(report.findings
+              ? [
+                  {
+                    url: 'http://aortalink.app/fhir/StructureDefinition/imaging-findings',
+                    valueString: report.findings
+                  }
+                ]
+              : []),
+            ...(report.modality
+              ? [
+                  {
+                    url: 'http://aortalink.app/fhir/StructureDefinition/imaging-modality',
+                    valueString: report.modality
+                  }
+                ]
+              : [])
+          ]
+        }
+      : {})
+  };
+
+  return [fhirReport, ...observations];
+}
+
+/**
+ * Reconstitute DiagnosticReportItem from FHIR DiagnosticReport and referenced Observations.
+ */
+export function diagnosticReportFromFHIR(
+  report: FhirDiagnosticReport,
+  referencedObservations: FhirObservation[] = []
+): DiagnosticReportItem {
+  let profileId = '';
+  if (report.subject?.reference) {
+    const ref = report.subject.reference;
+    profileId = ref.startsWith('urn:uuid:') ? ref.replace('urn:uuid:', '') : ref.replace(/^Patient\//, '');
+  }
+
+  const idIdent = report.identifier?.find((i) => i.system === 'http://aortalink.app/fhir/identifier/diagnostic-report-id')?.value;
+  const syncIdent = report.identifier?.find((i) => i.system === 'http://aortalink.app/fhir/identifier/sync-id')?.value;
+  const id = idIdent && /^\d+$/.test(idIdent) ? Number(idIdent) : undefined;
+
+  let modality: ImagingModality | 'LAB' = 'CTA';
+  let findings: string | undefined;
+
+  for (const ext of report.extension || []) {
+    if (ext.url?.endsWith('imaging-modality')) modality = ext.valueString as any;
+    else if (ext.url?.endsWith('imaging-findings')) findings = ext.valueString;
+  }
+
+  const display = (report.code?.text || report.code?.coding?.[0]?.display || '').toLowerCase();
+  if (!findings && !report.extension?.some((e) => e.url?.endsWith('imaging-modality'))) {
+    if (display.includes('echo') || display.includes('ultrasound') || display.includes('usg')) modality = 'ECHO';
+    else if (display.includes('x-ray') || display.includes('rontgen') || display.includes('radiograph')) modality = 'XRAY';
+    else if (display.includes('mri') || display.includes('magnetic')) modality = 'MRI';
+    else if (display.includes('ct') || display.includes('cta')) modality = 'CTA';
+  }
+
+  const aorticMeasurements: AorticMeasurements = {};
+  for (const obs of referencedObservations) {
+    const code = obs.code?.coding?.find((c) => c.system === 'http://loinc.org')?.code || obs.code?.coding?.[0]?.code;
+    const val = obs.valueQuantity?.value;
+    if (val !== undefined && val !== null) {
+      if (code === '18015-8') {
+        aorticMeasurements.aorticRoot = val;
+        aorticMeasurements.rootDiameterMm = val;
+      } else if (code === '79549-2') {
+        aorticMeasurements.ascendingAorta = val;
+        aorticMeasurements.ascendingAortaMm = val;
+      } else if (code === '79547-6') {
+        aorticMeasurements.aorticArch = val;
+        aorticMeasurements.aorticArchMm = val;
+      } else if (code === '79546-8') {
+        aorticMeasurements.descendingAorta = val;
+        aorticMeasurements.descendingAortaMm = val;
+      } else if (code === '79548-4') {
+        aorticMeasurements.abdominalAorta = val;
+        aorticMeasurements.abdominalAortaMm = val;
+      } else if (code === '93656-7') {
+        aorticMeasurements.maxDiameter = val;
+        aorticMeasurements.maxDiameterMm = val;
+      }
+    }
+  }
+
+  const hasMeasurements = Object.keys(aorticMeasurements).length > 0;
+
+  return {
+    ...(id !== undefined ? { id } : {}),
+    ...(syncIdent ? { syncId: syncIdent } : {}),
+    profileId,
+    effectiveDateTime: report.effectiveDateTime || new Date().toISOString(),
+    modality,
+    code: report.code?.coding?.[0]?.code || '36642-7',
+    codeDisplay: report.code?.coding?.[0]?.display || report.code?.text || 'Imaging Aorta',
+    category: (report.category?.[0]?.coding?.[0]?.code as any) || 'RAD',
+    conclusion: report.conclusion || '',
+    ...(findings ? { findings } : {}),
+    ...(hasMeasurements ? { measurements: aorticMeasurements, aorticMeasurements } : {}),
+    ...(report.performer?.[0]?.display ? { performerName: report.performer[0].display } : {}),
+    createdAt: report.issued || report.meta?.lastUpdated
+  };
+}
+
 export function exportCompleteFHIRBundle(options: {
   profile?: Profile;
   readings?: BPReading[];
@@ -1314,6 +1609,7 @@ export function exportCompleteFHIRBundle(options: {
   conditions?: ConditionItem[];
   familyHistory?: FamilyMemberHistoryItem[];
   immunizations?: ImmunizationItem[];
+  diagnosticReports?: DiagnosticReportItem[];
 }): FHIRBundleResource {
   const {
     profile,
@@ -1322,7 +1618,8 @@ export function exportCompleteFHIRBundle(options: {
     medications = [],
     conditions = [],
     familyHistory = [],
-    immunizations = []
+    immunizations = [],
+    diagnosticReports = []
   } = options;
 
   const entries: FHIRBundleEntry[] = [];
@@ -1422,6 +1719,22 @@ export function exportCompleteFHIRBundle(options: {
       fullUrl: `urn:uuid:${immRes.id}`,
       resource: immRes
     });
+  }
+
+  for (const dr of diagnosticReports) {
+    const [reportRes, ...drObsList] = convertDiagnosticReportToFHIR(dr, profile);
+    reportRes.subject.reference = patientRef;
+    entries.push({
+      fullUrl: `urn:uuid:${reportRes.id}`,
+      resource: reportRes
+    });
+    for (const o of drObsList) {
+      o.subject.reference = patientRef;
+      entries.push({
+        fullUrl: `urn:uuid:${o.id}`,
+        resource: o
+      });
+    }
   }
 
   return {

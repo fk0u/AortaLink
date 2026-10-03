@@ -7,15 +7,18 @@ import {
   convertLabResultToFHIR,
   convertMedicationToFHIR,
   convertProfileToFHIR,
+  convertDiagnosticReportToFHIR,
   exportReadingsToFHIRBundle,
+  exportCompleteFHIRBundle,
   readingFromFHIR,
   labResultFromFHIR,
   medicationFromFHIR,
   profileFromFHIR,
+  diagnosticReportFromFHIR,
   isUuid,
   toValidUuid
 } from '../src/services/fhir/fhir-exporter.ts';
-import type { BPReading, Profile, LabResult, MedicationItem } from '../src/types/blood-pressure.ts';
+import type { BPReading, Profile, LabResult, MedicationItem, DiagnosticReportItem } from '../src/types/blood-pressure.ts';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -103,11 +106,24 @@ const sampleLab: LabResult = {
   timestamp: '2026-09-15T09:00:00.000Z',
   bloodUrea: 32.5,
   serumCreatinine: 1.1,
-  uricAcid: 6.4
+  uricAcid: 6.4,
+  dDimer: 0.35,
+  dDimerUnit: 'ug/mL',
+  dDimerType: 'FEU',
+  dDimerLoinc: '48065-7',
+  troponinI: 12.4,
+  troponinUnit: 'ng/L',
+  troponinLoinc: '89579-7',
+  hsCrp: 1.25,
+  sourceLabCodes: {
+    dDimer: '48065-7',
+    troponin: '89579-7',
+    hsCrp: '30522-7'
+  }
 };
 
 const fhirLabs = convertLabResultToFHIR(sampleLab, sampleProfile);
-assert.equal(fhirLabs.length, 3);
+assert.equal(fhirLabs.length, 6, 'Must generate 6 observations: urea, creatinine, uric, d-dimer, troponin, hs-crp');
 
 // Verify LOINC codes & lack of profileId
 const ureaObs = fhirLabs.find((o) => o.code.coding?.[0]?.code === '3091-6');
@@ -122,11 +138,80 @@ assert.ok(creatObs, 'LOINC 2160-0 for Creatinine must be present');
 const uricObs = fhirLabs.find((o) => o.code.coding?.[0]?.code === '3084-1');
 assert.ok(uricObs, 'LOINC 3084-1 for Urate (Serum or Plasma) must be present');
 
+// Verify D-dimer LOINC 48065-7
+const dDimerObs = fhirLabs.find((o) => o.code.coding?.[0]?.code === '48065-7');
+assert.ok(dDimerObs, 'LOINC 48065-7 for D-dimer FEU must be present');
+assert.equal(dDimerObs!.valueQuantity?.value, 0.35);
+assert.equal(dDimerObs!.valueQuantity?.unit, 'ug/mL');
+
+// Verify Troponin I LOINC 89579-7
+const tropObs = fhirLabs.find((o) => o.code.coding?.[0]?.code === '89579-7');
+assert.ok(tropObs, 'LOINC 89579-7 for hs-cTnI must be present');
+assert.equal(tropObs!.valueQuantity?.value, 12.4);
+assert.equal(tropObs!.valueQuantity?.unit, 'ng/L');
+
+// Verify hs-CRP LOINC 30522-7
+const crpObs = fhirLabs.find((o) => o.code.coding?.[0]?.code === '30522-7');
+assert.ok(crpObs, 'LOINC 30522-7 for hs-CRP must be present');
+assert.equal(crpObs!.valueQuantity?.value, 1.25);
+assert.equal(crpObs!.valueQuantity?.unit, 'mg/L');
+
 const restoredLab = labResultFromFHIR(fhirLabs);
 assert.equal(restoredLab.bloodUrea, sampleLab.bloodUrea);
 assert.equal(restoredLab.serumCreatinine, sampleLab.serumCreatinine);
 assert.equal(restoredLab.uricAcid, sampleLab.uricAcid);
-console.log('✓ LabResult <-> FhirObservation round-trip & LOINC codes passed');
+assert.equal(restoredLab.dDimer, sampleLab.dDimer);
+assert.equal(restoredLab.dDimerUnit, 'ug/mL');
+assert.equal(restoredLab.troponinI, sampleLab.troponinI);
+assert.equal(restoredLab.hsCrp, sampleLab.hsCrp);
+assert.equal(restoredLab.sourceLabCodes?.['dDimer'], '48065-7');
+console.log('✓ LabResult <-> FhirObservation round-trip & Cardiovascular Biomarkers LOINC passed');
+
+// ---------------------------------------------------------------------------
+// 3b. Round-trip Tests: DiagnosticReportItem (Aorta Imaging) <-> FhirDiagnosticReport
+// ---------------------------------------------------------------------------
+const sampleReport: DiagnosticReportItem = {
+  id: 501,
+  syncId: 'report-sync-501',
+  profileId: sampleProfile.id,
+  effectiveDateTime: '2026-09-20T10:30:00.000Z',
+  modality: 'CTA',
+  category: 'cardiovascular',
+  conclusion: 'Ektasia aorta asendens kaliber 38 mm tanpa diseksi intimal flap.',
+  findings: 'Aorta root 34 mm, asendens 38 mm, arcus 29 mm, desendens 27 mm, abdominalis 21 mm.',
+  measurements: {
+    rootDiameterMm: 34,
+    ascendingAortaMm: 38,
+    aorticArchMm: 29,
+    descendingAortaMm: 27,
+    abdominalAortaMm: 21,
+    maxDiameterMm: 38
+  }
+};
+
+const [reportRes, ...drObsList] = convertDiagnosticReportToFHIR(sampleReport, sampleProfile);
+assert.equal(reportRes.resourceType, 'DiagnosticReport');
+assert.equal(reportRes.status, 'final');
+assert.equal(reportRes.code.coding?.[0]?.code, '36642-7', 'CTA Aorta must use LOINC 36642-7');
+assert.equal(reportRes.conclusion, sampleReport.conclusion);
+assert.equal(reportRes.result.length, 6, 'Must link 6 diameter observations');
+assert.equal(drObsList.length, 6, 'Must produce 6 diameter Observation resources');
+
+// Verify diameter observations LOINC & UCUM mm
+const ascObs = drObsList.find((o) => o.code.coding?.[0]?.code === '79549-2');
+assert.ok(ascObs, 'Ascending aorta diameter LOINC 79549-2 must exist');
+assert.equal(ascObs!.valueQuantity?.value, 38);
+assert.equal(ascObs!.valueQuantity?.unit, 'mm');
+assert.equal(ascObs!.valueQuantity?.code, 'mm');
+assert.equal(ascObs!.valueQuantity?.system, 'http://unitsofmeasure.org');
+
+const restoredReport = diagnosticReportFromFHIR(reportRes, drObsList);
+assert.equal(restoredReport.modality, 'CTA');
+assert.equal(restoredReport.conclusion, sampleReport.conclusion);
+assert.equal(restoredReport.measurements?.ascendingAortaMm, 38);
+assert.equal(restoredReport.measurements?.rootDiameterMm, 34);
+assert.equal(restoredReport.measurements?.maxDiameterMm, 38);
+console.log('✓ DiagnosticReportItem <-> FhirDiagnosticReport round-trip & Aortic Diameters passed');
 
 // ---------------------------------------------------------------------------
 // 4. Round-trip Tests: MedicationItem <-> FhirMedicationRequest (RxNorm P1-8)
@@ -254,5 +339,13 @@ async function validateWithHapi(bundleResource: any) {
   }
 }
 
-await validateWithHapi(bundle);
+const fullCompleteBundle = exportCompleteFHIRBundle({
+  profile: sampleProfile,
+  readings: [sampleReading, readingNoExt],
+  labResults: [sampleLab],
+  medications: [amlodipineMed, customMed],
+  diagnosticReports: [sampleReport]
+});
+
+await validateWithHapi(fullCompleteBundle);
 console.log('\n[FHIR Selfcheck] All HL7 FHIR R4 checks passed successfully.');

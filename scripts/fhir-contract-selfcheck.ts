@@ -15,6 +15,7 @@ import type {
   ConditionItem,
   FamilyMemberHistoryItem,
   ImmunizationItem,
+  DiagnosticReportItem,
   FhirObservation
 } from '../src/types/blood-pressure.ts';
 
@@ -74,7 +75,20 @@ const sampleLab: LabResult = {
   hba1c: 5.6,
   serumCreatinine: 1.0,
   bloodUrea: 28,
-  uricAcid: 5.5
+  uricAcid: 5.5,
+  dDimer: 0.42,
+  dDimerUnit: 'ug/mL',
+  dDimerType: 'FEU',
+  dDimerLoinc: '48065-7',
+  troponinI: 14.5,
+  troponinUnit: 'ng/L',
+  troponinLoinc: '89579-7',
+  hsCrp: 1.1,
+  sourceLabCodes: {
+    dDimer: '48065-7',
+    troponin: '89579-7',
+    hsCrp: '30522-7'
+  }
 };
 
 const sampleMed: MedicationItem = {
@@ -122,6 +136,25 @@ const sampleImm: ImmunizationItem = {
   status: 'completed'
 };
 
+const sampleReport: DiagnosticReportItem = {
+  id: 601,
+  syncId: 'report-sync-601',
+  profileId,
+  effectiveDateTime: '2026-03-01T10:00:00.000Z',
+  modality: 'CTA',
+  category: 'cardiovascular',
+  conclusion: 'Ektasia aorta asendens ringan 38 mm.',
+  findings: 'Root 33 mm, asendens 38 mm, arcus 28 mm, desendens 26 mm, abdominalis 20 mm.',
+  measurements: {
+    rootDiameterMm: 33,
+    ascendingAortaMm: 38,
+    aorticArchMm: 28,
+    descendingAortaMm: 26,
+    abdominalAortaMm: 20,
+    maxDiameterMm: 38
+  }
+};
+
 const snapshot: ClinicalEntitiesSnapshot = {
   profiles: [sampleProfile],
   readings: [sampleReading],
@@ -129,7 +162,8 @@ const snapshot: ClinicalEntitiesSnapshot = {
   medications: [sampleMed],
   conditions: [sampleCondition],
   familyHistory: [sampleFamily],
-  immunizations: [sampleImm]
+  immunizations: [sampleImm],
+  diagnosticReports: [sampleReport]
 };
 
 // ---------------------------------------------------------------------------
@@ -235,6 +269,19 @@ assert.equal(rImm.vaccineCode, sampleImm.vaccineCode);
 assert.equal(rImm.cvxCode, sampleImm.cvxCode);
 console.log('✓ ImmunizationItem round-trip passed');
 
+assert.equal(restored.diagnosticReports?.length, 1);
+const rReport = restored.diagnosticReports![0];
+assert.equal(rReport.modality, 'CTA');
+assert.equal(rReport.conclusion, sampleReport.conclusion);
+assert.equal(rReport.measurements?.ascendingAortaMm, 38);
+assert.equal(rReport.measurements?.rootDiameterMm, 33);
+assert.equal(rReport.measurements?.maxDiameterMm, 38);
+assert.equal(restored.labResults?.length, 1, 'Aorta diameter observations must NOT pollute labResults table');
+assert.equal(restored.labResults![0].dDimer, 0.42);
+assert.equal(restored.labResults![0].troponinI, 14.5);
+assert.equal(restored.labResults![0].hsCrp, 1.1);
+console.log('✓ DiagnosticReportItem & Biomarkers round-trip (with segmented diameter observations) passed');
+
 // ---------------------------------------------------------------------------
 // 5. Test direct fhirTableAdapters
 // ---------------------------------------------------------------------------
@@ -245,7 +292,8 @@ assert.ok(fhirTableAdapters.medications);
 assert.ok(fhirTableAdapters.conditions);
 assert.ok(fhirTableAdapters.familyHistory);
 assert.ok(fhirTableAdapters.immunizations);
-console.log('✓ fhirTableAdapters registry verified');
+assert.ok(fhirTableAdapters.diagnosticReports);
+console.log('✓ fhirTableAdapters registry verified (including diagnosticReports)');
 
 // ---------------------------------------------------------------------------
 // 5b. Specialized Contract Edge Case Tests
