@@ -241,7 +241,13 @@ export interface BackupDataFormat {
   medications?: MedicationItem[];
   medicationLogs?: MedicationLog[];
   labResults?: LabResult[];
+  conditions?: ConditionItem[];
+  familyHistory?: FamilyMemberHistoryItem[];
+  immunizations?: ImmunizationItem[];
+  fhirBundle?: any;
+  /** @deprecated ADR 002: Replaced by fhirBundle & fhir-contract-adapters */
   fhirPatients?: FhirPatient[];
+  /** @deprecated ADR 002: Replaced by fhirBundle & fhir-contract-adapters */
   fhirObservations?: FhirObservation[];
 }
 

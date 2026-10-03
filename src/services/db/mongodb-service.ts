@@ -1,6 +1,7 @@
 import { db, NOTES_ENCODING_RAW, withSyncMetadataSuppressed, type SyncTombstone } from '../../db';
 import { decodeLegacyEscapedText } from '../../security/sanitizer';
 import { useAppStore } from '../../store/useAppStore';
+import { entitiesToFhirBundle, fhirBundleToEntities } from '../fhir/fhir-contract-adapters';
 
 export interface SyncPushResult {
   success: boolean;
@@ -51,7 +52,8 @@ export class MongoDbAtlasService {
   }
 
   /**
-   * Push ALL 14 local Dexie.js records & userSettings to MongoDB Atlas Cloud Cluster
+   * Push ALL local Dexie.js records & userSettings to MongoDB Atlas Cloud Cluster
+   * Packages clinical data into a standardized HL7 FHIR R4 Bundle (ADR 002)
    */
   public async pushUserData(): Promise<SyncPushResult> {
     try {
@@ -77,10 +79,6 @@ export class MongoDbAtlasService {
         gamification,
         profiles,
         reminders,
-        fhirPatients,
-        fhirObservations,
-        fhirMedicationRequests,
-        fhirMedicationStatements,
         ascvdProfiles,
         clinicalNotes,
         conditions,
@@ -97,16 +95,23 @@ export class MongoDbAtlasService {
         db.gamification.toArray(),
         db.profiles.toArray(),
         db.reminders.toArray(),
-        db.fhirPatients.toArray(),
-        db.fhirObservations.toArray(),
-        db.fhirMedicationRequests.toArray(),
-        db.fhirMedicationStatements.toArray(),
         db.ascvdProfiles.toArray(),
         db.clinicalNotes.toArray(),
         db.conditions.toArray(),
         db.familyHistory.toArray(),
         db.immunizations.toArray()
       ]);
+
+      // Package clinical data into canonical HL7 FHIR R4 Bundle (ADR 002)
+      const fhirBundle = entitiesToFhirBundle({
+        profiles,
+        readings,
+        labResults,
+        medications,
+        conditions,
+        familyHistory,
+        immunizations
+      });
 
       // Deletions recorded since the last successful push must travel too,
       // or they would resurrect on other devices.
@@ -126,6 +131,17 @@ export class MongoDbAtlasService {
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
+          fhirBundle,
+          appState: {
+            reminders,
+            habits,
+            sodiumLogs,
+            sleepLogs,
+            gamification,
+            ascvdProfiles,
+            clinicalNotes,
+            userSettings
+          },
           readings,
           medications,
           medicationLogs,
@@ -136,10 +152,6 @@ export class MongoDbAtlasService {
           gamification,
           profiles,
           reminders,
-          fhirPatients,
-          fhirObservations,
-          fhirMedicationRequests,
-          fhirMedicationStatements,
           ascvdProfiles,
           clinicalNotes,
           conditions,
@@ -310,35 +322,61 @@ export class MongoDbAtlasService {
           }
         }
 
-        totalRestored += await restoreTable(cloudData.profiles, db.profiles, 'profiles');
-        // UUID readings first, so a legacy numeric copy finds its migrated
-        // twin locally instead of being rekeyed into a duplicate.
-        const cloudReadings: any[] = Array.isArray(cloudData.readings) ? cloudData.readings : [];
+        // Prioritize FHIR R4 Bundle for restoring clinical entities (ADR 002)
+        const hasFhirBundle = Boolean(data.fhirBundle && data.fhirBundle.resourceType === 'Bundle');
+        const fhirEntities = hasFhirBundle ? fhirBundleToEntities(data.fhirBundle) : null;
+
+        const profilesToRestore = (fhirEntities?.profiles && fhirEntities.profiles.length > 0)
+          ? fhirEntities.profiles
+          : (Array.isArray(cloudData.profiles) ? cloudData.profiles : []);
+        totalRestored += await restoreTable(profilesToRestore, db.profiles, 'profiles');
+
+        const readingsToRestore = (fhirEntities?.readings && fhirEntities.readings.length > 0)
+          ? fhirEntities.readings
+          : (Array.isArray(cloudData.readings) ? cloudData.readings : []);
         totalRestored += await restoreTable(
           [
-            ...cloudReadings.filter((r) => typeof r?.id === 'string'),
-            ...cloudReadings.filter((r) => typeof r?.id !== 'string')
+            ...readingsToRestore.filter((r: any) => typeof r?.id === 'string'),
+            ...readingsToRestore.filter((r: any) => typeof r?.id !== 'string')
           ],
           db.readings,
           'readings'
         );
-        totalRestored += await restoreTable(cloudData.medications, db.medications, 'medications');
+
+        const medsToRestore = (fhirEntities?.medications && fhirEntities.medications.length > 0)
+          ? fhirEntities.medications
+          : (Array.isArray(cloudData.medications) ? cloudData.medications : []);
+        totalRestored += await restoreTable(medsToRestore, db.medications, 'medications');
+
         totalRestored += await restoreTable(cloudData.medicationLogs, db.medicationLogs, 'medicationLogs');
-        totalRestored += await restoreTable(cloudData.labResults, db.labResults, 'labResults');
+
+        const labsToRestore = (fhirEntities?.labResults && fhirEntities.labResults.length > 0)
+          ? fhirEntities.labResults
+          : (Array.isArray(cloudData.labResults) ? cloudData.labResults : []);
+        totalRestored += await restoreTable(labsToRestore, db.labResults, 'labResults');
+
         totalRestored += await restoreTable(cloudData.habits, db.habits, 'habits');
         totalRestored += await restoreTable(cloudData.sodiumLogs, db.sodiumLogs, 'sodiumLogs');
         totalRestored += await restoreTable(cloudData.sleepLogs, db.sleepLogs, 'sleepLogs');
         totalRestored += await restoreTable(cloudData.gamification, db.gamification, 'gamification');
         totalRestored += await restoreTable(cloudData.reminders, db.reminders, 'reminders');
-        totalRestored += await restoreTable(cloudData.fhirPatients, db.fhirPatients, 'fhirPatients');
-        totalRestored += await restoreTable(cloudData.fhirObservations, db.fhirObservations, 'fhirObservations');
-        totalRestored += await restoreTable(cloudData.fhirMedicationRequests, db.fhirMedicationRequests, 'fhirMedicationRequests');
-        totalRestored += await restoreTable(cloudData.fhirMedicationStatements, db.fhirMedicationStatements, 'fhirMedicationStatements');
         totalRestored += await restoreTable(cloudData.ascvdProfiles, db.ascvdProfiles, 'ascvdProfiles');
         totalRestored += await restoreTable(cloudData.clinicalNotes, db.clinicalNotes, 'clinicalNotes');
-        totalRestored += await restoreTable(cloudData.conditions, db.conditions, 'conditions');
-        totalRestored += await restoreTable(cloudData.familyHistory, db.familyHistory, 'familyHistory');
-        totalRestored += await restoreTable(cloudData.immunizations, db.immunizations, 'immunizations');
+
+        const condsToRestore = (fhirEntities?.conditions && fhirEntities.conditions.length > 0)
+          ? fhirEntities.conditions
+          : (Array.isArray(cloudData.conditions) ? cloudData.conditions : []);
+        totalRestored += await restoreTable(condsToRestore, db.conditions, 'conditions');
+
+        const famToRestore = (fhirEntities?.familyHistory && fhirEntities.familyHistory.length > 0)
+          ? fhirEntities.familyHistory
+          : (Array.isArray(cloudData.familyHistory) ? cloudData.familyHistory : []);
+        totalRestored += await restoreTable(famToRestore, db.familyHistory, 'familyHistory');
+
+        const immToRestore = (fhirEntities?.immunizations && fhirEntities.immunizations.length > 0)
+          ? fhirEntities.immunizations
+          : (Array.isArray(cloudData.immunizations) ? cloudData.immunizations : []);
+        totalRestored += await restoreTable(immToRestore, db.immunizations, 'immunizations');
 
         if (legacyReadingTombstones.length > 0) {
           await db.syncTombstones.bulkPut(legacyReadingTombstones);
@@ -426,10 +464,6 @@ const TABLE_NAME_TO_DB: Record<string, { get: (key: any) => Promise<any>; delete
   sleepLogs: db.sleepLogs,
   gamification: db.gamification,
   reminders: db.reminders,
-  fhirPatients: db.fhirPatients,
-  fhirObservations: db.fhirObservations,
-  fhirMedicationRequests: db.fhirMedicationRequests,
-  fhirMedicationStatements: db.fhirMedicationStatements,
   ascvdProfiles: db.ascvdProfiles,
   clinicalNotes: db.clinicalNotes,
   conditions: db.conditions,

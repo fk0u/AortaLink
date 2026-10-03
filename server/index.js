@@ -333,6 +333,8 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
 
     const userId = req.user.id;
     const {
+      fhirBundle = null,
+      appState = null,
       readings = [],
       medications = [],
       medicationLogs = [],
@@ -343,10 +345,6 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       gamification = [],
       profiles = [],
       reminders = [],
-      fhirPatients = [],
-      fhirObservations = [],
-      fhirMedicationRequests = [],
-      fhirMedicationStatements = [],
       ascvdProfiles = [],
       clinicalNotes = [],
       conditions = [],
@@ -355,6 +353,15 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       tombstones = [],
       userSettings = null
     } = req.body;
+
+    // Save canonical FHIR R4 Bundle if provided (ADR 002)
+    if (fhirBundle && fhirBundle.resourceType === 'Bundle') {
+      await activeDb.collection('fhir_bundles').updateOne(
+        { userId },
+        { $set: { userId, bundle: fhirBundle, clientUpdatedAt: new Date().toISOString() } },
+        { upsert: true }
+      );
+    }
 
     let totalSynced = 0;
     let conflictSkipped = 0;
@@ -438,10 +445,6 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       upsertCollection('gamification', gamification, 'gamification'),
       upsertCollection('profiles', profiles, 'profiles'),
       upsertCollection('reminders', reminders, 'reminders'),
-      upsertCollection('fhir_patients', fhirPatients, 'fhirPatients'),
-      upsertCollection('fhir_observations', fhirObservations, 'fhirObservations'),
-      upsertCollection('fhir_medication_requests', fhirMedicationRequests, 'fhirMedicationRequests'),
-      upsertCollection('fhir_medication_statements', fhirMedicationStatements, 'fhirMedicationStatements'),
       upsertCollection('ascvd_profiles', ascvdProfiles, 'ascvdProfiles'),
       upsertCollection('clinical_notes', clinicalNotes, 'clinicalNotes'),
       upsertCollection('conditions', conditions, 'conditions'),
@@ -467,10 +470,6 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       gamification: 'gamification',
       profiles: 'profiles',
       reminders: 'reminders',
-      fhirPatients: 'fhir_patients',
-      fhirObservations: 'fhir_observations',
-      fhirMedicationRequests: 'fhir_medication_requests',
-      fhirMedicationStatements: 'fhir_medication_statements',
       ascvdProfiles: 'ascvd_profiles',
       clinicalNotes: 'clinical_notes',
       conditions: 'conditions',
@@ -551,17 +550,14 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
       gamification,
       profiles,
       reminders,
-      fhirPatients,
-      fhirObservations,
-      fhirMedicationRequests,
-      fhirMedicationStatements,
       ascvdProfiles,
       clinicalNotes,
       conditions,
       familyHistory,
       immunizations,
       tombstones,
-      userSettingsDoc
+      userSettingsDoc,
+      fhirBundleDoc
     ] = await Promise.all([
       activeDb.collection('observations').find({ userId }).toArray(),
       activeDb.collection('medications').find({ userId }).toArray(),
@@ -573,17 +569,14 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
       activeDb.collection('gamification').find({ userId }).toArray(),
       activeDb.collection('profiles').find({ userId }).toArray(),
       activeDb.collection('reminders').find({ userId }).toArray(),
-      activeDb.collection('fhir_patients').find({ userId }).toArray(),
-      activeDb.collection('fhir_observations').find({ userId }).toArray(),
-      activeDb.collection('fhir_medication_requests').find({ userId }).toArray(),
-      activeDb.collection('fhir_medication_statements').find({ userId }).toArray(),
       activeDb.collection('ascvd_profiles').find({ userId }).toArray(),
       activeDb.collection('clinical_notes').find({ userId }).toArray(),
       activeDb.collection('conditions').find({ userId }).toArray(),
       activeDb.collection('family_history').find({ userId }).toArray(),
       activeDb.collection('immunizations').find({ userId }).toArray(),
       activeDb.collection('tombstones').find({ userId }, { projection: { _id: 0, userId: 0 } }).toArray(),
-      activeDb.collection('user_settings').findOne({ userId })
+      activeDb.collection('user_settings').findOne({ userId }),
+      activeDb.collection('fhir_bundles').findOne({ userId })
     ]);
 
     const totalCount =
@@ -597,10 +590,6 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
       gamification.length +
       profiles.length +
       reminders.length +
-      fhirPatients.length +
-      fhirObservations.length +
-      fhirMedicationRequests.length +
-      fhirMedicationStatements.length +
       ascvdProfiles.length +
       clinicalNotes.length +
       conditions.length +
@@ -610,6 +599,18 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
 
     return res.json({
       success: true,
+      fhirBundle: fhirBundleDoc?.bundle || null,
+      appState: {
+        reminders,
+        habits,
+        sodiumLogs,
+        sleepLogs,
+        gamification,
+        ascvdProfiles,
+        clinicalNotes,
+        userSettings: userSettingsDoc || null
+      },
+      tombstones,
       data: {
         readings,
         medications,
@@ -621,10 +622,6 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
         gamification,
         profiles,
         reminders,
-        fhirPatients,
-        fhirObservations,
-        fhirMedicationRequests,
-        fhirMedicationStatements,
         ascvdProfiles,
         clinicalNotes,
         conditions,

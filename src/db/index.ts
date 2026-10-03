@@ -14,11 +14,11 @@ export class AortaLinkDatabase extends Dexie {
   medications!: Table<MedicationItem, number>;
   labResults!: Table<LabResult, number>;
 
-  // HL7 FHIR R4 Core Stores
-  fhirPatients!: Table<FhirPatient, string>;
-  fhirObservations!: Table<FhirObservation, string>;
-  fhirMedicationRequests!: Table<FhirMedicationRequest, string>;
-  fhirMedicationStatements!: Table<FhirMedicationStatement, string>;
+  // HL7 FHIR R4 Legacy Intermediate Stores (Deprecated in v12 per ADR 002)
+  fhirPatients?: Table<FhirPatient, string>;
+  fhirObservations?: Table<FhirObservation, string>;
+  fhirMedicationRequests?: Table<FhirMedicationRequest, string>;
+  fhirMedicationStatements?: Table<FhirMedicationStatement, string>;
 
   // V7: Clinical Features
   ascvdProfiles!: Table<AscvdProfile, number>;
@@ -178,6 +178,16 @@ export class AortaLinkDatabase extends Dexie {
       familyHistory: 'id, profileId, relationship, recordedDate',
       immunizations: 'id, profileId, vaccineCode, occurrenceDateTime'
     });
+
+    // Version 12: ADR 002 — Drop legacy intermediate FHIR cache tables.
+    // Canonical FHIR resources are generated dynamically on-demand at system boundaries
+    // via fhir-contract-adapters.
+    this.version(12).stores({
+      fhirPatients: null,
+      fhirObservations: null,
+      fhirMedicationRequests: null,
+      fhirMedicationStatements: null
+    });
   }
 }
 
@@ -226,10 +236,6 @@ export const SYNCED_TABLES = [
   'medications',
   'medicationLogs',
   'labResults',
-  'fhirPatients',
-  'fhirObservations',
-  'fhirMedicationRequests',
-  'fhirMedicationStatements',
   'ascvdProfiles',
   'clinicalNotes',
   'conditions',
@@ -350,10 +356,6 @@ export async function clearLocalEhrDatabase() {
         db.medicationLogs.clear(),
         db.medications.clear(),
         db.labResults.clear(),
-        db.fhirPatients.clear(),
-        db.fhirObservations.clear(),
-        db.fhirMedicationRequests.clear(),
-        db.fhirMedicationStatements.clear(),
         db.ascvdProfiles.clear(),
         db.clinicalNotes.clear(),
         db.conditions.clear(),
@@ -368,7 +370,7 @@ export async function clearLocalEhrDatabase() {
 }
 
 /**
- * Initialize fresh database with default profile, clinical medication regimen, and FHIR R4 seeds.
+ * Initialize fresh database with default profile and gamification state.
  */
 export async function seedInitialData(customName?: string) {
   const defaultProfileId = 'profile-self-default';
@@ -402,26 +404,5 @@ export async function seedInitialData(customName?: string) {
     });
   }
 
-  // Note: Medications start empty so each user enters their own real medical regimen.
-
-  // Inject default FHIR Patient Resource
-  const fhirPatientCount = await db.fhirPatients.count();
-  if (fhirPatientCount === 0) {
-    const defaultFhirPatient: FhirPatient = {
-      resourceType: 'Patient',
-      id: defaultProfileId,
-      meta: {
-        lastUpdated: new Date().toISOString(),
-        profile: ['http://hl7.org/fhir/StructureDefinition/Patient']
-      },
-      active: true,
-      name: [{
-        use: 'official',
-        text: customName || 'Saya',
-        family: 'Pengguna',
-        given: ['AortaLink']
-      }]
-    };
-    await db.fhirPatients.put(defaultFhirPatient);
-  }
+  // Note: Medications and clinical records start empty so each user enters their own real medical regimen.
 }

@@ -292,6 +292,123 @@ export function convertLabResultToFHIR(lab: LabResult, profile?: Profile): FhirO
     });
   }
 
+  if (lab.totalCholesterol !== undefined) {
+    obsList.push({
+      resourceType: 'Observation',
+      id: toValidUuid(lab.id ? `${lab.id}-chol` : `${Date.now()}-chol`, 'obs-chol'),
+      status: 'final',
+      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
+      code: { coding: [{ system: 'http://loinc.org', code: '2093-3', display: 'Cholesterol [Mass/volume] in Serum or Plasma' }], text: 'Kolesterol Total' },
+      subject: subjectRef,
+      effectiveDateTime: lab.timestamp,
+      valueQuantity: { value: lab.totalCholesterol, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }
+    });
+  }
+
+  if (lab.ldlCholesterol !== undefined) {
+    obsList.push({
+      resourceType: 'Observation',
+      id: toValidUuid(lab.id ? `${lab.id}-ldl` : `${Date.now()}-ldl`, 'obs-ldl'),
+      status: 'final',
+      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
+      code: { coding: [{ system: 'http://loinc.org', code: '13457-7', display: 'Cholesterol in LDL [Mass/volume] in Serum or Plasma' }], text: 'Kolesterol LDL' },
+      subject: subjectRef,
+      effectiveDateTime: lab.timestamp,
+      valueQuantity: { value: lab.ldlCholesterol, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }
+    });
+  }
+
+  if (lab.hdlCholesterol !== undefined) {
+    obsList.push({
+      resourceType: 'Observation',
+      id: toValidUuid(lab.id ? `${lab.id}-hdl` : `${Date.now()}-hdl`, 'obs-hdl'),
+      status: 'final',
+      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
+      code: { coding: [{ system: 'http://loinc.org', code: '2085-9', display: 'Cholesterol in HDL [Mass/volume] in Serum or Plasma' }], text: 'Kolesterol HDL' },
+      subject: subjectRef,
+      effectiveDateTime: lab.timestamp,
+      valueQuantity: { value: lab.hdlCholesterol, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }
+    });
+  }
+
+  if (lab.triglycerides !== undefined) {
+    obsList.push({
+      resourceType: 'Observation',
+      id: toValidUuid(lab.id ? `${lab.id}-trig` : `${Date.now()}-trig`, 'obs-trig'),
+      status: 'final',
+      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
+      code: { coding: [{ system: 'http://loinc.org', code: '2571-8', display: 'Triglyceride [Mass/volume] in Serum or Plasma' }], text: 'Trigliserida' },
+      subject: subjectRef,
+      effectiveDateTime: lab.timestamp,
+      valueQuantity: { value: lab.triglycerides, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }
+    });
+  }
+
+  if (lab.fastingBloodSugar !== undefined) {
+    obsList.push({
+      resourceType: 'Observation',
+      id: toValidUuid(lab.id ? `${lab.id}-fbs` : `${Date.now()}-fbs`, 'obs-fbs'),
+      status: 'final',
+      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
+      code: { coding: [{ system: 'http://loinc.org', code: '2345-7', display: 'Glucose [Mass/volume] in Serum or Plasma' }], text: 'Gula Darah Puasa' },
+      subject: subjectRef,
+      effectiveDateTime: lab.timestamp,
+      valueQuantity: { value: lab.fastingBloodSugar, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }
+    });
+  }
+
+  if (lab.hba1c !== undefined) {
+    obsList.push({
+      resourceType: 'Observation',
+      id: toValidUuid(lab.id ? `${lab.id}-hba1c` : `${Date.now()}-hba1c`, 'obs-hba1c'),
+      status: 'final',
+      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
+      code: { coding: [{ system: 'http://loinc.org', code: '4548-4', display: 'Hemoglobin A1c/Hemoglobin.total in Blood' }], text: 'HbA1c' },
+      subject: subjectRef,
+      effectiveDateTime: lab.timestamp,
+      valueQuantity: { value: lab.hba1c, unit: '%', system: 'http://unitsofmeasure.org', code: '%' }
+    });
+  }
+
+  if (lab.potassium !== undefined) {
+    obsList.push({
+      resourceType: 'Observation',
+      id: toValidUuid(lab.id ? `${lab.id}-k` : `${Date.now()}-k`, 'obs-k'),
+      status: 'final',
+      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
+      code: { coding: [{ system: 'http://loinc.org', code: '2823-3', display: 'Potassium [Moles/volume] in Serum or Plasma' }], text: 'Kalium Serum' },
+      subject: subjectRef,
+      effectiveDateTime: lab.timestamp,
+      valueQuantity: { value: lab.potassium, unit: 'mEq/L', system: 'http://unitsofmeasure.org', code: 'meq/L' }
+    });
+  }
+
+  if (lab.sodium !== undefined) {
+    obsList.push({
+      resourceType: 'Observation',
+      id: toValidUuid(lab.id ? `${lab.id}-na` : `${Date.now()}-na`, 'obs-na'),
+      status: 'final',
+      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
+      code: { coding: [{ system: 'http://loinc.org', code: '2951-2', display: 'Sodium [Moles/volume] in Serum or Plasma' }], text: 'Natrium Serum' },
+      subject: subjectRef,
+      effectiveDateTime: lab.timestamp,
+      valueQuantity: { value: lab.sodium, unit: 'mEq/L', system: 'http://unitsofmeasure.org', code: 'meq/L' }
+    });
+  }
+
+  if (lab.eGfr !== undefined) {
+    obsList.push({
+      resourceType: 'Observation',
+      id: toValidUuid(lab.id ? `${lab.id}-egfr` : `${Date.now()}-egfr`, 'obs-egfr'),
+      status: 'final',
+      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
+      code: { coding: [{ system: 'http://loinc.org', code: '33914-3', display: 'Glomerular filtration rate/1.73 sq M.predicted' }], text: 'eGFR' },
+      subject: subjectRef,
+      effectiveDateTime: lab.timestamp,
+      valueQuantity: { value: lab.eGfr, unit: 'mL/min/1.73m2', system: 'http://unitsofmeasure.org', code: 'mL/min/{1.73_m2}' }
+    });
+  }
+
   return obsList;
 }
 
@@ -427,6 +544,15 @@ export function labResultFromFHIR(observations: FhirObservation[]): LabResult {
   let uricAcid: number | undefined;
   let serumCreatinine: number | undefined;
   let bloodUrea: number | undefined;
+  let totalCholesterol: number | undefined;
+  let ldlCholesterol: number | undefined;
+  let hdlCholesterol: number | undefined;
+  let triglycerides: number | undefined;
+  let fastingBloodSugar: number | undefined;
+  let hba1c: number | undefined;
+  let potassium: number | undefined;
+  let sodium: number | undefined;
+  let eGfr: number | undefined;
   let timestamp = new Date().toISOString();
   let profileId = '';
   let id: number | undefined;
@@ -447,6 +573,15 @@ export function labResultFromFHIR(observations: FhirObservation[]): LabResult {
     if (code === '3084-1') uricAcid = val;
     else if (code === '2160-0') serumCreatinine = val;
     else if (code === '3091-6') bloodUrea = val;
+    else if (code === '2093-3') totalCholesterol = val;
+    else if (code === '13457-7') ldlCholesterol = val;
+    else if (code === '2085-9') hdlCholesterol = val;
+    else if (code === '2571-8') triglycerides = val;
+    else if (code === '2345-7') fastingBloodSugar = val;
+    else if (code === '4548-4') hba1c = val;
+    else if (code === '2823-3') potassium = val;
+    else if (code === '2951-2') sodium = val;
+    else if (code === '33914-3') eGfr = val;
   }
 
   return {
@@ -455,7 +590,16 @@ export function labResultFromFHIR(observations: FhirObservation[]): LabResult {
     timestamp,
     uricAcid: uricAcid ?? 0,
     serumCreatinine: serumCreatinine ?? 0,
-    bloodUrea: bloodUrea ?? 0
+    bloodUrea: bloodUrea ?? 0,
+    ...(totalCholesterol !== undefined ? { totalCholesterol } : {}),
+    ...(ldlCholesterol !== undefined ? { ldlCholesterol } : {}),
+    ...(hdlCholesterol !== undefined ? { hdlCholesterol } : {}),
+    ...(triglycerides !== undefined ? { triglycerides } : {}),
+    ...(fastingBloodSugar !== undefined ? { fastingBloodSugar } : {}),
+    ...(hba1c !== undefined ? { hba1c } : {}),
+    ...(potassium !== undefined ? { potassium } : {}),
+    ...(sodium !== undefined ? { sodium } : {}),
+    ...(eGfr !== undefined ? { eGfr } : {})
   };
 }
 

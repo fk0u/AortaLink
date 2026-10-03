@@ -95,7 +95,8 @@ export async function restoreBackupPayload(payload: BackupDataFormat) {
     ...(payload.medications ? { medications: payload.medications } : {}),
     ...(payload.medicationLogs ? { medicationLogs: payload.medicationLogs } : {}),
     ...(payload.labResults ? { labResults: payload.labResults } : {}),
-    ...(payload.fhirPatients ? { fhirPatients: payload.fhirPatients } : {}),
-    ...(payload.fhirObservations ? { fhirObservations: payload.fhirObservations } : {})
+    ...(payload.conditions ? { conditions: payload.conditions } : {}),
+    ...(payload.familyHistory ? { familyHistory: payload.familyHistory } : {}),
+    ...(payload.immunizations ? { immunizations: payload.immunizations } : {})
   });
 }
