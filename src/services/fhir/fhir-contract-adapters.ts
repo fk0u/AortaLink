@@ -372,15 +372,12 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
         }
 
         // Lab Observations (Category laboratory or specific LOINCs)
-        const isLabCategory = obs.category?.some((cat) =>
-          cat.coding?.some((c) => c.code === 'laboratory')
-        );
         const labCodes = [
           '3084-1', '2160-0', '3091-6', '2093-3', '13457-7', '2085-9',
           '2571-8', '1558-6', '2345-7', '4548-4', '2823-3', '2951-2',
           '33914-3', '48642-3', '48643-1', '48065-7', '6598-7'
         ];
-        if (isLabCategory || (code && labCodes.includes(code))) {
+        if (code && labCodes.includes(code)) {
           const labId = obs.identifier?.find((i: any) => i.system === 'http://aortalink.app/fhir/identifier/lab-id')?.value;
           const groupKey = labId ? `${pId}::id::${labId}` : `${pId}::ts::${obs.effectiveDateTime || obs.id || 'default'}`;
           if (!labObsByPatientAndGroup.has(groupKey)) labObsByPatientAndGroup.set(groupKey, []);
@@ -393,7 +390,19 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
         const medReq = res as FhirMedicationRequest;
         const partialMed = medicationFromFHIR(medReq);
         const pId = resolveProfileId(medReq.subject?.reference);
-        const medId = partialMed.id !== undefined ? partialMed.id : (medReq.id && /^\d+$/.test(medReq.id) ? Number(medReq.id) : (medications.length + 1));
+        let medId = partialMed.id;
+        if (medId === undefined && medReq.id && /^\d+$/.test(medReq.id)) {
+          medId = Number(medReq.id);
+        }
+        const usedIds = new Set<number>(
+          medications
+            .map((m) => m.id)
+            .filter((id): id is number => typeof id === 'number')
+        );
+        if (medId === undefined || usedIds.has(medId)) {
+          medId = usedIds.size > 0 ? Math.max(...usedIds) + 1 : 1;
+        }
+
         medications.push({
           id: medId,
           profileId: pId,
@@ -446,14 +455,17 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
   }
 
   // Pass 4: Fold Lab Observations into LabResult items
-  let fallbackLabIndex = 1;
+  const usedLabIds = new Set<number>();
   const labResults: LabResult[] = [];
   for (const [groupKey, obsList] of labObsByPatientAndGroup.entries()) {
     const [pId] = groupKey.split('::');
     const lab = labResultFromFHIR(obsList);
-    if (lab.id === undefined) {
-      lab.id = fallbackLabIndex++;
+    let labId = lab.id;
+    if (labId === undefined || usedLabIds.has(labId)) {
+      labId = usedLabIds.size > 0 ? Math.max(...usedLabIds) + 1 : 1;
     }
+    usedLabIds.add(labId);
+    lab.id = labId;
     lab.profileId = pId;
     labResults.push(lab);
   }

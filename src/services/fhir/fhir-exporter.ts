@@ -543,7 +543,7 @@ export function normalizeLabQuantity(code: string, rawVal: number, unit?: string
 export function readingFromFHIR(obs: FhirObservation): BPReading {
   let systolic = 0;
   let diastolic = 0;
-  let pulse = 0;
+  let pulse: number | undefined = undefined;
 
   for (const comp of obs.component || []) {
     const loinc = comp.code?.coding?.find((c) => c.system === 'http://loinc.org' || c.system?.includes('loinc'));
@@ -551,7 +551,7 @@ export function readingFromFHIR(obs: FhirObservation): BPReading {
     const val = comp.valueQuantity?.value ?? 0;
     if (code === '8480-6') systolic = val;
     else if (code === '8462-4') diastolic = val;
-    else if (code === '8867-4') pulse = val;
+    else if (code === '8867-4' && val > 0) pulse = val;
   }
 
   const ref = obs.subject?.reference || '';
@@ -579,7 +579,7 @@ export function readingFromFHIR(obs: FhirObservation): BPReading {
     profileId,
     systolic,
     diastolic,
-    pulse,
+    ...(pulse !== undefined && pulse > 0 ? { pulse } : {}),
     timestamp: obs.effectiveDateTime,
     notes,
     measurement_context,
@@ -747,9 +747,16 @@ export function profileFromFHIR(patient: FhirPatient): Partial<Profile> {
     else if (ext.url?.endsWith('is-default')) isDefault = ext.valueBoolean;
   }
 
+  const nameObj = patient.name?.[0];
+  let patientName = nameObj?.text;
+  if (!patientName && nameObj) {
+    const parts = [...(nameObj.given || []), nameObj.family].filter(Boolean);
+    if (parts.length > 0) patientName = parts.join(' ');
+  }
+
   return {
     id: localId || patient.id,
-    name: patient.name?.[0]?.text || 'Pasien',
+    name: patientName || 'Pasien',
     gender: patient.gender === 'male' || patient.gender === 'female' ? patient.gender : 'other',
     ...(age !== undefined ? { age } : {}),
     ...(targetSystolic !== undefined ? { targetSystolic } : {}),

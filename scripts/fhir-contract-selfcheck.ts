@@ -329,9 +329,9 @@ console.log('✓ Stable lab draw grouping by identifier passed');
 // ---------------------------------------------------------------------------
 async function validateWithHapi(bundleResource: any) {
   const endpoint = 'https://hapi.fhir.org/baseR4/Bundle/$validate';
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -341,7 +341,6 @@ async function validateWithHapi(bundleResource: any) {
       body: JSON.stringify(bundleResource),
       signal: controller.signal
     });
-    clearTimeout(timeout);
 
     if (!res.ok) {
       console.warn(`[FHIR Validator Warning] HAPI server returned HTTP ${res.status}; skipping remote check.`);
@@ -364,6 +363,8 @@ async function validateWithHapi(bundleResource: any) {
       return;
     }
     throw err;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

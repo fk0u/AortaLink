@@ -71,7 +71,7 @@ Diputuskan untuk menerapkan **Pola Adapter Batas Sistem (System Boundary Adapter
    - `BPReading` ⟷ `Observation` (Vital Signs BP Profile LOINC `85354-9`, systolic `8480-6`, diastolic `8462-4`, heart rate `8867-4`)
    - `LabResult` ⟷ `Observation[]` (LOINC lab panel: ureum `3091-6`, kreatinin `2160-0`, lipid panel, HbA1c, D-dimer, troponin)
    - `Profile` (Tinggi, Berat, BMI, Merokok, Alkohol) ⟷ `Observation[]` (LOINC `8302-2`, `29463-7`, `39156-5`, `72166-2`, `11331-6`)
-   - `MedicationItem` ⟷ `MedicationRequest` (Status active/stopped, intent order, dosage, timing)
+   - `MedicationItem` ⟷ `MedicationRequest` (Status active, intent order, dosage, timing; stopped state tracking direncanakan pada Step 05/06)
    - `ConditionItem` ⟷ `Condition` (Category problem-list-item/comorbidity, ICD-10-WHO + SNOMED CT)
    - `FamilyMemberHistoryItem` ⟷ `FamilyMemberHistory` (Relationship SNOMED CT, condition ICD-10)
    - `ImmunizationItem` ⟷ `Immunization` (CDC CVX vaccine coding)
@@ -94,7 +94,7 @@ Diputuskan untuk menerapkan **Pola Adapter Batas Sistem (System Boundary Adapter
 
 ### Positif:
 - **Zero Ambiguity:** Satu-satunya kontrak data standar untuk pertukaran data adalah HL7 FHIR R4 JSON.
-- **Ekspor/Impor Langsung Interoperabel:** Berkas backup yang diekspor dapat langsung divalidasi oleh validator resmi HL7 FHIR tanpa transformasi manual tambahan.
+- **Ekspor/Impor Langsung Interoperabel:** Berkas backup JSON menyertakan canonical FHIR R4 Bundle di bawah properti `fhirBundle` yang dapat diekstrak dan divalidasi langsung oleh validator resmi HL7 FHIR (`$validate`), serta didukung impor langsung berkas FHIR R4 Bundle mandiri.
 - **Penyimpanan Lokal Efisien:** Indeks Dexie tetap ramping dan cepat tanpa beban duplikasi data ke tabel tiruan.
 - **Kesiapan Modul `/core` & `/connectors`:** Menjamin pemisahan bersih antara logika inti domain dan konektor eksternal (Issue #22 & #24).
 

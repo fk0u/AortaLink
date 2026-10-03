@@ -114,24 +114,34 @@ export async function restoreAortaLinkJsonPayload(jsonString: string): Promise<{
         (r) => r && validateBPRange(r.systolic, r.diastolic, r.pulse).valid
       );
 
-      await replaceAllLocalData({
+      const localDataToReplace: any = {
         profiles,
         readings,
-        reminders: Array.isArray(rawParsed.reminders) ? rawParsed.reminders : [],
-        habits: Array.isArray(rawParsed.habits) ? rawParsed.habits : [],
         medications: extracted.medications || [],
-        medicationLogs: Array.isArray(rawParsed.medicationLogs) ? rawParsed.medicationLogs : [],
         labResults: extracted.labResults || [],
         conditions: extracted.conditions || [],
         familyHistory: extracted.familyHistory || [],
         immunizations: extracted.immunizations || []
-      });
+      };
+      if (Array.isArray(rawParsed.reminders)) localDataToReplace.reminders = rawParsed.reminders;
+      if (Array.isArray(rawParsed.habits)) localDataToReplace.habits = rawParsed.habits;
+      if (Array.isArray(rawParsed.medicationLogs)) localDataToReplace.medicationLogs = rawParsed.medicationLogs;
 
-      const total = profiles.length + readings.length + (extracted.conditions?.length || 0);
+      await replaceAllLocalData(localDataToReplace);
+
+      const total =
+        profiles.length +
+        readings.length +
+        (extracted.medications?.length || 0) +
+        (extracted.labResults?.length || 0) +
+        (extracted.conditions?.length || 0) +
+        (extracted.familyHistory?.length || 0) +
+        (extracted.immunizations?.length || 0);
+
       return {
         success: true,
         recordCount: total,
-        message: `Impor HL7 FHIR R4 Bundle berhasil! ${profiles.length} profil, ${readings.length} data tensi, ${extracted.conditions?.length || 0} riwayat/kondisi klinis dipulihkan.`
+        message: `Impor HL7 FHIR R4 Bundle berhasil! ${profiles.length} profil, ${readings.length} data tensi, ${extracted.medications?.length || 0} obat, ${extracted.labResults?.length || 0} hasil lab, dan ${extracted.conditions?.length || 0} riwayat/kondisi klinis dipulihkan.`
       };
     }
 
