@@ -65,7 +65,38 @@ console.log('✓ BMI calculation, Asia-Pacific WHO brackets, and non-finite reje
 // ---------------------------------------------------------------------------
 // 2. Aorta Risk Factors Catalog Integrity (WHO ICD-10 + SNOMED CT)
 // ---------------------------------------------------------------------------
-assert.ok(AORTA_RISK_FACTORS_CATALOG.length >= 16, 'Catalog must contain all required clinical risk factor categories');
+const REQUIRED_AORTA_KEYS = [
+  'family_aneurysm',
+  'family_dissection',
+  'marfan',
+  'loeys_dietz',
+  'veds',
+  'turner',
+  'bicuspid_aorta',
+  'coarctation',
+  'takayasu_arteritis',
+  'giant_cell_arteritis',
+  'personal_aorta_history',
+  'hypertension',
+  'smoking',
+  'stimulants',
+  'cad_pjk',
+  'stroke_ischemic',
+  'tia_ischemic',
+  'pad_peripheral',
+  'advanced_age_male',
+  'pregnancy_high_risk'
+];
+
+assert.equal(
+  AORTA_RISK_FACTORS_CATALOG.length,
+  REQUIRED_AORTA_KEYS.length,
+  `Catalog must contain exactly ${REQUIRED_AORTA_KEYS.length} aorta & vascular risk factors`
+);
+
+for (const key of REQUIRED_AORTA_KEYS) {
+  assert.ok(AORTA_RISK_FACTORS_CATALOG.some((f) => f.key === key), `Missing required risk factor: ${key}`);
+}
 
 const marfan = AORTA_RISK_FACTORS_CATALOG.find((f) => f.key === 'marfan');
 assert.ok(marfan);
@@ -89,9 +120,10 @@ assert.equal(turner.icd10Code, 'Q96.9');
 assert.ok(AORTA_RISK_FACTORS_CATALOG.find((f) => f.key === 'takayasu_arteritis' && f.icd10Code === 'M31.4'));
 assert.ok(AORTA_RISK_FACTORS_CATALOG.find((f) => f.key === 'giant_cell_arteritis' && f.icd10Code === 'M31.5'));
 
-// Verify split distinct choices for Atherosclerosis (CAD, Stroke, PAD)
+// Verify split distinct choices for Atherosclerosis (CAD, Stroke, TIA, PAD)
 assert.ok(AORTA_RISK_FACTORS_CATALOG.find((f) => f.key === 'cad_pjk' && f.icd10Code === 'I25.1'));
-assert.ok(AORTA_RISK_FACTORS_CATALOG.find((f) => f.key === 'stroke_cva' && f.icd10Code === 'I64'));
+assert.ok(AORTA_RISK_FACTORS_CATALOG.find((f) => f.key === 'stroke_ischemic' && f.icd10Code === 'I64'));
+assert.ok(AORTA_RISK_FACTORS_CATALOG.find((f) => f.key === 'tia_ischemic' && f.icd10Code === 'G45.9'));
 assert.ok(AORTA_RISK_FACTORS_CATALOG.find((f) => f.key === 'pad_peripheral' && f.icd10Code === 'I73.9'));
 
 console.log('✓ Aorta Risk Factors Catalog & WHO ICD-10/SNOMED codes verified');
@@ -269,7 +301,7 @@ assert.equal(social[0].code.coding?.[0]?.code, '72166-2', 'Smoking status must u
 assert.equal(social[0].valueCodeableConcept?.coding?.[0]?.code, '8517006', 'Former smoker must use SNOMED 8517006 in valueCodeableConcept');
 
 assert.equal(social[1].code.coding?.[0]?.code, '11331-6', 'Alcohol status must use LOINC 11331-6');
-assert.equal(social[1].valueCodeableConcept?.coding?.[0]?.code, '266917007', 'Non-drinker must use SNOMED 266917007 in valueCodeableConcept');
+assert.equal(social[1].valueCodeableConcept?.coding?.[0]?.code, '228274009', 'Lifetime non-drinker must use SNOMED 228274009 in valueCodeableConcept');
 console.log('✓ Anthropometry & Social History Observations with LOINC & SNOMED codes passed');
 
 // ---------------------------------------------------------------------------

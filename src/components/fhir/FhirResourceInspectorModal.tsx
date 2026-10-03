@@ -217,7 +217,7 @@ export const FhirResourceInspectorModal: React.FC<FhirResourceInspectorModalProp
               }`}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
-              Conditions & Vaccines ({fhirScreening.length})
+              Conditions, Family History & Vaccines ({fhirScreening.length})
             </button>
           </div>
 

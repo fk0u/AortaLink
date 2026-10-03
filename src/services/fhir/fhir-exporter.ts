@@ -986,14 +986,14 @@ export function convertSocialHistoryToFHIR(profile: Profile): FhirObservation[] 
 
   if (profile.alcoholConsumption && profile.alcoholConsumption !== 'unknown') {
     const snomedAlcoholMap: Record<string, { code: string; display: string; text: string }> = {
-      none: { code: '266917007', display: 'Non-drinker', text: 'Tidak Mengonsumsi' },
-      occasional: { code: '228273003', display: 'Light drinker', text: 'Jarang / Kadang-kadang' },
-      moderate: { code: '228274009', display: 'Moderate drinker', text: 'Moderat / Sedang' },
-      heavy: { code: '228275005', display: 'Heavy drinker', text: 'Sering / Berat' }
+      none: { code: '228274009', display: 'Lifetime non-drinker', text: 'Tidak Mengonsumsi' },
+      occasional: { code: '228276006', display: 'Occasional drinker', text: 'Jarang / Kadang-kadang' },
+      moderate: { code: '43783005', display: 'Moderate drinker', text: 'Moderat / Sedang' },
+      heavy: { code: '160577002', display: 'Heavy drinker', text: 'Sering / Berat' }
     };
     const aInfo = snomedAlcoholMap[profile.alcoholConsumption] || {
-      code: '266917007',
-      display: 'Non-drinker',
+      code: '228274009',
+      display: 'Lifetime non-drinker',
       text: profile.alcoholConsumption
     };
 

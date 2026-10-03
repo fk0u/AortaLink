@@ -69,79 +69,93 @@ export const HealthScreeningModal: React.FC = () => {
     TDAP: false
   });
 
+  const activeProfileId = activeProfile?.id;
+  const prevOpenRef = React.useRef(false);
+  const prevProfileIdRef = React.useRef<string | null>(null);
+
   // Load existing profile screening data on open with clean initialization (no leakage from prior profile)
   useEffect(() => {
-    if (!isOpen || !activeProfile) return;
-
-    setStep(1);
-    setHeightCm(activeProfile.heightCm ?? '');
-    setWeightKg(activeProfile.weightKg ?? '');
-    setSmokingStatus(activeProfile.smokingStatus ?? 'never');
-    setAlcoholConsumption(activeProfile.alcoholConsumption ?? 'none');
-    setSubstanceUseHistory(activeProfile.substanceUseHistory ?? false);
-
-    async function loadData() {
-      if (!activeProfile) return;
-      const { conditions: existingConds, familyHistory: existingFmhs, immunizations: existingImms } =
-        await fetchProfileScreeningData(activeProfile.id);
-
-      const condMap: Record<string, boolean> = {};
-      const detailsMap: Record<string, AortaMeasurementDetails> = {};
-
-      for (const c of existingConds) {
-        // Match exclusively on Condition targetResource to avoid shadowing between personal aorta history and family aneurysm
-        const found = AORTA_RISK_FACTORS_CATALOG.find(
-          (m) => m.targetResource === 'Condition' && m.icd10Code === c.code
-        );
-        if (found) {
-          condMap[found.key] = true;
-          if (c.aortaDetails) {
-            detailsMap[found.key] = c.aortaDetails;
-          }
-        }
-      }
-      setSelectedConditions(condMap);
-      setAortaDetailsMap(detailsMap);
-
-      let hasAneurysm = false;
-      let aneurysmRel: any = 'FTH';
-      let hasDissection = false;
-      let dissectionRel: any = 'FTH';
-
-      for (const f of existingFmhs) {
-        if (f.conditionCode === 'I71.9') {
-          hasAneurysm = true;
-          if (['FTH', 'MTH', 'SIB', 'CHILD'].includes(f.relationship)) {
-            aneurysmRel = f.relationship as any;
-          }
-        }
-        if (f.conditionCode === 'I71.0') {
-          hasDissection = true;
-          if (['FTH', 'MTH', 'SIB', 'CHILD'].includes(f.relationship)) {
-            dissectionRel = f.relationship as any;
-          }
-        }
-      }
-      setFamilyAneurysm(hasAneurysm);
-      setFamilyAneurysmRel(aneurysmRel);
-      setFamilyDissection(hasDissection);
-      setFamilyDissectionRel(dissectionRel);
-
-      const immMap: Record<string, boolean> = {
-        FLU: false,
-        PCV13: false,
-        PPSV23: false,
-        COVID19: false,
-        TDAP: false
-      };
-      for (const im of existingImms) {
-        immMap[im.vaccineCode] = im.status === 'completed';
-      }
-      setSelectedVaccines(immMap);
+    if (!isOpen || !activeProfileId) {
+      prevOpenRef.current = isOpen;
+      return;
     }
 
-    loadData().catch(console.error);
-  }, [isOpen, activeProfile]);
+    const isNewlyOpened = !prevOpenRef.current && isOpen;
+    const isProfileChanged = prevProfileIdRef.current !== activeProfileId;
+
+    if (isNewlyOpened || isProfileChanged) {
+      prevOpenRef.current = isOpen;
+      prevProfileIdRef.current = activeProfileId;
+      setStep(1);
+
+      setHeightCm(activeProfile?.heightCm ?? '');
+      setWeightKg(activeProfile?.weightKg ?? '');
+      setSmokingStatus(activeProfile?.smokingStatus ?? 'never');
+      setAlcoholConsumption(activeProfile?.alcoholConsumption ?? 'none');
+      setSubstanceUseHistory(activeProfile?.substanceUseHistory ?? false);
+
+      async function loadData() {
+        const { conditions: existingConds, familyHistory: existingFmhs, immunizations: existingImms } =
+          await fetchProfileScreeningData(activeProfileId!);
+
+        const condMap: Record<string, boolean> = {};
+        const detailsMap: Record<string, AortaMeasurementDetails> = {};
+
+        for (const c of existingConds) {
+          // Match exclusively on Condition targetResource to avoid shadowing between personal aorta history and family aneurysm
+          const found = AORTA_RISK_FACTORS_CATALOG.find(
+            (m) => m.targetResource === 'Condition' && m.icd10Code === c.code
+          );
+          if (found) {
+            condMap[found.key] = true;
+            if (c.aortaDetails) {
+              detailsMap[found.key] = c.aortaDetails;
+            }
+          }
+        }
+        setSelectedConditions(condMap);
+        setAortaDetailsMap(detailsMap);
+
+        let hasAneurysm = false;
+        let aneurysmRel: any = 'FTH';
+        let hasDissection = false;
+        let dissectionRel: any = 'FTH';
+
+        for (const f of existingFmhs) {
+          if (f.conditionCode === 'I71.9') {
+            hasAneurysm = true;
+            if (['FTH', 'MTH', 'SIB', 'CHILD'].includes(f.relationship)) {
+              aneurysmRel = f.relationship as any;
+            }
+          }
+          if (f.conditionCode === 'I71.0') {
+            hasDissection = true;
+            if (['FTH', 'MTH', 'SIB', 'CHILD'].includes(f.relationship)) {
+              dissectionRel = f.relationship as any;
+            }
+          }
+        }
+        setFamilyAneurysm(hasAneurysm);
+        setFamilyAneurysmRel(aneurysmRel);
+        setFamilyDissection(hasDissection);
+        setFamilyDissectionRel(dissectionRel);
+
+        const immMap: Record<string, boolean> = {
+          FLU: false,
+          PCV13: false,
+          PPSV23: false,
+          COVID19: false,
+          TDAP: false
+        };
+        for (const im of existingImms) {
+          immMap[im.vaccineCode] = im.status === 'completed';
+        }
+        setSelectedVaccines(immMap);
+      }
+
+      loadData().catch(console.error);
+    }
+  }, [isOpen, activeProfileId, activeProfile]);
 
   const bmiEval = calculateBMI(
     typeof heightCm === 'number' ? heightCm : undefined,

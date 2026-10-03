@@ -255,14 +255,24 @@ export const AORTA_RISK_FACTORS_CATALOG: AortaRiskFactorMeta[] = [
     snomedCode: '53741008'
   },
   {
-    key: 'stroke_cva',
-    name: 'Stroke / TIA (Serangan Stroke Ringan)',
-    question: 'Pernahkah Anda mengalami stroke iskemik atau serangan stroke ringan (TIA)?',
+    key: 'stroke_ischemic',
+    name: 'Stroke Iskemik Terdiagnosis',
+    question: 'Pernahkah Anda didiagnosis mengalami stroke iskemik (penyumbatan pembuluh darah otak)?',
     clinicalNote: 'Penyakit serebrovaskular aterotrombotik adalah indikator penyakit vaskular aterosklerotik luas.',
     group: 'vascular',
     targetResource: 'Condition',
     icd10Code: 'I64',
-    snomedCode: '230690007'
+    snomedCode: '422504000'
+  },
+  {
+    key: 'tia_ischemic',
+    name: 'Serangan Iskemik Transien (TIA / Stroke Ringan)',
+    question: 'Pernahkah Anda mengalami serangan stroke ringan sesaat (TIA) dengan gejala yang pulih <24 jam?',
+    clinicalNote: 'TIA merupakan tanda peringatan instabilitas plak vaskular yang memerlukan evaluasi menyeluruh.',
+    group: 'vascular',
+    targetResource: 'Condition',
+    icd10Code: 'G45.9',
+    snomedCode: '266257000'
   },
   {
     key: 'pad_peripheral',

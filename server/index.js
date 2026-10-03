@@ -557,6 +557,9 @@ app.get('/api/sync/pull', authenticateToken, async (req, res) => {
       fhirMedicationStatements,
       ascvdProfiles,
       clinicalNotes,
+      conditions,
+      familyHistory,
+      immunizations,
       tombstones,
       userSettingsDoc
     ] = await Promise.all([
