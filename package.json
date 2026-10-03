@@ -24,6 +24,7 @@
     "test:knowledge-base": "node --experimental-strip-types --no-warnings scripts/knowledge-base-selfcheck.ts",
     "test:satusehat": "node --experimental-strip-types --no-warnings scripts/satusehat-connector-selfcheck.ts",
     "test:ingestion": "node --experimental-strip-types --no-warnings scripts/ingestion-pipeline-selfcheck.ts",
+    "test:core": "node --experimental-strip-types --no-warnings scripts/core-minimum-selfcheck.ts",
     "cleanup:duplicates": "node scripts/cleanup-legacy-duplicate-readings.js",
     "preview": "rsbuild preview"
   },

@@ -1,4 +1,4 @@
-import { AscvdProfile } from '../types/blood-pressure';
+import type { AscvdProfile } from '../types/blood-pressure.ts';
 
 /**
  * ASCVD Risk Calculator — Pooled Cohort Equations (ACC/AHA 2013)
@@ -210,7 +210,7 @@ export function calculateAscvdRisk(input: AscvdInput): AscvdResult {
   };
 }
 
-import { timeService } from '../services/time/time-service';
+import { timeService } from '../services/time/time-service.ts';
 
 /**
  * Build AscvdProfile record to persist into Dexie/MongoDB
