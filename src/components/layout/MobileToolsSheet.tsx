@@ -14,7 +14,8 @@ import {
   BrainCircuit,
   Sparkles,
   FlaskConical,
-  ChevronRight
+  ChevronRight,
+  HeartPulse
 } from '../icons/AppIcons';
 import { useAppStore } from '../../store/useAppStore';
 import { useResearchStore } from '../../store/useResearchStore';
@@ -169,6 +170,29 @@ export const MobileToolsSheet: React.FC = () => {
                   Analitik Kesehatan (ML On-Device)
                 </span>
                 <div className="grid grid-cols-1 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      closeSheet();
+                      useAppStore.getState().openHealthScoreModal();
+                    }}
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-rose-50/70 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-900/60 active:scale-[0.98] transition-all text-left"
+                  >
+                    <div className="p-2 rounded-xl bg-rose-600 text-white shrink-0 shadow-sm">
+                      <HeartPulse size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                        <span>AortaLink Health Score</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-300 font-extrabold uppercase">
+                          AHA LE8
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-rose-700 dark:text-rose-400 font-semibold">8 parameter kardiovaskular transparan • tanpa tebakan AI</p>
+                    </div>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => {

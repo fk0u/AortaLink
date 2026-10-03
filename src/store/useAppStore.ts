@@ -39,6 +39,7 @@ interface AppState {
   isMobileToolsSheetOpen: boolean;
   isAiModalOpen: boolean;
   isScreeningModalOpen: boolean;
+  isHealthScoreModalOpen: boolean;
   
   // Toasts
   toasts: ToastMessage[];
@@ -71,6 +72,8 @@ interface AppState {
   closeAiModal: () => void;
   openScreeningModal: () => void;
   closeScreeningModal: () => void;
+  openHealthScoreModal: () => void;
+  closeHealthScoreModal: () => void;
 
   // Cache & Loading Actions
   setDataLoading: (loading: boolean) => void;
@@ -100,6 +103,7 @@ export const useAppStore = create<AppState>((set) => ({
   isMobileToolsSheetOpen: false,
   isAiModalOpen: false,
   isScreeningModalOpen: false,
+  isHealthScoreModalOpen: false,
 
   toasts: [],
 
@@ -147,6 +151,8 @@ export const useAppStore = create<AppState>((set) => ({
   closeAiModal: () => set({ isAiModalOpen: false }),
   openScreeningModal: () => set({ isScreeningModalOpen: true }),
   closeScreeningModal: () => set({ isScreeningModalOpen: false }),
+  openHealthScoreModal: () => set({ isHealthScoreModalOpen: true }),
+  closeHealthScoreModal: () => set({ isHealthScoreModalOpen: false }),
 
   // Caching setters
   setDataLoading: (loading) => set({ isDataLoading: loading }),

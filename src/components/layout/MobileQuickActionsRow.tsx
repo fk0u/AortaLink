@@ -21,6 +21,7 @@ interface MobileQuickActionsRowProps {
   onOpenExportPdf: () => void;
   onOpenClinicalNotes: () => void;
   onOpenFhir: () => void;
+  onOpenHealthScore?: () => void;
 }
 
 /**
@@ -39,6 +40,7 @@ export const MobileQuickActionsRow: React.FC<MobileQuickActionsRowProps> = ({
   onOpenExportPdf,
   onOpenClinicalNotes,
   onOpenFhir,
+  onOpenHealthScore,
 }) => {
   const favorites = [
     {
@@ -92,6 +94,7 @@ export const MobileQuickActionsRow: React.FC<MobileQuickActionsRowProps> = ({
   ];
 
   const advancedTools = [
+    ...(onOpenHealthScore ? [{ id: 'health-score', label: "Life's Essential 8", onClick: onOpenHealthScore }] : []),
     { id: 'rest-timer', label: 'Rest 5 Menit', onClick: onOpenRestTimer },
     { id: 'pdf-report', label: 'Laporan PDF', onClick: onOpenExportPdf },
     { id: 'clinical-notes', label: 'Catatan SOAP', onClick: onOpenClinicalNotes },
