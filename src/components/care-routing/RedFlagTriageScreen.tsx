@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, AlertTriangle, Activity, MapPin } from 'lucide-react';
+import { Phone, AlertTriangle, Activity, MapPin } from '../icons/AppIcons.tsx';
 import { AORTIC_RED_FLAGS } from '../../services/care-routing/red-flag-rules';
 import { evaluateRedFlags, evaluateBPRouting } from '../../services/care-routing/care-routing-engine';
 import { CareRouteDecision } from '../../types/care-routing';

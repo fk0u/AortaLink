@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, X, Printer, Send } from 'lucide-react';
+import { FileText, X, Printer, Send } from '../icons/AppIcons.tsx';
 import { FacilityType, TransferForm } from '../../types/care-routing';
 
 interface TransferFormModalProps {

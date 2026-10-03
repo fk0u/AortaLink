@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { evaluateBPRouting } from '../../services/care-routing/care-routing-engine';
 import { generateReferralRecommendations } from '../../services/care-routing/referral-rules';
-import { AlertCircle, ArrowRight, HeartPulse, Stethoscope, AlertTriangle } from 'lucide-react';
+import { AlertCircle, ArrowRight, HeartPulse, Stethoscope, AlertTriangle } from '../icons/AppIcons.tsx';
 import { RedFlagTriageScreen } from './RedFlagTriageScreen';
 
 interface CareRoutingPanelProps {
