@@ -187,6 +187,51 @@ export class AortaLinkDatabase extends Dexie {
       fhirObservations: null,
       fhirMedicationRequests: null,
       fhirMedicationStatements: null
+    }).upgrade(async (tx) => {
+      // Migrate any legacy FHIR observations that have no local counterpart before dropping stores
+      try {
+        const obsTable = tx.table('fhirObservations');
+        const count = await obsTable.count();
+        if (count > 0) {
+          const obsList = await obsTable.toArray();
+          const readingsTable = tx.table('readings');
+          const existingReadings = await readingsTable.toArray();
+          const existingTimestamps = new Set(existingReadings.map((r: any) => r.timestamp));
+
+          for (const obs of obsList) {
+            const isBp = obs.code?.coding?.some((c: any) => c.code === '85354-9') ||
+              (Array.isArray(obs.component) && obs.component.some((c: any) => c.code?.coding?.some((cod: any) => cod.code === '8480-6')));
+            if (isBp && obs.effectiveDateTime && !existingTimestamps.has(obs.effectiveDateTime)) {
+              let sys = 0;
+              let dia = 0;
+              let pul = 0;
+              for (const comp of obs.component || []) {
+                const code = comp.code?.coding?.[0]?.code;
+                const val = comp.valueQuantity?.value ?? 0;
+                if (code === '8480-6') sys = val;
+                else if (code === '8462-4') dia = val;
+                else if (code === '8867-4') pul = val;
+              }
+              if (sys > 0 && dia > 0) {
+                const ref = obs.subject?.reference || '';
+                const pId = ref.replace(/^urn:uuid:/, '').replace(/^Patient\//, '');
+                await readingsTable.add({
+                  id: obs.id || newSyncId(),
+                  profileId: pId || 'default-patient',
+                  systolic: sys,
+                  diastolic: dia,
+                  pulse: pul,
+                  timestamp: obs.effectiveDateTime,
+                  notes: obs.note?.[0]?.text
+                });
+                existingTimestamps.add(obs.effectiveDateTime);
+              }
+            }
+          }
+        }
+      } catch {
+        // Table already absent or empty — safe to proceed
+      }
     });
   }
 }

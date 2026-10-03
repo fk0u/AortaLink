@@ -25,8 +25,9 @@ console.log('[FHIR Contract Selfcheck] Starting HL7 FHIR R4 Internal Data Contra
 // ---------------------------------------------------------------------------
 assert.equal(extractRefUuid('urn:uuid:550e8400-e29b-41d4-a716-446655440000'), '550e8400-e29b-41d4-a716-446655440000');
 assert.equal(extractRefUuid('Patient/550e8400-e29b-41d4-a716-446655440000'), '550e8400-e29b-41d4-a716-446655440000');
+assert.equal(extractRefUuid('Patient/550e8400-e29b-41d4-a716-446655440000/_history/2'), '550e8400-e29b-41d4-a716-446655440000');
 assert.equal(extractRefUuid(undefined), null);
-console.log('✓ extractRefUuid passed');
+console.log('✓ extractRefUuid passed (including _history suffix handling)');
 
 // ---------------------------------------------------------------------------
 // 2. Sample Data Fixtures
@@ -174,36 +175,47 @@ console.log(`✓ entitiesToFhirBundle generated valid Bundle with ${bundle.entry
 const restored = fhirBundleToEntities(bundle);
 assert.equal(restored.profiles?.length, 1);
 const rProf = restored.profiles![0];
-assert.equal(rProf.id, profileId);
+assert.equal(rProf.id, sampleProfile.id);
 assert.equal(rProf.name, sampleProfile.name);
+assert.equal(rProf.relationship, sampleProfile.relationship);
+assert.equal(rProf.targetSystolic, 120);
+assert.equal(rProf.targetDiastolic, 80);
 assert.equal(rProf.heightCm, sampleProfile.heightCm);
 assert.equal(rProf.weightKg, sampleProfile.weightKg);
 assert.equal(rProf.bmi, sampleProfile.bmi);
 assert.equal(rProf.smokingStatus, sampleProfile.smokingStatus);
 assert.equal(rProf.alcoholConsumption, sampleProfile.alcoholConsumption);
-console.log('✓ Profile + Anthropometry + Social History round-trip passed');
+console.log('✓ Profile + Metadata Extensions + Anthropometry + Social History round-trip passed');
 
 assert.equal(restored.readings?.length, 1);
 const rReading = restored.readings![0];
+assert.equal(rReading.id, sampleReading.id);
 assert.equal(rReading.systolic, sampleReading.systolic);
 assert.equal(rReading.diastolic, sampleReading.diastolic);
 assert.equal(rReading.pulse, sampleReading.pulse);
+assert.equal(rReading.arm, sampleReading.arm);
+assert.equal(rReading.position, sampleReading.position);
 assert.equal(rReading.profileId, profileId);
-console.log('✓ BPReading round-trip passed');
+console.log('✓ BPReading round-trip (with ID & position/arm extensions) passed');
 
 assert.equal(restored.labResults?.length, 1);
 const rLab = restored.labResults![0];
+assert.equal(rLab.id, sampleLab.id);
 assert.equal(rLab.totalCholesterol, sampleLab.totalCholesterol);
 assert.equal(rLab.serumCreatinine, sampleLab.serumCreatinine);
 assert.equal(rLab.bloodUrea, sampleLab.bloodUrea);
 assert.equal(rLab.uricAcid, sampleLab.uricAcid);
-console.log('✓ LabResult round-trip passed');
+assert.equal(rLab.fastingBloodSugar, sampleLab.fastingBloodSugar);
+console.log('✓ LabResult round-trip (with stable lab ID & LOINC 1558-6) passed');
 
 assert.equal(restored.medications?.length, 1);
 const rMed = restored.medications![0];
+assert.equal(rMed.id, sampleMed.id);
 assert.equal(rMed.name, sampleMed.name);
 assert.equal(rMed.dosage, sampleMed.dosage);
-console.log('✓ MedicationItem round-trip passed');
+assert.equal(rMed.drugClass, sampleMed.drugClass);
+assert.equal(rMed.purpose, sampleMed.purpose);
+console.log('✓ MedicationItem round-trip (with stable numeric ID & extensions) passed');
 
 assert.equal(restored.conditions?.length, 1);
 const rCond = restored.conditions![0];
@@ -234,6 +246,83 @@ assert.ok(fhirTableAdapters.conditions);
 assert.ok(fhirTableAdapters.familyHistory);
 assert.ok(fhirTableAdapters.immunizations);
 console.log('✓ fhirTableAdapters registry verified');
+
+// ---------------------------------------------------------------------------
+// 5b. Specialized Contract Edge Case Tests
+// ---------------------------------------------------------------------------
+// A. No synthetic patient generated when profiles array is empty
+const emptyBundle = entitiesToFhirBundle({ profiles: [] });
+assert.equal(emptyBundle.entry.length, 0, 'Empty profiles must not emit a synthetic phantom Patient');
+console.log('✓ Empty profile push does not generate phantom Patient');
+
+// B. Multi-coding Observation: LOINC is matched even when local code is first
+const multiCodingObs: FhirObservation = {
+  resourceType: 'Observation',
+  id: 'multi-obs-1',
+  status: 'final',
+  code: {
+    coding: [
+      { system: 'http://local-lab.org/codes', code: 'CHOL-TOTAL' },
+      { system: 'http://loinc.org', code: '2093-3', display: 'Cholesterol [Mass/volume]' }
+    ]
+  },
+  valueQuantity: { value: 210, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' },
+  effectiveDateTime: '2026-03-01T10:00:00.000Z'
+};
+const parsedLabMulti = fhirTableAdapters.labResults.fromFhir([multiCodingObs]);
+assert.equal(parsedLabMulti.totalCholesterol, 210, 'LOINC should be matched even when not first coding');
+console.log('✓ Multi-coding LOINC extraction passed');
+
+// C. UCUM unit normalization (mmol/L -> mg/dL)
+const mmolLdlObs: FhirObservation = {
+  resourceType: 'Observation',
+  id: 'mmol-obs-1',
+  status: 'final',
+  code: {
+    coding: [{ system: 'http://loinc.org', code: '13457-7', display: 'Cholesterol in LDL' }]
+  },
+  valueQuantity: { value: 3.0, unit: 'mmol/L', system: 'http://unitsofmeasure.org', code: 'mmol/L' },
+  effectiveDateTime: '2026-03-01T10:00:00.000Z'
+};
+const parsedMmol = fhirTableAdapters.labResults.fromFhir([mmolLdlObs]);
+assert.equal(parsedMmol.ldlCholesterol, 116, '3.0 mmol/L LDL should normalize to 116 mg/dL (3.0 * 38.67 = 116.01)');
+console.log('✓ UCUM unit normalization (mmol/L -> mg/dL) passed');
+
+// D. Fasting blood sugar LOINC 1558-6 verified in exported bundle
+const fbsObs = bundle.entry.find((e: any) => e.resource?.code?.coding?.some((c: any) => c.code === '1558-6'));
+assert.ok(fbsObs, 'Fasting blood sugar must use LOINC 1558-6');
+console.log('✓ Fasting blood sugar uses LOINC 1558-6');
+
+// E. Stable lab draw grouping: two distinct lab draws on same calendar date do not overwrite
+const twoDrawsBundle: any = {
+  resourceType: 'Bundle',
+  type: 'collection',
+  entry: [
+    {
+      resource: {
+        resourceType: 'Observation',
+        identifier: [{ system: 'http://aortalink.app/fhir/identifier/lab-id', value: '101' }],
+        code: { coding: [{ system: 'http://loinc.org', code: '2093-3' }] },
+        valueQuantity: { value: 190, unit: 'mg/dL' },
+        effectiveDateTime: '2026-03-01T08:00:00.000Z'
+      }
+    },
+    {
+      resource: {
+        resourceType: 'Observation',
+        identifier: [{ system: 'http://aortalink.app/fhir/identifier/lab-id', value: '102' }],
+        code: { coding: [{ system: 'http://loinc.org', code: '2093-3' }] },
+        valueQuantity: { value: 205, unit: 'mg/dL' },
+        effectiveDateTime: '2026-03-01T14:00:00.000Z'
+      }
+    }
+  ]
+};
+const twoDrawsEntities = fhirBundleToEntities(twoDrawsBundle);
+assert.equal(twoDrawsEntities.labResults?.length, 2, 'Two distinct lab draws on the same date must not overwrite each other');
+assert.equal(twoDrawsEntities.labResults?.[0]?.id, 101);
+assert.equal(twoDrawsEntities.labResults?.[1]?.id, 102);
+console.log('✓ Stable lab draw grouping by identifier passed');
 
 // ---------------------------------------------------------------------------
 // 6. HL7 FHIR Validator / HAPI Cloud Test

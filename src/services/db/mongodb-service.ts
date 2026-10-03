@@ -322,18 +322,35 @@ export class MongoDbAtlasService {
           }
         }
 
-        // Prioritize FHIR R4 Bundle for restoring clinical entities (ADR 002)
+        // ADR 002: Dual-stack restoration. Flat records preserve rich app metadata
+        // (position, arm, target systolic/diastolic, local IDs); FHIR Bundle provides
+        // interoperability and catches any external FHIR resources.
         const hasFhirBundle = Boolean(data.fhirBundle && data.fhirBundle.resourceType === 'Bundle');
         const fhirEntities = hasFhirBundle ? fhirBundleToEntities(data.fhirBundle) : null;
 
-        const profilesToRestore = (fhirEntities?.profiles && fhirEntities.profiles.length > 0)
-          ? fhirEntities.profiles
-          : (Array.isArray(cloudData.profiles) ? cloudData.profiles : []);
+        const mergeWithFhir = <T extends { id?: any; syncId?: string; timestamp?: string }>(
+          flatList: T[] | undefined,
+          fhirList: T[] | undefined
+        ): T[] => {
+          const flat = Array.isArray(flatList) ? flatList : [];
+          const fhir = Array.isArray(fhirList) ? fhirList : [];
+          if (flat.length === 0) return fhir;
+          if (fhir.length === 0) return flat;
+
+          const existingKeys = new Set(
+            flat.map((item) => String(item.id ?? item.syncId ?? item.timestamp ?? ''))
+          );
+          const additional = fhir.filter((item) => {
+            const key = String(item.id ?? item.syncId ?? item.timestamp ?? '');
+            return key && !existingKeys.has(key);
+          });
+          return [...flat, ...additional];
+        };
+
+        const profilesToRestore = mergeWithFhir(cloudData.profiles, fhirEntities?.profiles);
         totalRestored += await restoreTable(profilesToRestore, db.profiles, 'profiles');
 
-        const readingsToRestore = (fhirEntities?.readings && fhirEntities.readings.length > 0)
-          ? fhirEntities.readings
-          : (Array.isArray(cloudData.readings) ? cloudData.readings : []);
+        const readingsToRestore = mergeWithFhir(cloudData.readings, fhirEntities?.readings);
         totalRestored += await restoreTable(
           [
             ...readingsToRestore.filter((r: any) => typeof r?.id === 'string'),
@@ -343,16 +360,12 @@ export class MongoDbAtlasService {
           'readings'
         );
 
-        const medsToRestore = (fhirEntities?.medications && fhirEntities.medications.length > 0)
-          ? fhirEntities.medications
-          : (Array.isArray(cloudData.medications) ? cloudData.medications : []);
+        const medsToRestore = mergeWithFhir(cloudData.medications, fhirEntities?.medications);
         totalRestored += await restoreTable(medsToRestore, db.medications, 'medications');
 
         totalRestored += await restoreTable(cloudData.medicationLogs, db.medicationLogs, 'medicationLogs');
 
-        const labsToRestore = (fhirEntities?.labResults && fhirEntities.labResults.length > 0)
-          ? fhirEntities.labResults
-          : (Array.isArray(cloudData.labResults) ? cloudData.labResults : []);
+        const labsToRestore = mergeWithFhir(cloudData.labResults, fhirEntities?.labResults);
         totalRestored += await restoreTable(labsToRestore, db.labResults, 'labResults');
 
         totalRestored += await restoreTable(cloudData.habits, db.habits, 'habits');
@@ -363,19 +376,13 @@ export class MongoDbAtlasService {
         totalRestored += await restoreTable(cloudData.ascvdProfiles, db.ascvdProfiles, 'ascvdProfiles');
         totalRestored += await restoreTable(cloudData.clinicalNotes, db.clinicalNotes, 'clinicalNotes');
 
-        const condsToRestore = (fhirEntities?.conditions && fhirEntities.conditions.length > 0)
-          ? fhirEntities.conditions
-          : (Array.isArray(cloudData.conditions) ? cloudData.conditions : []);
+        const condsToRestore = mergeWithFhir(cloudData.conditions, fhirEntities?.conditions);
         totalRestored += await restoreTable(condsToRestore, db.conditions, 'conditions');
 
-        const famToRestore = (fhirEntities?.familyHistory && fhirEntities.familyHistory.length > 0)
-          ? fhirEntities.familyHistory
-          : (Array.isArray(cloudData.familyHistory) ? cloudData.familyHistory : []);
+        const famToRestore = mergeWithFhir(cloudData.familyHistory, fhirEntities?.familyHistory);
         totalRestored += await restoreTable(famToRestore, db.familyHistory, 'familyHistory');
 
-        const immToRestore = (fhirEntities?.immunizations && fhirEntities.immunizations.length > 0)
-          ? fhirEntities.immunizations
-          : (Array.isArray(cloudData.immunizations) ? cloudData.immunizations : []);
+        const immToRestore = mergeWithFhir(cloudData.immunizations, fhirEntities?.immunizations);
         totalRestored += await restoreTable(immToRestore, db.immunizations, 'immunizations');
 
         if (legacyReadingTombstones.length > 0) {

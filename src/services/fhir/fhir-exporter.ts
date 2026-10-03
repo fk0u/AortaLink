@@ -87,6 +87,12 @@ export function convertProfileToFHIR(profile: Profile): FhirPatient {
     meta: {
       profile: ['http://hl7.org/fhir/StructureDefinition/Patient']
     },
+    identifier: [
+      {
+        system: 'http://aortalink.app/fhir/identifier/profile-id',
+        value: profile.id
+      }
+    ],
     active: true,
     name: [
       {
@@ -94,7 +100,18 @@ export function convertProfileToFHIR(profile: Profile): FhirPatient {
         text: profile.name || 'Patient'
       }
     ],
-    ...(profile.gender && profile.gender !== 'other' ? { gender: profile.gender } : {})
+    ...(profile.gender && profile.gender !== 'other' ? { gender: profile.gender } : {}),
+    ...(profile.age ? { birthDate: `${new Date().getFullYear() - profile.age}-01-01` } : {}),
+    extension: [
+      ...(profile.targetSystolic ? [{ url: 'http://aortalink.app/fhir/StructureDefinition/target-systolic', valueInteger: profile.targetSystolic }] : []),
+      ...(profile.targetDiastolic ? [{ url: 'http://aortalink.app/fhir/StructureDefinition/target-diastolic', valueInteger: profile.targetDiastolic }] : []),
+      ...(profile.relationship ? [{ url: 'http://aortalink.app/fhir/StructureDefinition/relationship', valueString: profile.relationship }] : []),
+      ...(profile.avatar ? [{ url: 'http://aortalink.app/fhir/StructureDefinition/avatar', valueString: profile.avatar }] : []),
+      ...(profile.guidelinePreference ? [{ url: 'http://aortalink.app/fhir/StructureDefinition/guideline-preference', valueString: profile.guidelinePreference }] : []),
+      ...(profile.screeningCompletedAt ? [{ url: 'http://aortalink.app/fhir/StructureDefinition/screening-completed-at', valueDateTime: profile.screeningCompletedAt }] : []),
+      ...(profile.createdAt ? [{ url: 'http://aortalink.app/fhir/StructureDefinition/created-at', valueDateTime: profile.createdAt }] : []),
+      ...(profile.isDefault !== undefined ? [{ url: 'http://aortalink.app/fhir/StructureDefinition/is-default', valueBoolean: profile.isDefault }] : [])
+    ]
   };
 }
 
@@ -187,6 +204,12 @@ export function convertReadingToFHIR(reading: BPReading, profile?: Profile): Fhi
     meta: {
       profile: ['http://hl7.org/fhir/StructureDefinition/bp']
     },
+    identifier: [
+      {
+        system: 'http://aortalink.app/fhir/identifier/reading-id',
+        value: String(reading.id)
+      }
+    ],
     status: 'final',
     category: [
       {
@@ -229,13 +252,40 @@ export function convertReadingToFHIR(reading: BPReading, profile?: Profile): Fhi
     component: components
   };
 
+  const readingExtensions: any[] = [];
   if (reading.measurement_context) {
-    fhirResource.extension = [
-      {
-        url: 'https://aortalink.health/fhir/StructureDefinition/measurement-context',
-        valueString: reading.measurement_context
-      }
-    ];
+    readingExtensions.push({
+      url: 'https://aortalink.health/fhir/StructureDefinition/measurement-context',
+      valueString: reading.measurement_context
+    });
+  }
+  if (reading.position) {
+    readingExtensions.push({
+      url: 'http://aortalink.app/fhir/StructureDefinition/body-position',
+      valueString: reading.position
+    });
+  }
+  if (reading.arm) {
+    readingExtensions.push({
+      url: 'http://aortalink.app/fhir/StructureDefinition/body-site',
+      valueString: reading.arm
+    });
+  }
+  if (reading.tags && reading.tags.length > 0) {
+    readingExtensions.push({
+      url: 'http://aortalink.app/fhir/StructureDefinition/reading-tag',
+      valueString: reading.tags.join(',')
+    });
+  }
+  if (reading.isFlaggedMeasurement !== undefined) {
+    readingExtensions.push({
+      url: 'http://aortalink.app/fhir/StructureDefinition/is-flagged',
+      valueBoolean: reading.isFlaggedMeasurement
+    });
+  }
+
+  if (readingExtensions.length > 0) {
+    fhirResource.extension = readingExtensions;
   }
 
   if (reading.notes) {
@@ -253,160 +303,97 @@ export function convertLabResultToFHIR(lab: LabResult, profile?: Profile): FhirO
   const subjectRef = { reference: `urn:uuid:${patientId}`, display: profile?.name || 'Patient' };
   const obsList: FhirObservation[] = [];
 
+  const createLabObs = (
+    subId: string,
+    loincCode: string,
+    loincDisplay: string,
+    text: string,
+    value: number,
+    unit: string,
+    ucumCode: string
+  ): FhirObservation => ({
+    resourceType: 'Observation',
+    id: toValidUuid(lab.id ? `${lab.id}-${subId}` : `${Date.now()}-${subId}`, `obs-${subId}`),
+    meta: {
+      profile: ['http://hl7.org/fhir/StructureDefinition/Observation']
+    },
+    ...(lab.id !== undefined
+      ? {
+          identifier: [
+            {
+              system: 'http://aortalink.app/fhir/identifier/lab-id',
+              value: String(lab.id)
+            }
+          ]
+        }
+      : {}),
+    status: 'final',
+    category: [
+      {
+        coding: [
+          {
+            system: 'http://terminology.hl7.org/CodeSystem/observation-category',
+            code: 'laboratory',
+            display: 'Laboratory'
+          }
+        ]
+      }
+    ],
+    code: {
+      coding: [
+        {
+          system: 'http://loinc.org',
+          code: loincCode,
+          display: loincDisplay
+        }
+      ],
+      text
+    },
+    subject: subjectRef,
+    effectiveDateTime: lab.timestamp,
+    valueQuantity: {
+      value,
+      unit,
+      system: 'http://unitsofmeasure.org',
+      code: ucumCode
+    }
+  });
+
   if (lab.uricAcid !== undefined) {
-    obsList.push({
-      resourceType: 'Observation',
-      id: toValidUuid(lab.id ? `${lab.id}-uric` : `${Date.now()}-uric`, 'obs-uric'),
-      status: 'final',
-      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '3084-1', display: 'Urate [Mass/volume] in Serum or Plasma' }], text: 'Asam Urat' },
-      subject: subjectRef,
-      effectiveDateTime: lab.timestamp,
-      valueQuantity: { value: lab.uricAcid, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }
-    });
+    obsList.push(createLabObs('uric', '3084-1', 'Urate [Mass/volume] in Serum or Plasma', 'Asam Urat', lab.uricAcid, 'mg/dL', 'mg/dL'));
   }
-
   if (lab.serumCreatinine !== undefined) {
-    obsList.push({
-      resourceType: 'Observation',
-      id: toValidUuid(lab.id ? `${lab.id}-creat` : `${Date.now()}-creat`, 'obs-creat'),
-      status: 'final',
-      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '2160-0', display: 'Creatinine [Mass/volume] in Serum or Plasma' }], text: 'Kreatinin Serum' },
-      subject: subjectRef,
-      effectiveDateTime: lab.timestamp,
-      valueQuantity: { value: lab.serumCreatinine, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }
-    });
+    obsList.push(createLabObs('creat', '2160-0', 'Creatinine [Mass/volume] in Serum or Plasma', 'Kreatinin Serum', lab.serumCreatinine, 'mg/dL', 'mg/dL'));
   }
-
   if (lab.bloodUrea !== undefined) {
-    obsList.push({
-      resourceType: 'Observation',
-      id: toValidUuid(lab.id ? `${lab.id}-urea` : `${Date.now()}-urea`, 'obs-urea'),
-      status: 'final',
-      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '3091-6', display: 'Urea [Mass/volume] in Serum or Plasma' }], text: 'Ureum Darah' },
-      subject: subjectRef,
-      effectiveDateTime: lab.timestamp,
-      valueQuantity: { value: lab.bloodUrea, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }
-    });
+    obsList.push(createLabObs('urea', '3091-6', 'Urea [Mass/volume] in Serum or Plasma', 'Ureum Darah', lab.bloodUrea, 'mg/dL', 'mg/dL'));
   }
-
   if (lab.totalCholesterol !== undefined) {
-    obsList.push({
-      resourceType: 'Observation',
-      id: toValidUuid(lab.id ? `${lab.id}-chol` : `${Date.now()}-chol`, 'obs-chol'),
-      status: 'final',
-      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '2093-3', display: 'Cholesterol [Mass/volume] in Serum or Plasma' }], text: 'Kolesterol Total' },
-      subject: subjectRef,
-      effectiveDateTime: lab.timestamp,
-      valueQuantity: { value: lab.totalCholesterol, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }
-    });
+    obsList.push(createLabObs('chol', '2093-3', 'Cholesterol [Mass/volume] in Serum or Plasma', 'Kolesterol Total', lab.totalCholesterol, 'mg/dL', 'mg/dL'));
   }
-
   if (lab.ldlCholesterol !== undefined) {
-    obsList.push({
-      resourceType: 'Observation',
-      id: toValidUuid(lab.id ? `${lab.id}-ldl` : `${Date.now()}-ldl`, 'obs-ldl'),
-      status: 'final',
-      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '13457-7', display: 'Cholesterol in LDL [Mass/volume] in Serum or Plasma' }], text: 'Kolesterol LDL' },
-      subject: subjectRef,
-      effectiveDateTime: lab.timestamp,
-      valueQuantity: { value: lab.ldlCholesterol, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }
-    });
+    obsList.push(createLabObs('ldl', '13457-7', 'Cholesterol in LDL [Mass/volume] in Serum or Plasma', 'Kolesterol LDL', lab.ldlCholesterol, 'mg/dL', 'mg/dL'));
   }
-
   if (lab.hdlCholesterol !== undefined) {
-    obsList.push({
-      resourceType: 'Observation',
-      id: toValidUuid(lab.id ? `${lab.id}-hdl` : `${Date.now()}-hdl`, 'obs-hdl'),
-      status: 'final',
-      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '2085-9', display: 'Cholesterol in HDL [Mass/volume] in Serum or Plasma' }], text: 'Kolesterol HDL' },
-      subject: subjectRef,
-      effectiveDateTime: lab.timestamp,
-      valueQuantity: { value: lab.hdlCholesterol, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }
-    });
+    obsList.push(createLabObs('hdl', '2085-9', 'Cholesterol in HDL [Mass/volume] in Serum or Plasma', 'Kolesterol HDL', lab.hdlCholesterol, 'mg/dL', 'mg/dL'));
   }
-
   if (lab.triglycerides !== undefined) {
-    obsList.push({
-      resourceType: 'Observation',
-      id: toValidUuid(lab.id ? `${lab.id}-trig` : `${Date.now()}-trig`, 'obs-trig'),
-      status: 'final',
-      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '2571-8', display: 'Triglyceride [Mass/volume] in Serum or Plasma' }], text: 'Trigliserida' },
-      subject: subjectRef,
-      effectiveDateTime: lab.timestamp,
-      valueQuantity: { value: lab.triglycerides, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }
-    });
+    obsList.push(createLabObs('trig', '2571-8', 'Triglyceride [Mass/volume] in Serum or Plasma', 'Trigliserida', lab.triglycerides, 'mg/dL', 'mg/dL'));
   }
-
   if (lab.fastingBloodSugar !== undefined) {
-    obsList.push({
-      resourceType: 'Observation',
-      id: toValidUuid(lab.id ? `${lab.id}-fbs` : `${Date.now()}-fbs`, 'obs-fbs'),
-      status: 'final',
-      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '2345-7', display: 'Glucose [Mass/volume] in Serum or Plasma' }], text: 'Gula Darah Puasa' },
-      subject: subjectRef,
-      effectiveDateTime: lab.timestamp,
-      valueQuantity: { value: lab.fastingBloodSugar, unit: 'mg/dL', system: 'http://unitsofmeasure.org', code: 'mg/dL' }
-    });
+    obsList.push(createLabObs('fbs', '1558-6', 'Fasting glucose [Mass/volume] in Serum or Plasma', 'Gula Darah Puasa', lab.fastingBloodSugar, 'mg/dL', 'mg/dL'));
   }
-
   if (lab.hba1c !== undefined) {
-    obsList.push({
-      resourceType: 'Observation',
-      id: toValidUuid(lab.id ? `${lab.id}-hba1c` : `${Date.now()}-hba1c`, 'obs-hba1c'),
-      status: 'final',
-      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '4548-4', display: 'Hemoglobin A1c/Hemoglobin.total in Blood' }], text: 'HbA1c' },
-      subject: subjectRef,
-      effectiveDateTime: lab.timestamp,
-      valueQuantity: { value: lab.hba1c, unit: '%', system: 'http://unitsofmeasure.org', code: '%' }
-    });
+    obsList.push(createLabObs('hba1c', '4548-4', 'Hemoglobin A1c/Hemoglobin.total in Blood', 'HbA1c', lab.hba1c, '%', '%'));
   }
-
   if (lab.potassium !== undefined) {
-    obsList.push({
-      resourceType: 'Observation',
-      id: toValidUuid(lab.id ? `${lab.id}-k` : `${Date.now()}-k`, 'obs-k'),
-      status: 'final',
-      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '2823-3', display: 'Potassium [Moles/volume] in Serum or Plasma' }], text: 'Kalium Serum' },
-      subject: subjectRef,
-      effectiveDateTime: lab.timestamp,
-      valueQuantity: { value: lab.potassium, unit: 'mEq/L', system: 'http://unitsofmeasure.org', code: 'meq/L' }
-    });
+    obsList.push(createLabObs('k', '2823-3', 'Potassium [Moles/volume] in Serum or Plasma', 'Kalium Serum', lab.potassium, 'mEq/L', 'meq/L'));
   }
-
   if (lab.sodium !== undefined) {
-    obsList.push({
-      resourceType: 'Observation',
-      id: toValidUuid(lab.id ? `${lab.id}-na` : `${Date.now()}-na`, 'obs-na'),
-      status: 'final',
-      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '2951-2', display: 'Sodium [Moles/volume] in Serum or Plasma' }], text: 'Natrium Serum' },
-      subject: subjectRef,
-      effectiveDateTime: lab.timestamp,
-      valueQuantity: { value: lab.sodium, unit: 'mEq/L', system: 'http://unitsofmeasure.org', code: 'meq/L' }
-    });
+    obsList.push(createLabObs('na', '2951-2', 'Sodium [Moles/volume] in Serum or Plasma', 'Natrium Serum', lab.sodium, 'mEq/L', 'meq/L'));
   }
-
   if (lab.eGfr !== undefined) {
-    obsList.push({
-      resourceType: 'Observation',
-      id: toValidUuid(lab.id ? `${lab.id}-egfr` : `${Date.now()}-egfr`, 'obs-egfr'),
-      status: 'final',
-      category: [{ coding: [{ system: 'http://terminology.hl7.org/CodeSystem/observation-category', code: 'laboratory', display: 'Laboratory' }] }],
-      code: { coding: [{ system: 'http://loinc.org', code: '33914-3', display: 'Glomerular filtration rate/1.73 sq M.predicted' }], text: 'eGFR' },
-      subject: subjectRef,
-      effectiveDateTime: lab.timestamp,
-      valueQuantity: { value: lab.eGfr, unit: 'mL/min/1.73m2', system: 'http://unitsofmeasure.org', code: 'mL/min/{1.73_m2}' }
-    });
+    obsList.push(createLabObs('egfr', '33914-3', 'Glomerular filtration rate/1.73 sq M.predicted', 'eGFR', lab.eGfr, 'mL/min/1.73m2', 'mL/min/{1.73_m2}'));
   }
 
   return obsList;
@@ -423,6 +410,16 @@ export function convertMedicationToFHIR(med: MedicationItem, profile?: Profile):
   return {
     resourceType: 'MedicationRequest',
     id: toValidUuid(med.id, 'medreq'),
+    meta: {
+      profile: ['http://hl7.org/fhir/StructureDefinition/MedicationRequest'],
+      ...(med.createdAt ? { lastUpdated: med.createdAt } : {})
+    },
+    identifier: [
+      {
+        system: 'http://aortalink.app/fhir/identifier/medication-id',
+        value: String(med.id)
+      }
+    ],
     status: 'active',
     intent: 'order',
     medicationCodeableConcept: isAmlodipine
@@ -445,8 +442,14 @@ export function convertMedicationToFHIR(med: MedicationItem, profile?: Profile):
     },
     dosageInstruction: [
       {
-        text: `Schedule: ${med.schedule}. Purpose: ${med.purpose}`
+        text: `Dose: ${med.dosage}. Schedule: ${med.schedule}. Purpose: ${med.purpose}`
       }
+    ],
+    extension: [
+      ...(med.drugClass ? [{ url: 'http://aortalink.app/fhir/StructureDefinition/drug-class', valueString: med.drugClass }] : []),
+      ...(med.purpose ? [{ url: 'http://aortalink.app/fhir/StructureDefinition/purpose', valueString: med.purpose }] : []),
+      ...(med.dosage ? [{ url: 'http://aortalink.app/fhir/StructureDefinition/dosage', valueString: med.dosage }] : []),
+      ...(med.schedule ? [{ url: 'http://aortalink.app/fhir/StructureDefinition/schedule', valueString: med.schedule }] : [])
     ]
   };
 }
@@ -502,13 +505,49 @@ export function exportReadingsToFHIRBundle(readings: BPReading[], profile?: Prof
 // Reverse Converters (fromFHIR -> Domain Models)
 // ---------------------------------------------------------------------------
 
+/**
+ * Normalize lab values based on UCUM units to standard Indonesian EHR units (mg/dL).
+ */
+export function normalizeLabQuantity(code: string, rawVal: number, unit?: string, ucumCode?: string): number {
+  const u = (unit || ucumCode || '').toLowerCase().trim();
+  if (u === 'mmol/l' || u === 'mmol/l') {
+    // Total cholesterol, LDL, HDL: 1 mmol/L = 38.67 mg/dL
+    if (code === '2093-3' || code === '13457-7' || code === '2085-9') {
+      return Math.round(rawVal * 38.67 * 10) / 10;
+    }
+    // Triglycerides: 1 mmol/L = 88.57 mg/dL
+    if (code === '2571-8') {
+      return Math.round(rawVal * 88.57 * 10) / 10;
+    }
+    // Fasting Glucose: 1 mmol/L = 18.0182 mg/dL
+    if (code === '1558-6' || code === '2345-7') {
+      return Math.round(rawVal * 18.0182 * 10) / 10;
+    }
+    // Blood urea: 1 mmol/L = 6.006 mg/dL
+    if (code === '3091-6') {
+      return Math.round(rawVal * 6.006 * 10) / 10;
+    }
+  } else if (u === 'umol/l' || u === 'µmol/l') {
+    // Serum creatinine: 1 umol/L = 1 / 88.4 mg/dL
+    if (code === '2160-0') {
+      return Math.round((rawVal / 88.4) * 100) / 100;
+    }
+    // Uric acid: 1 umol/L = 1 / 59.48 mg/dL
+    if (code === '3084-1') {
+      return Math.round((rawVal / 59.48) * 100) / 100;
+    }
+  }
+  return rawVal;
+}
+
 export function readingFromFHIR(obs: FhirObservation): BPReading {
   let systolic = 0;
   let diastolic = 0;
   let pulse = 0;
 
   for (const comp of obs.component || []) {
-    const code = comp.code?.coding?.[0]?.code;
+    const loinc = comp.code?.coding?.find((c) => c.system === 'http://loinc.org' || c.system?.includes('loinc'));
+    const code = loinc?.code || comp.code?.coding?.[0]?.code;
     const val = comp.valueQuantity?.value ?? 0;
     if (code === '8480-6') systolic = val;
     else if (code === '8462-4') diastolic = val;
@@ -519,24 +558,35 @@ export function readingFromFHIR(obs: FhirObservation): BPReading {
   const profileId = ref.startsWith('urn:uuid:') ? ref.replace('urn:uuid:', '') : ref.replace(/^Patient\//, '');
 
   let measurement_context: any = undefined;
-  if (obs.extension && obs.extension.length > 0) {
-    const ctxExt = obs.extension.find(
-      (e) => e.url === 'https://aortalink.health/fhir/StructureDefinition/measurement-context'
-    );
-    if (ctxExt) measurement_context = ctxExt.valueString;
+  let position: any = undefined;
+  let arm: any = undefined;
+  let tags: string[] | undefined = undefined;
+  let isFlaggedMeasurement: boolean | undefined = undefined;
+
+  for (const ext of obs.extension || []) {
+    if (ext.url?.includes('measurement-context')) measurement_context = ext.valueString;
+    else if (ext.url?.includes('body-position')) position = ext.valueString;
+    else if (ext.url?.includes('body-site')) arm = ext.valueString;
+    else if (ext.url?.includes('reading-tag')) tags = ext.valueString ? ext.valueString.split(',') : undefined;
+    else if (ext.url?.includes('is-flagged')) isFlaggedMeasurement = ext.valueBoolean;
   }
 
   const notes = obs.note?.[0]?.text;
+  const localId = obs.identifier?.find((i: any) => i.system === 'http://aortalink.app/fhir/identifier/reading-id')?.value;
 
   return {
-    id: obs.id || '',
+    id: localId || obs.id || '',
     profileId,
     systolic,
     diastolic,
     pulse,
     timestamp: obs.effectiveDateTime,
     notes,
-    measurement_context
+    measurement_context,
+    ...(position ? { position } : {}),
+    ...(arm ? { arm } : {}),
+    ...(tags ? { tags } : {}),
+    ...(isFlaggedMeasurement !== undefined ? { isFlaggedMeasurement } : {})
   };
 }
 
@@ -563,13 +613,23 @@ export function labResultFromFHIR(observations: FhirObservation[]): LabResult {
       profileId = ref.startsWith('urn:uuid:') ? ref.replace('urn:uuid:', '') : ref.replace(/^Patient\//, '');
     }
     if (obs.effectiveDateTime) timestamp = obs.effectiveDateTime;
-    if (id === undefined && obs.id) {
-      const parsed = Number(obs.id);
-      if (!isNaN(parsed)) id = parsed;
+    if (id === undefined) {
+      const idFromIdent = obs.identifier?.find((i: any) => i.system === 'http://aortalink.app/fhir/identifier/lab-id')?.value;
+      if (idFromIdent && /^\d+$/.test(idFromIdent)) {
+        id = Number(idFromIdent);
+      } else if (obs.id && /^\d+$/.test(obs.id)) {
+        id = Number(obs.id);
+      }
     }
 
-    const code = obs.code?.coding?.[0]?.code;
-    const val = obs.valueQuantity?.value;
+    // Match LOINC across all codings
+    const loincCoding = obs.code?.coding?.find((c) => c.system === 'http://loinc.org' || c.system?.includes('loinc'));
+    const code = loincCoding?.code || obs.code?.coding?.[0]?.code;
+    const rawVal = obs.valueQuantity?.value;
+    if (rawVal === undefined || rawVal === null) continue;
+
+    const val = normalizeLabQuantity(code || '', rawVal, obs.valueQuantity?.unit, obs.valueQuantity?.code);
+
     if (code === '3084-1') uricAcid = val;
     else if (code === '2160-0') serumCreatinine = val;
     else if (code === '3091-6') bloodUrea = val;
@@ -577,11 +637,11 @@ export function labResultFromFHIR(observations: FhirObservation[]): LabResult {
     else if (code === '13457-7') ldlCholesterol = val;
     else if (code === '2085-9') hdlCholesterol = val;
     else if (code === '2571-8') triglycerides = val;
-    else if (code === '2345-7') fastingBloodSugar = val;
+    else if (code === '1558-6' || code === '2345-7') fastingBloodSugar = val;
     else if (code === '4548-4') hba1c = val;
     else if (code === '2823-3') potassium = val;
     else if (code === '2951-2') sodium = val;
-    else if (code === '33914-3') eGfr = val;
+    else if (code === '33914-3' || code === '48642-3' || code === '48643-1') eGfr = val;
   }
 
   return {
@@ -610,23 +670,50 @@ export function medicationFromFHIR(req: FhirMedicationRequest): Partial<Medicati
   const coding = req.medicationCodeableConcept?.coding?.[0];
 
   const instruction = req.dosageInstruction?.[0]?.text || '';
+  const doseMatch = instruction.match(/Dose:\s*([^.]+)/);
   const scheduleMatch = instruction.match(/Schedule:\s*([^.]+)/);
   const purposeMatch = instruction.match(/Purpose:\s*(.+)/);
 
+  let drugClassFromExt: string | undefined;
+  let purposeFromExt: string | undefined;
+  let dosageFromExt: string | undefined;
+  let scheduleFromExt: string | undefined;
+
+  for (const ext of (req as any).extension || []) {
+    if (ext.url?.endsWith('drug-class')) drugClassFromExt = ext.valueString;
+    else if (ext.url?.endsWith('purpose')) purposeFromExt = ext.valueString;
+    else if (ext.url?.endsWith('dosage')) dosageFromExt = ext.valueString;
+    else if (ext.url?.endsWith('schedule')) scheduleFromExt = ext.valueString;
+  }
+
   const validSchedules: MedicationSchedule[] = ['pagi', 'siang', 'sore', 'malam', 'pagi_malam', 'sesuai_kebutuhan'];
-  const rawSchedule = scheduleMatch ? scheduleMatch[1].trim() : '';
+  const rawSchedule = scheduleFromExt || (scheduleMatch ? scheduleMatch[1].trim() : '');
   const schedule: MedicationSchedule = (validSchedules.includes(rawSchedule as MedicationSchedule) ? rawSchedule : 'pagi') as MedicationSchedule;
 
-  const parsedId = req.id ? Number(req.id) : undefined;
+  const localIdStr = req.identifier?.find((i: any) => i.system === 'http://aortalink.app/fhir/identifier/medication-id')?.value;
+  const parsedId = localIdStr && /^\d+$/.test(localIdStr) ? Number(localIdStr) : (req.id && /^\d+$/.test(req.id) ? Number(req.id) : undefined);
+
+  let name = text;
+  let drugClass = drugClassFromExt || 'Antihipertensi';
+  const nameMatch = text.match(/^(.+?)\s*\((.+?)\)$/);
+  if (nameMatch) {
+    name = nameMatch[1].trim();
+    if (!drugClassFromExt) drugClass = nameMatch[2].trim();
+  } else if (coding?.display) {
+    name = coding.display.split(' ')[0];
+  }
+
+  const dosage = dosageFromExt || (doseMatch ? doseMatch[1].trim() : (coding?.display?.match(/\d+\s*(?:mg|mcg|g)/i)?.[0] || '1 tablet'));
+  const purpose = purposeFromExt || (purposeMatch ? purposeMatch[1].trim() : 'Hipertensi');
 
   return {
-    ...(parsedId !== undefined && !isNaN(parsedId) ? { id: parsedId } : {}),
+    ...(parsedId !== undefined ? { id: parsedId } : {}),
     profileId,
-    name: coding?.display ? coding.display.split(' ')[0] : text.replace(/\s*\(.*\)$/, ''),
-    dosage: coding?.display ? coding.display.split(' ').slice(1).join(' ') : '10mg',
+    name: name || 'Obat',
+    dosage,
     schedule,
-    purpose: purposeMatch ? purposeMatch[1].trim() : 'Hipertensi',
-    drugClass: text.match(/\((.*)\)/)?.[1] || 'Antihipertensi'
+    purpose,
+    drugClass
   };
 }
 
@@ -639,11 +726,40 @@ export function profileFromFHIR(patient: FhirPatient): Partial<Profile> {
     }
   }
 
+  const localId = patient.identifier?.find((i: any) => i.system === 'http://aortalink.app/fhir/identifier/profile-id')?.value;
+  let targetSystolic: number | undefined;
+  let targetDiastolic: number | undefined;
+  let relationship: any = undefined;
+  let avatar: string | undefined;
+  let guidelinePreference: any = undefined;
+  let screeningCompletedAt: string | undefined;
+  let createdAt: string | undefined;
+  let isDefault: boolean | undefined;
+
+  for (const ext of (patient as any).extension || []) {
+    if (ext.url?.endsWith('target-systolic')) targetSystolic = ext.valueInteger;
+    else if (ext.url?.endsWith('target-diastolic')) targetDiastolic = ext.valueInteger;
+    else if (ext.url?.endsWith('relationship')) relationship = ext.valueString;
+    else if (ext.url?.endsWith('avatar')) avatar = ext.valueString;
+    else if (ext.url?.endsWith('guideline-preference')) guidelinePreference = ext.valueString;
+    else if (ext.url?.endsWith('screening-completed-at')) screeningCompletedAt = ext.valueDateTime;
+    else if (ext.url?.endsWith('created-at')) createdAt = ext.valueDateTime;
+    else if (ext.url?.endsWith('is-default')) isDefault = ext.valueBoolean;
+  }
+
   return {
-    id: patient.id,
+    id: localId || patient.id,
     name: patient.name?.[0]?.text || 'Pasien',
     gender: patient.gender === 'male' || patient.gender === 'female' ? patient.gender : 'other',
-    ...(age !== undefined ? { age } : {})
+    ...(age !== undefined ? { age } : {}),
+    ...(targetSystolic !== undefined ? { targetSystolic } : {}),
+    ...(targetDiastolic !== undefined ? { targetDiastolic } : {}),
+    ...(relationship ? { relationship } : {}),
+    ...(avatar ? { avatar } : {}),
+    ...(guidelinePreference ? { guidelinePreference } : {}),
+    ...(screeningCompletedAt ? { screeningCompletedAt } : {}),
+    ...(createdAt ? { createdAt } : {}),
+    ...(isDefault !== undefined ? { isDefault } : {})
   };
 }
 

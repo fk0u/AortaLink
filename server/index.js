@@ -354,13 +354,70 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       userSettings = null
     } = req.body;
 
-    // Save canonical FHIR R4 Bundle if provided (ADR 002)
+    // Support both direct top-level arrays and appState payload container
+    const sourceReadings = (Array.isArray(readings) && readings.length > 0) ? readings : (appState?.readings || []);
+    const sourceMedications = (Array.isArray(medications) && medications.length > 0) ? medications : (appState?.medications || []);
+    const sourceMedicationLogs = (Array.isArray(medicationLogs) && medicationLogs.length > 0) ? medicationLogs : (appState?.medicationLogs || []);
+    const sourceLabResults = (Array.isArray(labResults) && labResults.length > 0) ? labResults : (appState?.labResults || []);
+    const sourceHabits = (Array.isArray(habits) && habits.length > 0) ? habits : (appState?.habits || []);
+    const sourceSodiumLogs = (Array.isArray(sodiumLogs) && sodiumLogs.length > 0) ? sodiumLogs : (appState?.sodiumLogs || []);
+    const sourceSleepLogs = (Array.isArray(sleepLogs) && sleepLogs.length > 0) ? sleepLogs : (appState?.sleepLogs || []);
+    const sourceGamification = (Array.isArray(gamification) && gamification.length > 0) ? gamification : (appState?.gamification || []);
+    const sourceProfiles = (Array.isArray(profiles) && profiles.length > 0) ? profiles : (appState?.profiles || []);
+    const sourceReminders = (Array.isArray(reminders) && reminders.length > 0) ? reminders : (appState?.reminders || []);
+    const sourceAscvdProfiles = (Array.isArray(ascvdProfiles) && ascvdProfiles.length > 0) ? ascvdProfiles : (appState?.ascvdProfiles || []);
+    const sourceClinicalNotes = (Array.isArray(clinicalNotes) && clinicalNotes.length > 0) ? clinicalNotes : (appState?.clinicalNotes || []);
+    const sourceConditions = (Array.isArray(conditions) && conditions.length > 0) ? conditions : (appState?.conditions || []);
+    const sourceFamilyHistory = (Array.isArray(familyHistory) && familyHistory.length > 0) ? familyHistory : (appState?.familyHistory || []);
+    const sourceImmunizations = (Array.isArray(immunizations) && immunizations.length > 0) ? immunizations : (appState?.immunizations || []);
+    const sourceTombstones = (Array.isArray(tombstones) && tombstones.length > 0) ? tombstones : (appState?.tombstones || []);
+    const effectiveUserSettings = userSettings || appState?.userSettings || null;
+
+    // Save canonical FHIR R4 Bundle if provided (ADR 002) with conflict and recency checks
     if (fhirBundle && fhirBundle.resourceType === 'Bundle') {
-      await activeDb.collection('fhir_bundles').updateOne(
-        { userId },
-        { $set: { userId, bundle: fhirBundle, clientUpdatedAt: new Date().toISOString() } },
-        { upsert: true }
-      );
+      const existingBundleDoc = await activeDb.collection('fhir_bundles').findOne({ userId });
+      const incomingBundleTime = fhirBundle.timestamp ? new Date(fhirBundle.timestamp).getTime() : Date.now();
+      const existingBundleTime = existingBundleDoc?.clientUpdatedAt
+        ? new Date(existingBundleDoc.clientUpdatedAt).getTime()
+        : 0;
+
+      if (incomingBundleTime >= existingBundleTime) {
+        // Collect active tombstones to filter deleted records from bundle entries
+        const allTombstones = await activeDb.collection('tombstones').find({ userId }).toArray();
+        const incomingDeletedIds = new Set(
+          [...allTombstones, ...sourceTombstones].map((t) => String(t.recordId || t.id || '')).filter(Boolean)
+        );
+
+        const sanitizedEntries = Array.isArray(fhirBundle.entry)
+          ? fhirBundle.entry.filter((entry) => {
+              const res = entry?.resource;
+              if (!res) return false;
+              const resId = String(res.id || '');
+              if (incomingDeletedIds.has(resId)) return false;
+              if (Array.isArray(res.identifier)) {
+                for (const ident of res.identifier) {
+                  if (ident?.value && incomingDeletedIds.has(String(ident.value))) {
+                    return false;
+                  }
+                }
+              }
+              return true;
+            })
+          : [];
+
+        await activeDb.collection('fhir_bundles').updateOne(
+          { userId },
+          {
+            $set: {
+              userId,
+              bundle: { ...fhirBundle, entry: sanitizedEntries },
+              clientUpdatedAt: fhirBundle.timestamp || new Date().toISOString(),
+              serverReceivedAt: new Date().toISOString()
+            }
+          },
+          { upsert: true }
+        );
+      }
     }
 
     let totalSynced = 0;
@@ -435,21 +492,21 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
     };
 
     const syncResults = await Promise.all([
-      upsertCollection('observations', readings, 'readings'),
-      upsertCollection('medications', medications, 'medications'),
-      upsertCollection('medication_logs', medicationLogs, 'medicationLogs'),
-      upsertCollection('lab_results', labResults, 'labResults'),
-      upsertCollection('habits', habits, 'habits'),
-      upsertCollection('sodium_logs', sodiumLogs, 'sodiumLogs'),
-      upsertCollection('sleep_logs', sleepLogs, 'sleepLogs'),
-      upsertCollection('gamification', gamification, 'gamification'),
-      upsertCollection('profiles', profiles, 'profiles'),
-      upsertCollection('reminders', reminders, 'reminders'),
-      upsertCollection('ascvd_profiles', ascvdProfiles, 'ascvdProfiles'),
-      upsertCollection('clinical_notes', clinicalNotes, 'clinicalNotes'),
-      upsertCollection('conditions', conditions, 'conditions'),
-      upsertCollection('family_history', familyHistory, 'familyHistory'),
-      upsertCollection('immunizations', immunizations, 'immunizations')
+      upsertCollection('observations', sourceReadings, 'readings'),
+      upsertCollection('medications', sourceMedications, 'medications'),
+      upsertCollection('medication_logs', sourceMedicationLogs, 'medicationLogs'),
+      upsertCollection('lab_results', sourceLabResults, 'labResults'),
+      upsertCollection('habits', sourceHabits, 'habits'),
+      upsertCollection('sodium_logs', sourceSodiumLogs, 'sodiumLogs'),
+      upsertCollection('sleep_logs', sourceSleepLogs, 'sleepLogs'),
+      upsertCollection('gamification', sourceGamification, 'gamification'),
+      upsertCollection('profiles', sourceProfiles, 'profiles'),
+      upsertCollection('reminders', sourceReminders, 'reminders'),
+      upsertCollection('ascvd_profiles', sourceAscvdProfiles, 'ascvdProfiles'),
+      upsertCollection('clinical_notes', sourceClinicalNotes, 'clinicalNotes'),
+      upsertCollection('conditions', sourceConditions, 'conditions'),
+      upsertCollection('family_history', sourceFamilyHistory, 'familyHistory'),
+      upsertCollection('immunizations', sourceImmunizations, 'immunizations')
     ]);
     for (const result of syncResults) {
       totalSynced += result.applied;
@@ -476,8 +533,8 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
       familyHistory: 'family_history',
       immunizations: 'immunizations'
     };
-    if (Array.isArray(tombstones) && tombstones.length > 0) {
-      for (const t of tombstones) {
+    if (Array.isArray(sourceTombstones) && sourceTombstones.length > 0) {
+      for (const t of sourceTombstones) {
         // Clients send `recordId` (see SyncTombstone); `id` is accepted for
         // older builds. Checking only `t.id` used to drop every deletion.
         const recordId = t?.recordId ?? t?.id;
@@ -503,10 +560,10 @@ app.post('/api/sync/push', authenticateToken, async (req, res) => {
     }
 
     // Save User Settings (Theme, Active Profile, Layout)
-    if (userSettings) {
+    if (effectiveUserSettings) {
       await activeDb.collection('user_settings').updateOne(
         { userId },
-        { $set: { ...userSettings, userId, updatedAt: new Date().toISOString() } },
+        { $set: { ...effectiveUserSettings, userId, updatedAt: new Date().toISOString() } },
         { upsert: true }
       );
       totalSynced += 1;

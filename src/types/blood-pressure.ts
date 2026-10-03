@@ -286,6 +286,11 @@ export interface FhirPatient {
     lastUpdated?: string;
     profile?: string[];
   };
+  identifier?: Array<{
+    system?: string;
+    value?: string;
+    use?: string;
+  }>;
   active: boolean;
   name: Array<{
     use?: string;
@@ -299,6 +304,15 @@ export interface FhirPatient {
     system: 'phone' | 'email';
     value: string;
   }>;
+  extension?: Array<{
+    url: string;
+    valueString?: string;
+    valueCode?: string;
+    valueInteger?: number;
+    valueBoolean?: boolean;
+    valueDateTime?: string;
+    [key: string]: any;
+  }>;
 }
 
 export interface FhirObservation {
@@ -309,6 +323,11 @@ export interface FhirObservation {
     lastUpdated?: string;
     profile?: string[];
   };
+  identifier?: Array<{
+    system?: string;
+    value?: string;
+    use?: string;
+  }>;
   /** Internal Dexie indexing only; stripped on FHIR R4 export */
   profileId?: string;
   status: 'final' | 'amended' | 'preliminary';
@@ -334,6 +353,10 @@ export interface FhirObservation {
     url: string;
     valueString?: string;
     valueCode?: string;
+    valueInteger?: number;
+    valueBoolean?: boolean;
+    valueDateTime?: string;
+    [key: string]: any;
   }>;
 }
 
@@ -345,6 +368,11 @@ export interface FhirMedicationRequest {
     lastUpdated?: string;
     profile?: string[];
   };
+  identifier?: Array<{
+    system?: string;
+    value?: string;
+    use?: string;
+  }>;
   /** Internal Dexie indexing only; stripped on FHIR R4 export */
   profileId?: string;
   status: 'active' | 'completed' | 'cancelled';
@@ -363,6 +391,15 @@ export interface FhirMedicationRequest {
         when?: string[];
       };
     };
+  }>;
+  extension?: Array<{
+    url: string;
+    valueString?: string;
+    valueCode?: string;
+    valueInteger?: number;
+    valueBoolean?: boolean;
+    valueDateTime?: string;
+    [key: string]: any;
   }>;
 }
 

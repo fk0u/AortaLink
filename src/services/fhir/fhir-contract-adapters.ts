@@ -55,14 +55,16 @@ export interface ClinicalEntitiesSnapshot {
 }
 
 /**
- * Extract target UUID string from a reference like "urn:uuid:abc-123" or "Patient/abc-123".
+ * Extract target UUID string from a reference like "urn:uuid:abc-123", "Patient/abc-123",
+ * or "Patient/abc-123/_history/1".
  */
 export function extractRefUuid(ref?: string): string | null {
   if (!ref || typeof ref !== 'string') return null;
   if (ref.startsWith('urn:uuid:')) {
     return ref.replace('urn:uuid:', '').toLowerCase();
   }
-  const parts = ref.split('/');
+  const cleanRef = ref.replace(/\/_history\/[^/]+$/, '');
+  const parts = cleanRef.split('/');
   return parts[parts.length - 1].toLowerCase();
 }
 
@@ -161,36 +163,24 @@ export function entitiesToFhirBundle(snapshot: ClinicalEntitiesSnapshot): FHIRBu
     }
   }
 
-  // Fallback default patient reference if no profiles supplied
-  const defaultPatientUuid = toValidUuid('default-patient', 'patient');
-  const defaultPatientRef = `urn:uuid:${defaultPatientUuid}`;
-  if (profiles.length === 0) {
-    entries.push({
-      fullUrl: defaultPatientRef,
-      resource: {
-        resourceType: 'Patient',
-        id: defaultPatientUuid,
-        meta: { profile: ['http://hl7.org/fhir/StructureDefinition/Patient'] },
-        active: true,
-        name: [{ use: 'official', text: 'Patient' }]
-      }
-    });
-  }
-
-  const getPatientRef = (profileId?: string): string => {
+  const getPatientRef = (profileId?: string): string | undefined => {
     if (profileId && profileIdToUuid.has(profileId)) {
       return `urn:uuid:${profileIdToUuid.get(profileId)}`;
     }
-    return profiles.length > 0 && profiles[0].id && profileIdToUuid.has(profiles[0].id)
-      ? `urn:uuid:${profileIdToUuid.get(profiles[0].id)}`
-      : defaultPatientRef;
+    if (profiles.length > 0 && profiles[0].id && profileIdToUuid.has(profiles[0].id)) {
+      return `urn:uuid:${profileIdToUuid.get(profiles[0].id)}`;
+    }
+    return undefined;
   };
 
   // 2. Readings -> Observations (LOINC 85354-9)
   for (const r of readings) {
     const matchingProfile = profiles.find((p) => p.id === r.profileId);
     const obs = convertReadingToFHIR(r, matchingProfile);
-    obs.subject.reference = getPatientRef(r.profileId);
+    const ref = getPatientRef(r.profileId);
+    if (ref) {
+      obs.subject.reference = ref;
+    }
     entries.push({
       fullUrl: `urn:uuid:${obs.id}`,
       resource: obs
@@ -203,7 +193,9 @@ export function entitiesToFhirBundle(snapshot: ClinicalEntitiesSnapshot): FHIRBu
     const labObsList = convertLabResultToFHIR(l, matchingProfile);
     const ref = getPatientRef(l.profileId);
     for (const o of labObsList) {
-      o.subject.reference = ref;
+      if (ref) {
+        o.subject.reference = ref;
+      }
       entries.push({
         fullUrl: `urn:uuid:${o.id}`,
         resource: o
@@ -215,7 +207,10 @@ export function entitiesToFhirBundle(snapshot: ClinicalEntitiesSnapshot): FHIRBu
   for (const m of medications) {
     const matchingProfile = profiles.find((p) => p.id === m.profileId);
     const medRes = convertMedicationToFHIR(m, matchingProfile);
-    medRes.subject.reference = getPatientRef(m.profileId);
+    const ref = getPatientRef(m.profileId);
+    if (ref) {
+      medRes.subject.reference = ref;
+    }
     entries.push({
       fullUrl: `urn:uuid:${medRes.id}`,
       resource: medRes
@@ -226,7 +221,10 @@ export function entitiesToFhirBundle(snapshot: ClinicalEntitiesSnapshot): FHIRBu
   for (const c of conditions) {
     const matchingProfile = profiles.find((p) => p.id === c.profileId);
     const condRes = convertConditionToFHIR(c, matchingProfile);
-    condRes.subject.reference = getPatientRef(c.profileId);
+    const ref = getPatientRef(c.profileId);
+    if (ref) {
+      condRes.subject.reference = ref;
+    }
     entries.push({
       fullUrl: `urn:uuid:${condRes.id}`,
       resource: condRes
@@ -237,7 +235,10 @@ export function entitiesToFhirBundle(snapshot: ClinicalEntitiesSnapshot): FHIRBu
   for (const f of familyHistory) {
     const matchingProfile = profiles.find((p) => p.id === f.profileId);
     const fRes = convertFamilyHistoryToFHIR(f, matchingProfile);
-    fRes.patient.reference = getPatientRef(f.profileId);
+    const ref = getPatientRef(f.profileId);
+    if (ref) {
+      fRes.patient.reference = ref;
+    }
     entries.push({
       fullUrl: `urn:uuid:${fRes.id}`,
       resource: fRes
@@ -248,7 +249,10 @@ export function entitiesToFhirBundle(snapshot: ClinicalEntitiesSnapshot): FHIRBu
   for (const im of immunizations) {
     const matchingProfile = profiles.find((p) => p.id === im.profileId);
     const immRes = convertImmunizationToFHIR(im, matchingProfile);
-    immRes.patient.reference = getPatientRef(im.profileId);
+    const ref = getPatientRef(im.profileId);
+    if (ref) {
+      immRes.patient.reference = ref;
+    }
     entries.push({
       fullUrl: `urn:uuid:${immRes.id}`,
       resource: immRes
@@ -280,9 +284,10 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
   }
 
   const profilesMap = new Map<string, Profile>();
+  const patientUuidToProfileId = new Map<string, string>();
   const anthroObsByPatient = new Map<string, FhirObservation[]>();
   const readings: BPReading[] = [];
-  const labObsByPatientAndDate = new Map<string, FhirObservation[]>();
+  const labObsByPatientAndGroup = new Map<string, FhirObservation[]>();
   const medications: MedicationItem[] = [];
   const conditions: ConditionItem[] = [];
   const familyHistory: FamilyMemberHistoryItem[] = [];
@@ -296,32 +301,43 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
     if (res.resourceType === 'Patient') {
       const patient = res as FhirPatient;
       const partialProfile = profileFromFHIR(patient);
-      const profileId = patient.id || toValidUuid(`prof-${profilesMap.size + 1}`, 'patient');
+      const profileId = partialProfile.id || patient.id || toValidUuid(`prof-${profilesMap.size + 1}`, 'patient');
       const profile: Profile = {
         id: profileId,
         name: partialProfile.name || 'Pasien',
-        relationship: 'self',
-        avatar: 'user',
+        relationship: partialProfile.relationship || 'self',
+        avatar: partialProfile.avatar || 'user',
         gender: partialProfile.gender || 'other',
         age: partialProfile.age,
-        targetSystolic: 120,
-        targetDiastolic: 80,
-        isDefault: profilesMap.size === 0,
-        createdAt: new Date().toISOString()
+        targetSystolic: partialProfile.targetSystolic ?? 120,
+        targetDiastolic: partialProfile.targetDiastolic ?? 80,
+        guidelinePreference: partialProfile.guidelinePreference,
+        screeningCompletedAt: partialProfile.screeningCompletedAt,
+        isDefault: partialProfile.isDefault !== undefined ? partialProfile.isDefault : profilesMap.size === 0,
+        createdAt: partialProfile.createdAt || new Date().toISOString()
       };
       profilesMap.set(profileId, profile);
+      if (patient.id) {
+        patientUuidToProfileId.set(patient.id.toLowerCase(), profileId);
+      }
+      patientUuidToProfileId.set(profileId.toLowerCase(), profileId);
     }
   }
 
   // Helper to resolve profileId from a subject/patient reference
   const resolveProfileId = (ref?: string): string => {
     const uuid = extractRefUuid(ref);
-    if (uuid && profilesMap.has(uuid)) {
-      return uuid;
+    if (uuid) {
+      if (patientUuidToProfileId.has(uuid)) {
+        return patientUuidToProfileId.get(uuid)!;
+      }
+      if (profilesMap.has(uuid)) {
+        return uuid;
+      }
     }
     // If not found by direct id, check first profile
     const first = profilesMap.values().next().value;
-    return first ? first.id : (uuid || 'default-patient');
+    return first ? first.id : (uuid || '');
   };
 
   // Pass 2: Extract Clinical Resources & Observations
@@ -332,7 +348,8 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
     switch (res.resourceType) {
       case 'Observation': {
         const obs = res as FhirObservation;
-        const code = obs.code?.coding?.[0]?.code;
+        const loincCoding = obs.code?.coding?.find((c) => c.system === 'http://loinc.org' || c.system?.includes('loinc'));
+        const code = loincCoding?.code || obs.code?.coding?.[0]?.code;
         const pId = resolveProfileId(obs.subject?.reference);
 
         // Anthropometry & Social History LOINCs
@@ -358,11 +375,16 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
         const isLabCategory = obs.category?.some((cat) =>
           cat.coding?.some((c) => c.code === 'laboratory')
         );
-        const labCodes = ['3091-6', '2160-0', '2093-3', '13457-7', '2085-9', '2571-8', '2345-7', '4548-4', '48065-7', '6598-7'];
+        const labCodes = [
+          '3084-1', '2160-0', '3091-6', '2093-3', '13457-7', '2085-9',
+          '2571-8', '1558-6', '2345-7', '4548-4', '2823-3', '2951-2',
+          '33914-3', '48642-3', '48643-1', '48065-7', '6598-7'
+        ];
         if (isLabCategory || (code && labCodes.includes(code))) {
-          const groupKey = `${pId}::${obs.effectiveDateTime?.slice(0, 10) || 'default'}`;
-          if (!labObsByPatientAndDate.has(groupKey)) labObsByPatientAndDate.set(groupKey, []);
-          labObsByPatientAndDate.get(groupKey)!.push(obs);
+          const labId = obs.identifier?.find((i: any) => i.system === 'http://aortalink.app/fhir/identifier/lab-id')?.value;
+          const groupKey = labId ? `${pId}::id::${labId}` : `${pId}::ts::${obs.effectiveDateTime || obs.id || 'default'}`;
+          if (!labObsByPatientAndGroup.has(groupKey)) labObsByPatientAndGroup.set(groupKey, []);
+          labObsByPatientAndGroup.get(groupKey)!.push(obs);
         }
         break;
       }
@@ -371,7 +393,7 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
         const medReq = res as FhirMedicationRequest;
         const partialMed = medicationFromFHIR(medReq);
         const pId = resolveProfileId(medReq.subject?.reference);
-        const medId = medReq.id && /^\d+$/.test(medReq.id) ? Number(medReq.id) : (medications.length + 1);
+        const medId = partialMed.id !== undefined ? partialMed.id : (medReq.id && /^\d+$/.test(medReq.id) ? Number(medReq.id) : (medications.length + 1));
         medications.push({
           id: medId,
           profileId: pId,
@@ -424,12 +446,14 @@ export function fhirBundleToEntities(bundle: FHIRBundleResource): ClinicalEntiti
   }
 
   // Pass 4: Fold Lab Observations into LabResult items
-  let labIndex = 1;
+  let fallbackLabIndex = 1;
   const labResults: LabResult[] = [];
-  for (const [groupKey, obsList] of labObsByPatientAndDate.entries()) {
+  for (const [groupKey, obsList] of labObsByPatientAndGroup.entries()) {
     const [pId] = groupKey.split('::');
     const lab = labResultFromFHIR(obsList);
-    lab.id = labIndex++;
+    if (lab.id === undefined) {
+      lab.id = fallbackLabIndex++;
+    }
     lab.profileId = pId;
     labResults.push(lab);
   }
