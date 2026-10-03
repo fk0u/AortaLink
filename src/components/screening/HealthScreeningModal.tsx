@@ -94,9 +94,14 @@ export const HealthScreeningModal: React.FC = () => {
       setAlcoholConsumption(activeProfile?.alcoholConsumption ?? 'none');
       setSubstanceUseHistory(activeProfile?.substanceUseHistory ?? false);
 
+      let isCancelled = false;
+      const targetId = activeProfileId;
+
       async function loadData() {
         const { conditions: existingConds, familyHistory: existingFmhs, immunizations: existingImms } =
-          await fetchProfileScreeningData(activeProfileId!);
+          await fetchProfileScreeningData(targetId);
+
+        if (isCancelled || prevProfileIdRef.current !== targetId) return;
 
         const condMap: Record<string, boolean> = {};
         const detailsMap: Record<string, AortaMeasurementDetails> = {};
@@ -113,6 +118,7 @@ export const HealthScreeningModal: React.FC = () => {
             }
           }
         }
+        if (isCancelled || prevProfileIdRef.current !== targetId) return;
         setSelectedConditions(condMap);
         setAortaDetailsMap(detailsMap);
 
@@ -135,6 +141,7 @@ export const HealthScreeningModal: React.FC = () => {
             }
           }
         }
+        if (isCancelled || prevProfileIdRef.current !== targetId) return;
         setFamilyAneurysm(hasAneurysm);
         setFamilyAneurysmRel(aneurysmRel);
         setFamilyDissection(hasDissection);
@@ -150,10 +157,15 @@ export const HealthScreeningModal: React.FC = () => {
         for (const im of existingImms) {
           immMap[im.vaccineCode] = im.status === 'completed';
         }
+        if (isCancelled || prevProfileIdRef.current !== targetId) return;
         setSelectedVaccines(immMap);
       }
 
       loadData().catch(console.error);
+
+      return () => {
+        isCancelled = true;
+      };
     }
   }, [isOpen, activeProfileId, activeProfile]);
 

@@ -301,8 +301,22 @@ assert.equal(social[0].code.coding?.[0]?.code, '72166-2', 'Smoking status must u
 assert.equal(social[0].valueCodeableConcept?.coding?.[0]?.code, '8517006', 'Former smoker must use SNOMED 8517006 in valueCodeableConcept');
 
 assert.equal(social[1].code.coding?.[0]?.code, '11331-6', 'Alcohol status must use LOINC 11331-6');
-assert.equal(social[1].valueCodeableConcept?.coding?.[0]?.code, '228274009', 'Lifetime non-drinker must use SNOMED 228274009 in valueCodeableConcept');
-console.log('✓ Anthropometry & Social History Observations with LOINC & SNOMED codes passed');
+assert.equal(social[1].valueCodeableConcept?.coding?.[0]?.code, '228274009', 'Lifetime non-drinker must use SNOMED 228274009');
+
+// Exercise all four SNOMED CT alcohol codes
+const pOccasional: Profile = { ...sampleProfile, alcoholConsumption: 'occasional' };
+const sOccasional = convertSocialHistoryToFHIR(pOccasional);
+assert.equal(sOccasional[1].valueCodeableConcept?.coding?.[0]?.code, '228276006', 'Occasional drinker must use SNOMED 228276006');
+
+const pModerate: Profile = { ...sampleProfile, alcoholConsumption: 'moderate' };
+const sModerate = convertSocialHistoryToFHIR(pModerate);
+assert.equal(sModerate[1].valueCodeableConcept?.coding?.[0]?.code, '43783005', 'Moderate drinker must use SNOMED 43783005');
+
+const pHeavy: Profile = { ...sampleProfile, alcoholConsumption: 'heavy' };
+const sHeavy = convertSocialHistoryToFHIR(pHeavy);
+assert.equal(sHeavy[1].valueCodeableConcept?.coding?.[0]?.code, '160577002', 'Heavy drinker must use SNOMED 160577002');
+
+console.log('✓ Anthropometry & Social History Observations with all LOINC & SNOMED codes passed');
 
 // ---------------------------------------------------------------------------
 // 7. Complete FHIR R4 Bundle Collection Export
