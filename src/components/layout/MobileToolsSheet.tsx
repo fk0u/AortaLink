@@ -213,6 +213,51 @@ export const MobileToolsSheet: React.FC = () => {
                       <p className="text-[10px] text-teal-700 dark:text-teal-400 font-semibold">Mesin statistik on-device • tanpa server eksternal</p>
                     </div>
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      closeSheet();
+                      useAppStore.getState().openKnowledgeBaseModal();
+                    }}
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/60 active:scale-[0.98] transition-all text-left"
+                  >
+                    <div className="p-2 rounded-xl bg-indigo-600 text-white shrink-0 shadow-sm">
+                      <FileText size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                        <span>Basis Pengetahuan &amp; Surveilans</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 font-extrabold uppercase">
+                          Guideline
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-indigo-700 dark:text-indigo-400 font-semibold">Edukasi komplikasi, terapi bertingkat &amp; jadwal surveilans TAA/AAA</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      closeSheet();
+                      useAppStore.getState().openRedFlagTriage();
+                    }}
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-red-50/70 dark:bg-red-950/40 border border-red-200/80 dark:border-red-900/60 active:scale-[0.98] transition-all text-left"
+                  >
+                    <div className="p-2 rounded-xl bg-red-600 text-white shrink-0 shadow-sm">
+                      <Shield size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                        <span>Triage Gejala Darurat Aorta</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 font-extrabold uppercase">
+                          Red Flag
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-red-700 dark:text-red-400 font-semibold">Skrining nyeri dada robek, sinkop &amp; rujukan 119/IGD langsung</p>
+                    </div>
+                  </button>
                 </div>
               </div>
 

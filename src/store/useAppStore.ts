@@ -40,6 +40,9 @@ interface AppState {
   isAiModalOpen: boolean;
   isScreeningModalOpen: boolean;
   isHealthScoreModalOpen: boolean;
+  isKnowledgeBaseModalOpen: boolean;
+  isRedFlagTriageOpen: boolean;
+  isTransferFormModalOpen: boolean;
   
   // Toasts
   toasts: ToastMessage[];
@@ -74,6 +77,12 @@ interface AppState {
   closeScreeningModal: () => void;
   openHealthScoreModal: () => void;
   closeHealthScoreModal: () => void;
+  openKnowledgeBaseModal: () => void;
+  closeKnowledgeBaseModal: () => void;
+  openRedFlagTriage: () => void;
+  closeRedFlagTriage: () => void;
+  openTransferFormModal: () => void;
+  closeTransferFormModal: () => void;
 
   // Cache & Loading Actions
   setDataLoading: (loading: boolean) => void;
@@ -104,6 +113,9 @@ export const useAppStore = create<AppState>((set) => ({
   isAiModalOpen: false,
   isScreeningModalOpen: false,
   isHealthScoreModalOpen: false,
+  isKnowledgeBaseModalOpen: false,
+  isRedFlagTriageOpen: false,
+  isTransferFormModalOpen: false,
 
   toasts: [],
 
@@ -153,6 +165,12 @@ export const useAppStore = create<AppState>((set) => ({
   closeScreeningModal: () => set({ isScreeningModalOpen: false }),
   openHealthScoreModal: () => set({ isHealthScoreModalOpen: true }),
   closeHealthScoreModal: () => set({ isHealthScoreModalOpen: false }),
+  openKnowledgeBaseModal: () => set({ isKnowledgeBaseModalOpen: true }),
+  closeKnowledgeBaseModal: () => set({ isKnowledgeBaseModalOpen: false }),
+  openRedFlagTriage: () => set({ isRedFlagTriageOpen: true }),
+  closeRedFlagTriage: () => set({ isRedFlagTriageOpen: false }),
+  openTransferFormModal: () => set({ isTransferFormModalOpen: true }),
+  closeTransferFormModal: () => set({ isTransferFormModalOpen: false }),
 
   // Caching setters
   setDataLoading: (loading) => set({ isDataLoading: loading }),

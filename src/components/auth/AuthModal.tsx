@@ -7,6 +7,7 @@ import { useAuthStore, SubscriptionTier } from '../../store/useAuthStore';
 import { useFocusTrap } from '../../utils/modal-a11y';
 import { hasGuestDataToMigrate } from '../../db/local-data';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
+import { DataConsentModal } from './DataConsentModal';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -25,10 +26,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>('pro_ehr');
-  // Mode Lokal data on this device: offer to carry it into the account
-  // instead of silently discarding it.
+  
   const [hasGuestData, setHasGuestData] = useState(false);
   const [migrateLocalData, setMigrateLocalData] = useState(true);
+  
+  const [hasConsent, setHasConsent] = useState(false);
+  const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -58,8 +61,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           addToast({ type: 'warning', title: 'Data Belum Lengkap', message: 'Silakan isi nama lengkap Anda.' });
           return;
         }
+        if (!hasConsent) {
+          addToast({ type: 'warning', title: 'Persetujuan Diperlukan', message: 'Anda harus menyetujui pemrosesan data kesehatan (UU PDP) untuk mendaftar.' });
+          return;
+        }
 
-        await registerWithEmail(name, email, password, selectedTier, { migrateLocalData: hasGuestData && migrateLocalData });
+        await registerWithEmail(name, email, password, selectedTier, { migrateLocalData: hasGuestData && migrateLocalData, healthDataConsent: hasConsent });
         playSuccessChime();
         addToast({
           type: 'success',
@@ -98,191 +105,238 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (onSuccess) onSuccess();
     onClose();
   };
+  
+  const handleConsentAccept = () => {
+    setHasConsent(true);
+    setIsConsentModalOpen(false);
+  };
 
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
-        <motion.div
-          ref={trapRef}
-          initial={{ opacity: 0, scale: 0.95, y: 15 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="bg-white dark:bg-[#1c1c1e] border border-slate-200/90 dark:border-white/10 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden my-auto flex flex-col text-slate-900 dark:text-slate-100 max-h-[92vh]"
-        >
-          {/* Header */}
-          <div className="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/5 shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-teal-600 flex items-center justify-center shadow-md shadow-teal-600/25 text-white">
-                <Heart size={20} className="fill-white" />
+    <>
+      <AnimatePresence>
+        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md overflow-y-auto">
+          <motion.div
+            ref={trapRef}
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+            className="bg-white dark:bg-[#1c1c1e] border border-slate-200/90 dark:border-white/10 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden my-auto flex flex-col text-slate-900 dark:text-slate-100 max-h-[92vh]"
+          >
+            {/* Header */}
+            <div className="p-5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-white/5 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-teal-600 flex items-center justify-center shadow-md shadow-teal-600/25 text-white">
+                  <Heart size={20} className="fill-white" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">
+                    AortaLink EHR Platform
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    {tab === 'login' ? 'Masuk dengan Akun Cloud' : 'Daftar Akun Baru'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">
-                  AortaLink EHR Platform
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  {tab === 'login' ? 'Masuk dengan Akun Cloud' : 'Daftar Akun Baru'}
-                </p>
-              </div>
-            </div>
-            
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          <div className="p-6 space-y-4 overflow-y-auto">
-            {/* Tab Switcher */}
-            <div className="p-1 bg-slate-100 dark:bg-white/10 rounded-2xl flex items-center">
+              
               <button
                 type="button"
-                onClick={() => setTab('login')}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                  tab === 'login'
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
-                }`}
+                onClick={onClose}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
-                <LogIn size={14} />
-                <span>Masuk Akun</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setTab('register')}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                  tab === 'register'
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
-                }`}
-              >
-                <UserPlus size={14} />
-                <span>Daftar Akun Baru</span>
+                <X size={18} />
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleEmailSubmit} className="space-y-3 pt-1">
-              {tab === 'register' && (
+            <div className="p-6 space-y-4 overflow-y-auto">
+              {/* Tab Switcher */}
+              <div className="p-1 bg-slate-100 dark:bg-white/10 rounded-2xl flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setTab('login')}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    tab === 'login'
+                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                  }`}
+                >
+                  <LogIn size={14} />
+                  <span>Masuk Akun</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab('register')}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    tab === 'register'
+                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                  }`}
+                >
+                  <UserPlus size={14} />
+                  <span>Daftar Akun Baru</span>
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleEmailSubmit} className="space-y-3 pt-1">
+                {tab === 'register' && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Nama Lengkap Pasien / Tenaga Medis
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: dr. Budi Santoso / Budi"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    />
+                  </div>
+                )}
+
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Nama Lengkap Pasien / Tenaga Medis
+                    Email
                   </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: dr. Budi Santoso / Budi"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
-                  />
+                  <div className="relative">
+                    <input
+                      type="email"
+                      required
+                      placeholder="nama@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    />
+                    <Mail size={15} className="absolute left-3 top-3 text-slate-400" />
+                  </div>
                 </div>
-              )}
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Email
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    required
-                    placeholder="nama@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
-                  />
-                  <Mail size={15} className="absolute left-3 top-3 text-slate-400" />
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Kata Sandi
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="password"
+                      required
+                      placeholder="Minimal 6 karakter"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    />
+                    <Lock size={15} className="absolute left-3 top-3 text-slate-400" />
+                  </div>
                 </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Kata Sandi
-                </label>
-                <div className="relative">
-                  <input
-                    type="password"
-                    required
-                    placeholder="Minimal 6 karakter"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#2c2c2e] border border-slate-200 dark:border-white/10 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
-                  />
-                  <Lock size={15} className="absolute left-3 top-3 text-slate-400" />
-                </div>
-              </div>
-
-              {hasGuestData && (
-                <label className="flex items-start gap-2.5 p-3 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 text-left cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={migrateLocalData}
-                    onChange={(e) => setMigrateLocalData(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 shrink-0 accent-teal-600"
-                  />
-                  <span className="text-[11px] leading-relaxed text-slate-700 dark:text-slate-200">
-                    <span className="font-bold">Pindahkan data Mode Lokal ke akun ini.</span>{' '}
-                    {migrateLocalData
-                      ? 'Catatan yang sudah tersimpan di perangkat ini akan ikut tersinkron ke akun.'
-                      : 'Data Mode Lokal di perangkat ini akan dihapus setelah berhasil masuk.'}
-                  </span>
-                </label>
-              )}
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw size={14} className="animate-spin" />
-                    <span>Memproses Autentikasi...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 size={14} />
-                    <span>{tab === 'login' ? 'Masuk ke Dashboard Cloud' : 'Daftarkan Akun'}</span>
-                  </>
+                
+                {tab === 'register' && (
+                  <div className="pt-2">
+                    <label className="flex items-start gap-2.5 p-3 rounded-2xl bg-teal-50/50 dark:bg-teal-950/20 border border-teal-100 dark:border-teal-900/30 text-left cursor-pointer hover:bg-teal-50 dark:hover:bg-teal-950/30 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={hasConsent}
+                        onChange={(e) => {
+                          if (e.target.checked && !hasConsent) {
+                            setIsConsentModalOpen(true);
+                          } else {
+                            setHasConsent(false);
+                          }
+                        }}
+                        className="mt-0.5 h-4 w-4 shrink-0 accent-teal-600 rounded border-slate-300 text-teal-600 focus:ring-teal-600"
+                      />
+                      <span className="text-[11px] leading-relaxed text-slate-700 dark:text-slate-200 flex-1">
+                        Saya menyetujui pemrosesan data kesehatan sesuai UU PDP.
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setIsConsentModalOpen(true);
+                          }}
+                          className="text-teal-600 dark:text-teal-400 font-bold ml-1 hover:underline inline-flex items-center gap-0.5"
+                        >
+                          Baca Detail Ketentuan
+                        </button>
+                      </span>
+                    </label>
+                  </div>
                 )}
-              </button>
-            </form>
 
-            {/* Skip Login Section with Medical Disclaimer */}
-            <div className="pt-3 border-t border-slate-100 dark:border-white/10 space-y-2.5">
-              <div className="p-3 rounded-2xl bg-teal-50/80 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-900/50 space-y-1.5 text-left">
-                <div className="flex items-center gap-1.5 text-teal-900 dark:text-teal-200 font-bold text-xs">
-                  <Info size={14} className="text-teal-600 shrink-0" />
-                  <span>Mode Tamu / Offline-First (Tanpa Akun)</span>
+                {hasGuestData && (
+                  <label className="flex items-start gap-2.5 p-3 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 text-left cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={migrateLocalData}
+                      onChange={(e) => setMigrateLocalData(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-teal-600 rounded border-slate-300 text-teal-600 focus:ring-teal-600"
+                    />
+                    <span className="text-[11px] leading-relaxed text-slate-700 dark:text-slate-200">
+                      <span className="font-bold">Pindahkan data Mode Lokal ke akun ini.</span>{' '}
+                      {migrateLocalData
+                        ? 'Catatan yang sudah tersimpan di perangkat ini akan ikut tersinkron ke akun.'
+                        : 'Data Mode Lokal di perangkat ini akan dihapus setelah berhasil masuk.'}
+                    </span>
+                  </label>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isLoading || (tab === 'register' && !hasConsent)}
+                  className="w-full py-3 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md shadow-teal-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin" />
+                      <span>Memproses Autentikasi...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={14} />
+                      <span>{tab === 'login' ? 'Masuk ke Dashboard Cloud' : 'Daftarkan Akun'}</span>
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Skip Login Section with Medical Disclaimer */}
+              <div className="pt-3 border-t border-slate-100 dark:border-white/10 space-y-2.5">
+                <div className="p-3 rounded-2xl bg-teal-50/80 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-900/50 space-y-1.5 text-left">
+                  <div className="flex items-center gap-1.5 text-teal-900 dark:text-teal-200 font-bold text-xs">
+                    <Info size={14} className="text-teal-600 shrink-0" />
+                    <span>Mode Tamu / Offline-First (Tanpa Akun)</span>
+                  </div>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                    Anda dapat langsung menggunakan seluruh fitur rekam medis tanpa perlu login. Data klinis disimpan secara aman di browser lokal Anda (Dexie.js).
+                  </p>
                 </div>
-                <p className="text-[10px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                  Anda dapat langsung menggunakan seluruh fitur rekam medis tanpa perlu login. Data klinis disimpan secara aman di browser lokal Anda (Dexie.js).
-                </p>
+
+                <button
+                  type="button"
+                  onClick={handleSkipLogin}
+                  className="w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-[#2c2c2e] dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs active:scale-95 transition-all flex items-center justify-center gap-2 group"
+                >
+                  <span>Lanjutkan Mode Offline (Tanpa Login)</span>
+                  <ArrowRight size={13} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={handleSkipLogin}
-                className="w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-[#2c2c2e] dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs active:scale-95 transition-all flex items-center justify-center gap-2 group"
-              >
-                <span>Lanjutkan Mode Offline (Tanpa Login)</span>
-                <ArrowRight size={13} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-              </button>
             </div>
 
-          </div>
-
-          {/* Footer Note */}
-          <div className="p-3 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-white/10 text-center text-[10px] text-slate-400 font-medium shrink-0">
-            Password ter-hash bcrypt • MongoDB Atlas Cloud Sync • HL7 FHIR R4
-          </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+            {/* Footer Note */}
+            <div className="p-3 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-white/10 text-center text-[10px] text-slate-400 font-medium shrink-0">
+              Password ter-hash bcrypt • MongoDB Atlas Cloud Sync • HL7 FHIR R4
+            </div>
+          </motion.div>
+        </div>
+      </AnimatePresence>
+      
+      {/* Privacy Consent Modal */}
+      <DataConsentModal
+        isOpen={isConsentModalOpen}
+        onClose={() => setIsConsentModalOpen(false)}
+        onAccept={handleConsentAccept}
+      />
+    </>
   );
 };

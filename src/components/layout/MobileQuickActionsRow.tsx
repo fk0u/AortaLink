@@ -22,6 +22,8 @@ interface MobileQuickActionsRowProps {
   onOpenClinicalNotes: () => void;
   onOpenFhir: () => void;
   onOpenHealthScore?: () => void;
+  onOpenKnowledgeBase?: () => void;
+  onOpenRedFlagTriage?: () => void;
 }
 
 /**
@@ -41,6 +43,8 @@ export const MobileQuickActionsRow: React.FC<MobileQuickActionsRowProps> = ({
   onOpenClinicalNotes,
   onOpenFhir,
   onOpenHealthScore,
+  onOpenKnowledgeBase,
+  onOpenRedFlagTriage,
 }) => {
   const favorites = [
     {
@@ -95,6 +99,8 @@ export const MobileQuickActionsRow: React.FC<MobileQuickActionsRowProps> = ({
 
   const advancedTools = [
     ...(onOpenHealthScore ? [{ id: 'health-score', label: "Life's Essential 8", onClick: onOpenHealthScore }] : []),
+    ...(onOpenKnowledgeBase ? [{ id: 'knowledge-base', label: 'Panduan Guideline', onClick: onOpenKnowledgeBase }] : []),
+    ...(onOpenRedFlagTriage ? [{ id: 'red-flag-triage', label: 'Triage Darurat', onClick: onOpenRedFlagTriage }] : []),
     { id: 'rest-timer', label: 'Rest 5 Menit', onClick: onOpenRestTimer },
     { id: 'pdf-report', label: 'Laporan PDF', onClick: onOpenExportPdf },
     { id: 'clinical-notes', label: 'Catatan SOAP', onClick: onOpenClinicalNotes },

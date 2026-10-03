@@ -67,6 +67,10 @@ import { OnboardingModal, ONBOARDING_DONE_KEY } from './components/onboarding/On
 import { HealthScreeningModal } from './components/screening/HealthScreeningModal';
 import { HealthScoreModal } from './components/health-score/HealthScoreModal';
 import { HealthScoreDashboardCard } from './components/dashboard/HealthScoreDashboardCard';
+import { CareRoutingPanel } from './components/care-routing/CareRoutingPanel';
+import { RedFlagTriageScreen } from './components/care-routing/RedFlagTriageScreen';
+import { TransferFormModal } from './components/care-routing/TransferFormModal';
+import { KnowledgeBaseModal } from './components/knowledge-base/KnowledgeBaseModal';
 
 // Bluetooth pairing
 import { DevicePairingButton } from './components/bluetooth/DevicePairingButton';
@@ -186,6 +190,15 @@ export function App() {
   const isHealthScoreModalOpen = useAppStore((state) => state.isHealthScoreModalOpen);
   const openHealthScoreModal = useAppStore((state) => state.openHealthScoreModal);
   const closeHealthScoreModal = useAppStore((state) => state.closeHealthScoreModal);
+
+  const isKnowledgeBaseModalOpen = useAppStore((state) => state.isKnowledgeBaseModalOpen);
+  const closeKnowledgeBaseModal = useAppStore((state) => state.closeKnowledgeBaseModal);
+
+  const isRedFlagTriageOpen = useAppStore((state) => state.isRedFlagTriageOpen);
+  const closeRedFlagTriage = useAppStore((state) => state.closeRedFlagTriage);
+
+  const isTransferFormModalOpen = useAppStore((state) => state.isTransferFormModalOpen);
+  const closeTransferFormModal = useAppStore((state) => state.closeTransferFormModal);
 
   // Deleting reading confirmation state
   const [deletingReadingId, setDeletingReadingId] = useState<string | null>(null);
@@ -455,6 +468,15 @@ export function App() {
                   onOpenClinicalNotes={() => setIsClinicalNotesModalOpen(true)}
                   onOpenFhir={() => setIsFhirModalOpen(true)}
                   onOpenHealthScore={() => openHealthScoreModal()}
+                  onOpenKnowledgeBase={() => useAppStore.getState().openKnowledgeBaseModal()}
+                  onOpenRedFlagTriage={() => useAppStore.getState().openRedFlagTriage()}
+                />
+
+                {/* Step 06 Care Routing & Red-Flag Guidance Panel */}
+                <CareRoutingPanel
+                  latestSystolic={stats.latestReading?.systolic ?? null}
+                  latestDiastolic={stats.latestReading?.diastolic ?? null}
+                  hasComorbidities={Boolean((labResults && labResults.length > 0) || (userMeds && userMeds.length > 0))}
                 />
 
                 {/* Real-time Status Indicator */}
@@ -912,6 +934,33 @@ export function App() {
       />
       <LocalMlAssistantWidget />
       <ResearchConsentModal />
+
+      {/* Step 07 Knowledge Base & Multi-Tier Guidance Modal */}
+      <KnowledgeBaseModal
+        isOpen={isKnowledgeBaseModalOpen}
+        onClose={closeKnowledgeBaseModal}
+      />
+
+      {/* Step 06 Red Flag Emergency Triage Screen */}
+      {isRedFlagTriageOpen && (
+        <RedFlagTriageScreen
+          onClose={closeRedFlagTriage}
+          latestSystolic={stats.latestReading?.systolic}
+          latestDiastolic={stats.latestReading?.diastolic}
+        />
+      )}
+
+      {/* Step 06 Clinical Transfer Form Modal */}
+      <TransferFormModal
+        isOpen={isTransferFormModalOpen}
+        onClose={closeTransferFormModal}
+        patientName={activeProfile?.name || 'Pasien'}
+        patientAge={activeProfile?.age || 45}
+        latestSystolic={stats.latestReading?.systolic || 120}
+        latestDiastolic={stats.latestReading?.diastolic || 80}
+        recommendedFacility="RS_RUJUKAN_JANTUNG"
+        primaryReason="Evaluasi Lanjutan & Tata Laksana Hipertensi/Aorta"
+      />
 
       {/* Delete Reading Confirmation Modal */}
       <ConfirmModal

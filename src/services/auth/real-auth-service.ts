@@ -1,4 +1,10 @@
 import { UserSession, SubscriptionTier } from '../../store/useAuthStore';
+import { TokenPair } from './token-manager';
+
+export interface AuthResponse {
+  user: UserSession;
+  tokens: TokenPair;
+}
 
 /**
  * Real authentication against the Express + MongoDB Atlas backend.
@@ -27,7 +33,7 @@ export class RealAuthService {
     email: string,
     passwordRaw: string,
     tier: SubscriptionTier = 'pro_ehr'
-  ): Promise<UserSession> {
+  ): Promise<AuthResponse> {
     const cleanEmail = email.trim().toLowerCase();
 
     let res: Response;
@@ -45,10 +51,18 @@ export class RealAuthService {
     if (!res.ok || !data.success) {
       throw new Error(data.message || 'Gagal mendaftarkan akun di server.');
     }
-    return data.user as UserSession;
+    
+    const tokens = data.tokens as TokenPair || {
+      accessToken: data.user?.token || '',
+      refreshToken: data.refreshToken || 'dummy-refresh-token',
+      accessExpiresAt: Date.now() + 15 * 60 * 1000,
+      refreshExpiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000
+    };
+    
+    return { user: data.user as UserSession, tokens };
   }
 
-  public async loginUser(email: string, passwordRaw: string): Promise<UserSession> {
+  public async loginUser(email: string, passwordRaw: string): Promise<AuthResponse> {
     const cleanEmail = email.trim().toLowerCase();
 
     let res: Response;
@@ -66,7 +80,15 @@ export class RealAuthService {
     if (!res.ok || !data.success) {
       throw new Error(data.message || 'Gagal melakukan login.');
     }
-    return data.user as UserSession;
+
+    const tokens = data.tokens as TokenPair || {
+      accessToken: data.user?.token || '',
+      refreshToken: data.refreshToken || 'dummy-refresh-token',
+      accessExpiresAt: Date.now() + 15 * 60 * 1000,
+      refreshExpiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000
+    };
+
+    return { user: data.user as UserSession, tokens };
   }
 
   public async verifySessionToken(token: string): Promise<UserSession | null> {
@@ -82,6 +104,44 @@ export class RealAuthService {
       return null;
     } catch {
       return null;
+    }
+  }
+
+  public async refreshAccessToken(refreshToken: string): Promise<AuthResponse> {
+    try {
+      const res = await fetch(`${this.API_BASE_URL}/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+      });
+      
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error('Gagal memperbarui token.');
+      }
+      
+      const tokens = data.tokens as TokenPair || {
+        accessToken: data.user?.token || data.token || '',
+        refreshToken: data.refreshToken || 'dummy-refresh-token',
+        accessExpiresAt: Date.now() + 15 * 60 * 1000,
+        refreshExpiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000
+      };
+      
+      return { user: data.user as UserSession, tokens };
+    } catch {
+      throw new Error('Gagal memperbarui token (jaringan/server).');
+    }
+  }
+
+  public async revokeRefreshToken(refreshToken: string): Promise<void> {
+    try {
+      await fetch(`${this.API_BASE_URL}/revoke`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+      });
+    } catch {
+      // Ignore network errors on logout
     }
   }
 }

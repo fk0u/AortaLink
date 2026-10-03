@@ -20,6 +20,9 @@
     "test:screening": "node --experimental-strip-types --no-warnings scripts/health-screening-selfcheck.ts",
     "test:contract": "node --experimental-strip-types --no-warnings scripts/fhir-contract-selfcheck.ts",
     "test:healthscore": "node --experimental-strip-types --no-warnings scripts/health-score-selfcheck.ts",
+    "test:care-routing": "node --experimental-strip-types --no-warnings scripts/care-routing-selfcheck.ts",
+    "test:knowledge-base": "node --experimental-strip-types --no-warnings scripts/knowledge-base-selfcheck.ts",
+    "test:satusehat": "node --experimental-strip-types --no-warnings scripts/satusehat-connector-selfcheck.ts",
     "cleanup:duplicates": "node scripts/cleanup-legacy-duplicate-readings.js",
     "preview": "rsbuild preview"
   },
