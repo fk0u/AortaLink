@@ -65,6 +65,8 @@ import { MobileToolsSheet } from './components/layout/MobileToolsSheet';
 import { initializeNotificationService } from './services/notifications/push-service';
 import { OnboardingModal, ONBOARDING_DONE_KEY } from './components/onboarding/OnboardingModal';
 import { HealthScreeningModal } from './components/screening/HealthScreeningModal';
+import { HealthScoreModal } from './components/health-score/HealthScoreModal';
+import { HealthScoreDashboardCard } from './components/dashboard/HealthScoreDashboardCard';
 
 // Bluetooth pairing
 import { DevicePairingButton } from './components/bluetooth/DevicePairingButton';
@@ -181,6 +183,9 @@ export function App() {
   const openReadingModal = useAppStore((state) => state.openReadingModal);
   const openExportPdfModal = useAppStore((state) => state.openExportPdfModal);
   const openReminderModal = useAppStore((state) => state.openReminderModal);
+  const isHealthScoreModalOpen = useAppStore((state) => state.isHealthScoreModalOpen);
+  const openHealthScoreModal = useAppStore((state) => state.openHealthScoreModal);
+  const closeHealthScoreModal = useAppStore((state) => state.closeHealthScoreModal);
 
   // Deleting reading confirmation state
   const [deletingReadingId, setDeletingReadingId] = useState<string | null>(null);
@@ -449,6 +454,7 @@ export function App() {
                   onOpenExportPdf={() => openExportPdfModal()}
                   onOpenClinicalNotes={() => setIsClinicalNotesModalOpen(true)}
                   onOpenFhir={() => setIsFhirModalOpen(true)}
+                  onOpenHealthScore={() => openHealthScoreModal()}
                 />
 
                 {/* Real-time Status Indicator */}
@@ -479,6 +485,15 @@ export function App() {
                     <ShimmerSkeletonCard type="chart" />
                   ) : (
                     <BPTrendChart readings={rawReadings || []} />
+                  )}
+                </div>
+
+                {/* AortaLink Health Score (AHA LE8) Card */}
+                <div>
+                  {isLoading || isDataRefreshing ? (
+                    <ShimmerSkeletonCard type="stats" />
+                  ) : (
+                    <HealthScoreDashboardCard onOpenModal={() => openHealthScoreModal()} />
                   )}
                 </div>
 
@@ -834,6 +849,17 @@ export function App() {
 
       {/* Step 03 Health Screening Modal */}
       <HealthScreeningModal />
+
+      {/* Step 05 AortaLink Health Score Modal */}
+      <HealthScoreModal
+        isOpen={isHealthScoreModalOpen}
+        onClose={closeHealthScoreModal}
+        onOpenReading={() => openReadingModal()}
+        onOpenLab={() => setIsLabModalOpen(true)}
+        onOpenProfile={() => useAppStore.getState().openProfileModal()}
+        onOpenSodium={() => setIsSodiumModalOpen(true)}
+        onOpenHabits={() => setIsHabitsModalOpen(true)}
+      />
 
       {/* All Subsystem Modals */}
       <SecurityBackupModal
