@@ -883,3 +883,35 @@ export const Calculator = createIcon(
     <path d="M8 18h.01" />
   </>
 );
+
+export const Scale = createIcon(
+  <>
+    <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+    <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+    <path d="M7 21h10" />
+    <path d="M12 3v18" />
+    <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
+  </>
+);
+
+export const Cigarette = createIcon(
+  <>
+    <path d="M18 12H2v4h16" />
+    <path d="M22 12v4" />
+    <path d="M7 12v4" />
+    <path d="M18 8c0-2.5-2-2.5-2-5" />
+    <path d="M22 8c0-2.5-2-2.5-2-5" />
+  </>
+);
+
+export const Syringe = createIcon(
+  <>
+    <path d="m18 2 4 4" />
+    <path d="m17 7 3-3" />
+    <path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5" />
+    <path d="m9 11 4 4" />
+    <path d="m5 19-3 3" />
+    <path d="m14 4 6 6" />
+  </>
+);
+

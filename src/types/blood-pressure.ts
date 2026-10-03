@@ -19,6 +19,16 @@ export interface Profile {
   notes?: string;
   createdAt: string;
   isDefault?: boolean;
+  // Step 03: Anthropometry & Lifestyle Screening
+  heightCm?: number;
+  weightKg?: number;
+  bmi?: number;
+  smokingStatus?: 'never' | 'former' | 'current' | 'unknown';
+  smokingPackYears?: number;
+  alcoholConsumption?: 'none' | 'occasional' | 'moderate' | 'heavy' | 'unknown';
+  substanceUseHistory?: boolean;
+  pregnancyStatus?: 'not_pregnant' | 'pregnant' | 'postpartum' | 'not_applicable';
+  screeningCompletedAt?: string;
 }
 
 export interface BleMeasurementStatus {
@@ -310,6 +320,8 @@ export interface FhirObservation {
     code: string;
   };
   component?: FhirObservationComponent[];
+  valueCodeableConcept?: FhirCodeableConcept;
+  derivedFrom?: Array<{ reference: string }>;
   interpretation?: FhirCodeableConcept[];
   note?: Array<{ text: string }>;
   extension?: Array<{
@@ -406,3 +418,141 @@ export interface SmartOnFhirConfig {
   scope: string;
   redirectUri: string;
 }
+
+// ===========================================================================
+// Step 03: Onboarding Health Screening & Aorta Risk Factors (FHIR R4 Aligned)
+// ===========================================================================
+
+export type ConditionCategory = 'aorta_risk' | 'comorbidity' | 'past_history';
+export type ClinicalStatus = 'active' | 'recurrence' | 'relapse' | 'inactive' | 'remission' | 'resolved';
+export type VerificationStatus = 'confirmed' | 'provisional' | 'differential' | 'unconfirmed';
+
+export interface AortaMeasurementDetails {
+  diameterMm?: number;
+  segment?: 'ascending' | 'arch' | 'descending_thoracic' | 'abdominal_suprarenal' | 'abdominal_infrarenal';
+  modality?: 'cta' | 'mri' | 'echocardiogram' | 'ultrasound';
+  measurementMethod?: 'inner_to_inner' | 'leading_edge' | 'outer_to_outer';
+}
+
+export interface ConditionItem {
+  id: string; // UUID
+  profileId: string;
+  code: string; // ICD-10 WHO e.g. 'Q87.4'
+  codeSystem?: string; // default: 'http://hl7.org/fhir/sid/icd-10'
+  snomedCode?: string; // SNOMED CT e.g. '19346006'
+  category: ConditionCategory;
+  name: string;
+  clinicalStatus: ClinicalStatus;
+  verificationStatus?: VerificationStatus;
+  onsetDateTime?: string; // ISO 8601
+  recordedDate: string; // ISO 8601
+  notes?: string;
+  aortaDetails?: AortaMeasurementDetails;
+  updatedAt?: string;
+}
+
+export type FamilyRelationshipCode = 'FTH' | 'MTH' | 'SIB' | 'CHILD' | 'EXT';
+
+export interface FamilyMemberHistoryItem {
+  id: string; // UUID
+  profileId: string;
+  relationship: FamilyRelationshipCode; // HL7 v3-RoleCode: Father, Mother, Sibling, Child, Extended
+  relationshipDisplay: string; // e.g. 'Ayah Kandung', 'Ibu Kandung'
+  conditionCode: string; // ICD-10 WHO e.g. 'I71.9'
+  conditionName: string; // e.g. 'Aneurisma Aorta'
+  snomedCode?: string;
+  deceased?: boolean;
+  deceasedAge?: number;
+  contributedToDeath?: boolean;
+  recordedDate: string;
+  updatedAt?: string;
+}
+
+export interface ImmunizationItem {
+  id: string; // UUID
+  profileId: string;
+  vaccineCode: string; // e.g. 'FLU', 'PCV', 'COVID19', 'TET'
+  vaccineName: string;
+  cvxCode?: string;
+  occurrenceDateTime: string;
+  status: 'completed' | 'not-done';
+  recordedDate: string;
+  updatedAt?: string;
+}
+
+export interface FhirCondition {
+  resourceType: 'Condition';
+  id?: string;
+  meta?: {
+    versionId?: string;
+    lastUpdated?: string;
+    profile?: string[];
+  };
+  clinicalStatus?: FhirCodeableConcept;
+  verificationStatus?: FhirCodeableConcept;
+  category?: FhirCodeableConcept[];
+  code: FhirCodeableConcept;
+  subject: {
+    reference: string;
+    display?: string;
+  };
+  onsetDateTime?: string;
+  recordedDate?: string;
+  note?: Array<{ text: string }>;
+  evidence?: Array<{
+    code?: FhirCodeableConcept[];
+    detail?: Array<{ reference: string; display?: string }>;
+  }>;
+  extension?: Array<{
+    url: string;
+    valueString?: string;
+    valueDecimal?: number;
+  }>;
+}
+
+export interface FhirFamilyMemberHistory {
+  resourceType: 'FamilyMemberHistory';
+  id?: string;
+  meta?: {
+    versionId?: string;
+    lastUpdated?: string;
+    profile?: string[];
+  };
+  status: 'completed' | 'partial' | 'health-unknown';
+  patient: {
+    reference: string;
+    display?: string;
+  };
+  relationship: FhirCodeableConcept;
+  date?: string;
+  deceasedBoolean?: boolean;
+  deceasedAge?: {
+    value: number;
+    unit: string;
+    system: string;
+    code: string;
+  };
+  condition?: Array<{
+    code: FhirCodeableConcept;
+    contributedToDeath?: boolean;
+  }>;
+}
+
+export interface FhirImmunization {
+  resourceType: 'Immunization';
+  id?: string;
+  meta?: {
+    versionId?: string;
+    lastUpdated?: string;
+    profile?: string[];
+  };
+  status: 'completed' | 'not-done';
+  vaccineCode: FhirCodeableConcept;
+  patient: {
+    reference: string;
+    display?: string;
+  };
+  occurrenceDateTime: string;
+  recorded?: string;
+}
+

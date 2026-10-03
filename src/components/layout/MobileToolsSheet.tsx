@@ -8,7 +8,8 @@ import {
   Bell, 
   FileText, 
   Database, 
-  ShieldCheck, 
+  ShieldCheck,
+  Shield, 
   Plus,
   BrainCircuit,
   Sparkles,
@@ -132,6 +133,31 @@ export const MobileToolsSheet: React.FC = () => {
                     <div>
                       <p className="text-xs font-black text-slate-900 dark:text-slate-100">Laporan PDF</p>
                       <p className="text-[10px] text-slate-500 dark:text-slate-400">Format Dokter</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      closeSheet();
+                      useAppStore.getState().openScreeningModal();
+                    }}
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-rose-50/70 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-900/60 active:scale-[0.98] transition-all text-left col-span-2"
+                  >
+                    <div className="p-2 rounded-xl bg-rose-600 text-white shrink-0 shadow-sm">
+                      <Shield size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                        <span>Skrining Kesehatan &amp; Risiko Aorta</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-300 font-extrabold uppercase">
+                          FHIR R4
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                        BMI, Gaya Hidup, 16 Faktor Risiko Aorta &amp; Imunisasi
+                      </p>
                     </div>
                   </button>
                 </div>

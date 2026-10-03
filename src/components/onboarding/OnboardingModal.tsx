@@ -1,8 +1,9 @@
-/* First-run guided onboarding — three steps, real actions, honest copy. */
+/* First-run guided onboarding — four steps, real actions, honest copy. */
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserRound, Pill, Plus, ArrowRight, Check, Heart } from '../icons/AppIcons';
+import { UserRound, Pill, Plus, ArrowRight, Check, Heart, Shield } from '../icons/AppIcons';
 import { playClickSound, playSuccessChime } from '../../utils/audio-fx';
+import { useAppStore } from '../../store/useAppStore';
 
 export const ONBOARDING_DONE_KEY = 'aortalink_onboarding_done';
 
@@ -31,6 +32,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 }) => {
   const [stepIndex, setStepIndex] = useState(0);
   const [completed, setCompleted] = useState<number[]>([]);
+  const openScreeningModal = useAppStore((state) => state.openScreeningModal);
 
   const steps: Step[] = [
     {
@@ -40,6 +42,14 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       actionLabel: 'Buka Profil',
       icon: <UserRound size={18} />,
       action: onOpenProfile
+    },
+    {
+      title: 'Skrining kesehatan & risiko aorta (FHIR R4)',
+      description:
+        'Catat tinggi, berat badan (BMI otomatis), gaya hidup, serta 16 faktor risiko vaskular & aorta berbasis standar HL7 FHIR R4. Bisa dilewati dan diisi bertahap kapan saja.',
+      actionLabel: 'Mulai Skrining',
+      icon: <Shield size={18} />,
+      action: () => openScreeningModal()
     },
     {
       title: 'Daftarkan obat rutin (opsional)',
@@ -110,7 +120,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               </div>
               <div>
                 <h2 className="text-base font-black text-slate-900 dark:text-slate-100">Selamat datang di AortaLink</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Tiga langkah singkat untuk mulai memantau dengan benar.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Empat langkah singkat untuk mulai memantau dengan benar.</p>
               </div>
             </div>
 

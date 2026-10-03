@@ -1,6 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import { decodeLegacyEscapedText } from '../security/sanitizer.ts';
-import type { Profile, BPReading, Reminder, HabitLog, GamificationState, SodiumLog, SleepLog, MedicationLog, MedicationItem, LabResult, FhirPatient, FhirObservation, FhirMedicationRequest, FhirMedicationStatement, AscvdProfile, ClinicalNote } from '../types/blood-pressure.ts';
+import type { Profile, BPReading, Reminder, HabitLog, GamificationState, SodiumLog, SleepLog, MedicationLog, MedicationItem, LabResult, FhirPatient, FhirObservation, FhirMedicationRequest, FhirMedicationStatement, AscvdProfile, ClinicalNote, ConditionItem, FamilyMemberHistoryItem, ImmunizationItem } from '../types/blood-pressure.ts';
 
 export class AortaLinkDatabase extends Dexie {
   profiles!: Table<Profile, string>;
@@ -23,6 +23,11 @@ export class AortaLinkDatabase extends Dexie {
   // V7: Clinical Features
   ascvdProfiles!: Table<AscvdProfile, number>;
   clinicalNotes!: Table<ClinicalNote, number>;
+
+  // V11: Step 03 Onboarding Screening & Aorta Risk Stores (UUID String Keys)
+  conditions!: Table<ConditionItem, string>;
+  familyHistory!: Table<FamilyMemberHistoryItem, string>;
+  immunizations!: Table<ImmunizationItem, string>;
 
   // V8: Sync bookkeeping — user deletions that must propagate to other devices
   syncTombstones!: Table<SyncTombstone, [string, string]>;
@@ -166,6 +171,13 @@ export class AortaLinkDatabase extends Dexie {
         }
       });
     });
+
+    // Version 11: Step 03 Onboarding Health Screening & Aorta Risk Factors
+    this.version(11).stores({
+      conditions: 'id, profileId, code, category, recordedDate',
+      familyHistory: 'id, profileId, relationship, recordedDate',
+      immunizations: 'id, profileId, vaccineCode, occurrenceDateTime'
+    });
   }
 }
 
@@ -219,7 +231,10 @@ export const SYNCED_TABLES = [
   'fhirMedicationRequests',
   'fhirMedicationStatements',
   'ascvdProfiles',
-  'clinicalNotes'
+  'clinicalNotes',
+  'conditions',
+  'familyHistory',
+  'immunizations'
 ] as const;
 
 let syncMetadataSuppressed = false;
@@ -317,7 +332,7 @@ db.use({
 });
 
 /**
- * Completely clears all 16 local tables in Dexie.js to prevent data leakage between accounts.
+ * Completely clears all 19 local tables in Dexie.js to prevent data leakage between accounts.
  * Runs with sync metadata suppressed: wiping another account's data must not
  * tombstone it, and local tombstones are wiped with it.
  */
@@ -341,6 +356,9 @@ export async function clearLocalEhrDatabase() {
         db.fhirMedicationStatements.clear(),
         db.ascvdProfiles.clear(),
         db.clinicalNotes.clear(),
+        db.conditions.clear(),
+        db.familyHistory.clear(),
+        db.immunizations.clear(),
         db.syncTombstones.clear()
       ]);
     });
