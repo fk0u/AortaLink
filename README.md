@@ -121,8 +121,8 @@ No AI provider keys are needed.
 ## 🔐 Security & privacy
 
 - Passwords are hashed with bcrypt; legacy SHA-256 accounts are upgraded on login.
-- Bearer JWTs stored in `localStorage`; always serve over HTTPS. Shorter-lived tokens are planned ([#21](https://github.com/fk0u/AortaLink/issues/21)).
-- Health data is sensitive personal data under UU 27/2022 (PDP). Consent and data-protection work is tracked in [#23](https://github.com/fk0u/AortaLink/issues/23).
+- Authentication utilizes short-lived access tokens with rotating refresh tokens and automatic background refresh via `TokenManager`.
+- Health data is protected under UU 27/2022 (UU PDP) with explicit health data processing consent required prior to account registration.
 - Report vulnerabilities as described in [`SECURITY.md`](SECURITY.md).
 
 ---
@@ -133,6 +133,11 @@ Researchers and students may use AortaLink for journal papers, theses and *skrip
 
 ---
 
-## 📄 License & contributing
+## 📄 License & architecture
 
-Distributed under the **MIT License**. The `LICENSE` file itself still has to be added, together with the `/core` and `/connectors` split ([#22](https://github.com/fk0u/AortaLink/issues/22)). See [`CONTRIBUTING.md`](CONTRIBUTING.md) to get started.
+Distributed under the **Apache License 2.0**. See [`LICENSE`](LICENSE) for full legal text and patent grant protections.
+
+Architecture is cleanly partitioned:
+- `/core`: Pure TypeScript domain models, deterministic clinical guidelines (ESH/ACC/ESC), Life's Essential 8 Health Score, care routing rules, and FHIR R4 contract adapters.
+- `/connectors`: Unified integrations for SATUSEHAT FHIR R4 (Permenkes 24/2022), Dexie.js local storage, Web Bluetooth GATT, and MongoDB Atlas sync.
+

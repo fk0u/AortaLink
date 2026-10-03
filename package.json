@@ -2,7 +2,7 @@
   "name": "aortalink",
   "description": "AortaLink — open-source cardiovascular & aorta health companion (HL7 FHIR R4)",
   "private": true,
-  "version": "1.0.0",
+  "version": "3.0.0",
   "type": "module",
   "scripts": {
     "dev": "node scripts/start-all.js",
