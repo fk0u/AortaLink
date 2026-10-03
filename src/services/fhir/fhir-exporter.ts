@@ -1096,7 +1096,7 @@ export function convertSocialHistoryToFHIR(profile: Profile): FhirObservation[] 
     obsList.push({
       resourceType: 'Observation',
       id: toValidUuid(`${profile.id}-smoking`, 'obs-smoking'),
-      meta: { profile: ['http://hl7.org/fhir/StructureDefinition/socialhistory'] },
+      meta: { profile: ['http://hl7.org/fhir/StructureDefinition/Observation'] },
       status: 'final',
       category: [
         {
@@ -1144,7 +1144,7 @@ export function convertSocialHistoryToFHIR(profile: Profile): FhirObservation[] 
     obsList.push({
       resourceType: 'Observation',
       id: toValidUuid(`${profile.id}-alcohol`, 'obs-alcohol'),
-      meta: { profile: ['http://hl7.org/fhir/StructureDefinition/socialhistory'] },
+      meta: { profile: ['http://hl7.org/fhir/StructureDefinition/Observation'] },
       status: 'final',
       category: [
         {
