@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aortalink-v4';
+const CACHE_NAME = 'aortalink-v3-release';
 const ASSETS = [
   '/',
   '/index.html',
@@ -33,8 +33,8 @@ self.addEventListener('activate', (event) => {
 // Push Event — Show notification when push message is received
 self.addEventListener('push', (event) => {
   let data = {
-    title: 'HeartSync',
-    body: 'Pengingat dari HeartSync.',
+    title: 'AortaLink',
+    body: 'Pengingat dari AortaLink.',
     icon: '/favicon.svg',
     badge: '/favicon.svg',
     tag: 'aortalink-reminder',

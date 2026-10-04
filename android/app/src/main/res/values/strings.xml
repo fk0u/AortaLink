@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AortaLink</string>
+    <string name="title_activity_main">AortaLink</string>
+    <string name="package_name">id.aortalink.app</string>
+    <string name="custom_url_scheme">id.aortalink.app</string>
+</resources>

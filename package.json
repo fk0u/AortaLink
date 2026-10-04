@@ -26,9 +26,14 @@
     "test:ingestion": "node --experimental-strip-types --no-warnings scripts/ingestion-pipeline-selfcheck.ts",
     "test:core": "node --experimental-strip-types --no-warnings scripts/core-minimum-selfcheck.ts",
     "cleanup:duplicates": "node scripts/cleanup-legacy-duplicate-readings.js",
+    "android:sync": "rsbuild build && cap sync android",
+    "android:build": "rsbuild build && cap sync android && cd android && ./gradlew assembleDebug",
+    "android:open": "cap open android",
     "preview": "rsbuild preview"
   },
   "dependencies": {
+    "@capacitor/android": "^6.2.2",
+    "@capacitor/core": "^6.2.2",
     "@gsap/react": "^2.1.2",
     "@rspack/core": "^2.1.7",
     "@tanstack/react-query": "^5.101.4",
@@ -53,6 +58,7 @@
     "zustand": "^5.0.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.2.2",
     "@rsbuild/core": "^2.1.7",
     "@rsbuild/plugin-react": "^2.1.0",
     "@types/canvas-confetti": "^1.9.0",

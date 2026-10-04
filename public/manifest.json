@@ -5,13 +5,32 @@
   "theme_color": "#0f172a",
   "background_color": "#0f172a",
   "display": "standalone",
+  "orientation": "portrait",
   "start_url": "/",
+  "scope": "/",
+  "lang": "id",
   "icons": [
     {
-      "src": "favicon.svg",
+      "src": "/favicon.svg",
       "sizes": "192x192 512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Catat Tensi",
+      "short_name": "Tensi",
+      "description": "Catat tekanan darah baru",
+      "url": "/?action=record",
+      "icons": [{ "src": "/favicon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Darurat 119",
+      "short_name": "SOS 119",
+      "description": "Panggilan darurat kardiovaskular",
+      "url": "/?action=sos",
+      "icons": [{ "src": "/favicon.svg", "sizes": "192x192" }]
     }
   ]
 }
