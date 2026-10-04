@@ -36,17 +36,17 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
   const steps: Step[] = [
     {
-      title: 'Lengkapi profil & target',
+      title: 'Lengkapi data diri Anda',
       description:
-        'Isi nama, usia, dan target tekanan darah Anda. Semua analisis ML (tren, risiko, kepatuhan) dipersonalisasi dari angka-angka ini.',
+        'Isi nama, usia, dan target tensi agar aplikasi dapat memberikan anjuran kesehatan yang tepat dan sesuai kondisi tubuh Anda.',
       actionLabel: 'Buka Profil',
       icon: <UserRound size={18} />,
       action: onOpenProfile
     },
     {
-      title: 'Skrining kesehatan & risiko aorta (FHIR R4)',
+      title: 'Cek kesehatan & kebiasaan harian',
       description:
-        'Catat tinggi, berat badan (BMI otomatis), gaya hidup, serta 16 faktor risiko vaskular & aorta berbasis standar HL7 FHIR R4. Bisa dilewati dan diisi bertahap kapan saja.',
+        'Catat tinggi dan berat badan (menghitung berat ideal otomatis) serta pola aktivitas Anda. Langkah ini dapat dilewati dan diisi bertahap kapan saja.',
       actionLabel: 'Mulai Skrining',
       icon: <Shield size={18} />,
       action: () => openScreeningModal()
@@ -54,15 +54,15 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     {
       title: 'Daftarkan obat rutin (opsional)',
       description:
-        'Tambahkan regimen obat Anda beserta jadwalnya. Dengan ini model kepatuhan dapat menghitung kaitan langsung antara kepatuhan minum obat dan kontrol tensi Anda.',
+        'Jika Anda rutin mengonsumsi obat dari dokter atau puskesmas, catat di sini agar ada pengingat jam minum obat dan pemantauan efeknya terhadap tensi.',
       actionLabel: 'Tambah Obat',
       icon: <Pill size={18} />,
       action: onOpenMedication
     },
     {
-      title: 'Catat pengukuran pertama',
+      title: 'Catat pengukuran tensi pertama',
       description:
-        'Gunakan protokol istirahat 5 menit, duduk tenang, lalu ukur. Mulai titik ini seluruh mesin analisis bekerja dari data asli Anda — bukan angka contoh.',
+        'Duduk rileks selama 5 menit, bernapas santai, lalu ukur tensi Anda. Mulai dari sini, Anda dapat memantau kesehatan jantung secara mandiri.',
       actionLabel: 'Catat Tensi',
       icon: <Plus size={18} />,
       action: onOpenReading

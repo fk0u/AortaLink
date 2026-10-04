@@ -261,6 +261,50 @@ export const MobileToolsSheet: React.FC = () => {
                 </div>
               </div>
 
+              {/* Category: Panduan & Edukasi Pasien Awam */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-2">
+                  Panduan Pasien &amp; Edukasi
+                </span>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      closeSheet();
+                      useAppStore.getState().openBpGuideModal();
+                    }}
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-900/60 active:scale-[0.98] transition-all text-left"
+                  >
+                    <div className="p-2 rounded-xl bg-teal-600 text-white shrink-0 shadow-sm">
+                      <Sparkles size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100">Cara Ukur Benar</p>
+                      <p className="text-[10px] text-teal-700 dark:text-teal-400 font-semibold">4 Langkah PERHI</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClickSound();
+                      closeSheet();
+                      useAppStore.getState().openGlossaryModal();
+                    }}
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-sky-50/70 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-900/60 active:scale-[0.98] transition-all text-left"
+                  >
+                    <div className="p-2 rounded-xl bg-sky-600 text-white shrink-0 shadow-sm">
+                      <HeartPulse size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100">Kamus Tensi</p>
+                      <p className="text-[10px] text-sky-700 dark:text-sky-400 font-semibold">Istilah Bahasa Awam</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
               {/* Category 2: Terapi & Jadwal */}
               <div className="space-y-2">
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 px-2">

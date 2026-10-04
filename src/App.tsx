@@ -71,6 +71,9 @@ import { CareRoutingPanel } from './components/care-routing/CareRoutingPanel';
 import { RedFlagTriageScreen } from './components/care-routing/RedFlagTriageScreen';
 import { TransferFormModal } from './components/care-routing/TransferFormModal';
 import { KnowledgeBaseModal } from './components/knowledge-base/KnowledgeBaseModal';
+import { PatientFriendlyHeroCard } from './components/dashboard/PatientFriendlyHeroCard';
+import { BpMeasurementGuideModal } from './components/guidance/BpMeasurementGuideModal';
+import { HealthGlossaryModal } from './components/guidance/HealthGlossaryModal';
 
 // Bluetooth pairing
 import { DevicePairingButton } from './components/bluetooth/DevicePairingButton';
@@ -122,6 +125,14 @@ export function App() {
   const setTheme = useAppStore((state) => state.setTheme);
 
   const screenKey = getScreenKey(routerState.location.pathname);
+
+  const userExperienceMode = useAppStore((state) => state.userExperienceMode);
+  const isBpGuideModalOpen = useAppStore((state) => state.isBpGuideModalOpen);
+  const openBpGuideModal = useAppStore((state) => state.openBpGuideModal);
+  const closeBpGuideModal = useAppStore((state) => state.closeBpGuideModal);
+  const isGlossaryModalOpen = useAppStore((state) => state.isGlossaryModalOpen);
+  const openGlossaryModal = useAppStore((state) => state.openGlossaryModal);
+  const closeGlossaryModal = useAppStore((state) => state.closeGlossaryModal);
 
   const activeTab: NavTab = isPrimaryTab(screenKey) ? screenKey : 'dashboard';
   const showPrimaryNavigation = isPrimaryTab(screenKey);
@@ -333,7 +344,9 @@ export function App() {
       if (isFhirModalOpen) { setIsFhirModalOpen(false); return; }
       if (isJsonBackupModalOpen) { setIsJsonBackupModalOpen(false); return; }
       if (isAscvdModalOpen) { setIsAscvdModalOpen(false); return; }
-      if (isClinicalNotesModalOpen) { setIsClinicalNotesModalOpen(false); }
+      if (isClinicalNotesModalOpen) { setIsClinicalNotesModalOpen(false); return; }
+      if (isBpGuideModalOpen) { closeBpGuideModal(); return; }
+      if (isGlossaryModalOpen) { closeGlossaryModal(); return; }
     };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
@@ -432,6 +445,15 @@ export function App() {
                 
                 {/* Critical Emergency Crisis Alert (Only >=180/120) */}
                 <EmergencyAlert latestReading={stats.latestReading} />
+
+                {/* Patient-Friendly Hero Summary Card (Human Language & Quick Guidance) */}
+                <PatientFriendlyHeroCard
+                  latestReading={stats.latestReading ?? null}
+                  onOpenNewReading={() => openReadingModal()}
+                  onOpenRestTimer={() => setIsRestTimerOpen(true)}
+                  onOpenGuide={openBpGuideModal}
+                  onOpenGlossary={openGlossaryModal}
+                />
 
                 {/* Primary Hero Card: Latest Blood Pressure Gauge */}
                 <div data-dashboard-section="statcards" style={sectionStyle('statcards')}>
@@ -960,6 +982,29 @@ export function App() {
         latestDiastolic={stats.latestReading?.diastolic || 80}
         recommendedFacility="RS_RUJUKAN_JANTUNG"
         primaryReason="Evaluasi Lanjutan & Tata Laksana Hipertensi/Aorta"
+      />
+
+      {/* Layman Guidance Modals: Cara Mengukur yang Benar & Kamus Istilah */}
+      <BpMeasurementGuideModal
+        isOpen={isBpGuideModalOpen}
+        onClose={closeBpGuideModal}
+        onStartRestTimer={() => {
+          closeBpGuideModal();
+          setIsRestTimerOpen(true);
+        }}
+        onOpenReadingForm={() => {
+          closeBpGuideModal();
+          openReadingModal();
+        }}
+      />
+
+      <HealthGlossaryModal
+        isOpen={isGlossaryModalOpen}
+        onClose={closeGlossaryModal}
+        onOpenSOS={() => {
+          closeGlossaryModal();
+          setIsSOSModalOpen(true);
+        }}
       />
 
       {/* Delete Reading Confirmation Modal */}

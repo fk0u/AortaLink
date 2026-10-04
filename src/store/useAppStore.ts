@@ -30,6 +30,10 @@ interface AppState {
   categoryFilter: BPCategoryKey | 'all';
   theme: 'light' | 'dark' | 'system';
   
+  // User Experience Mode: 'patient' (simplified layman mode) or 'clinical' (comprehensive doctor/pro mode)
+  userExperienceMode: 'patient' | 'clinical';
+  setUserExperienceMode: (mode: 'patient' | 'clinical') => void;
+
   // Modals
   isReadingModalOpen: boolean;
   editingReading: BPReading | null;
@@ -43,6 +47,8 @@ interface AppState {
   isKnowledgeBaseModalOpen: boolean;
   isRedFlagTriageOpen: boolean;
   isTransferFormModalOpen: boolean;
+  isBpGuideModalOpen: boolean;
+  isGlossaryModalOpen: boolean;
   
   // Toasts
   toasts: ToastMessage[];
@@ -83,6 +89,10 @@ interface AppState {
   closeRedFlagTriage: () => void;
   openTransferFormModal: () => void;
   closeTransferFormModal: () => void;
+  openBpGuideModal: () => void;
+  closeBpGuideModal: () => void;
+  openGlossaryModal: () => void;
+  closeGlossaryModal: () => void;
 
   // Cache & Loading Actions
   setDataLoading: (loading: boolean) => void;
@@ -95,6 +105,18 @@ interface AppState {
   removeToast: (id: string) => void;
 }
 
+const getInitialUxMode = (): 'patient' | 'clinical' => {
+  try {
+    const saved = localStorage.getItem('aortalink_ux_mode');
+    if (saved === 'clinical' || saved === 'patient') {
+      return saved;
+    }
+  } catch {
+    // ignore
+  }
+  return 'patient'; // Default to friendly patient mode for laymen
+};
+
 export const useAppStore = create<AppState>((set) => ({
   activeProfileId: 'profile-self-default',
   dateFilter: '30days',
@@ -103,6 +125,7 @@ export const useAppStore = create<AppState>((set) => ({
   searchQuery: '',
   categoryFilter: 'all',
   theme: getInitialTheme(),
+  userExperienceMode: getInitialUxMode(),
 
   isReadingModalOpen: false,
   editingReading: null,
@@ -116,6 +139,8 @@ export const useAppStore = create<AppState>((set) => ({
   isKnowledgeBaseModalOpen: false,
   isRedFlagTriageOpen: false,
   isTransferFormModalOpen: false,
+  isBpGuideModalOpen: false,
+  isGlossaryModalOpen: false,
 
   toasts: [],
 
@@ -142,6 +167,14 @@ export const useAppStore = create<AppState>((set) => ({
       // ignore
     }
     set({ theme });
+  },
+  setUserExperienceMode: (mode) => {
+    try {
+      localStorage.setItem('aortalink_ux_mode', mode);
+    } catch {
+      // ignore
+    }
+    set({ userExperienceMode: mode });
   },
 
   openReadingModal: (readingToEdit = null) =>
@@ -171,6 +204,10 @@ export const useAppStore = create<AppState>((set) => ({
   closeRedFlagTriage: () => set({ isRedFlagTriageOpen: false }),
   openTransferFormModal: () => set({ isTransferFormModalOpen: true }),
   closeTransferFormModal: () => set({ isTransferFormModalOpen: false }),
+  openBpGuideModal: () => set({ isBpGuideModalOpen: true }),
+  closeBpGuideModal: () => set({ isBpGuideModalOpen: false }),
+  openGlossaryModal: () => set({ isGlossaryModalOpen: true }),
+  closeGlossaryModal: () => set({ isGlossaryModalOpen: false }),
 
   // Caching setters
   setDataLoading: (loading) => set({ isDataLoading: loading }),
